@@ -29,6 +29,8 @@
 #define AMS_MAX_SEAT_NODES								(1000)
 #define AMS_MAX_TELLER_ID_LEN							30
 #define AMS_MAX_GRPID_LEN								30
+#define AMS_MAX_USERID_LEN								30
+#define AMS_MAX_SERVICETYPE_LEN							30
 #define IPV6_LEN										16
 #define AMS_SEAT_ID_HASH_SIZE							(AMS_MAX_SEAT_NUM)
 #define TERMINFO_ID                                     0x03
@@ -992,6 +994,66 @@ typedef struct  seatNode_t
 	OACBPARA_t      oaCbPara;       //网管回调用参数 zhuyn 20160704
 	
 }SEAT_NODE;
+
+
+typedef struct userNode_t
+{
+	NODE			node;  
+	
+	//Customer In Queue Pid
+	DWORD			customerPid;
+
+	DWORD			amsPid;
+	DWORD			state;	
+	DWORD			callState;	
+	DWORD			serviceState;	
+
+	int 			sendMsgToVtaState;
+	int 			sendMsgToVtmState;
+	
+	int 			sendFileToVtaState;
+	int 			sendFileToVtmState;
+	
+	int 			vtmParaCfgState;
+
+	TIME_INFO		stateStartLocalTime;	
+	TIME_INFO		callStateStartLocalTime; 
+	TIME_INFO		serviceStateStartLocalTime; 
+	time_t			stateStartTime; 
+	time_t			callStateStartTime; 
+	time_t			serviceStateStartTime;			
+	time_t			handshakeTime;
+	time_t			enterQueueTime;
+
+	DWORD			serviceType;
+
+	//timer
+	int 			iTimerId; //Not Use Yet
+	int 			sendMsgToVtaTimerId;  //VTA
+	int 			sendMsgToVtmTimerId;  //VTM
+	int 			sendFileToVtaTimerId; //VTA
+	int 			sendFileToVtmTimerId; //VTM
+	int 			vtmParaCfgTimerId;	  //VTM
+//	int 			iTimerType;
+
+	//communication pid
+	PID_t			myPid;
+	PID_t			rPid;	  //vtm
+	PID_t			cmsPid;   //cms
+	PID_t			vtaPid;   //VTA 
+
+	VTM_INFO		vtmInfo;
+
+	VNC_AUTH_PARA	vncAuth;					   //远程接入鉴权密码
+
+	DWORD			vtmCfgPos;
+	DWORD			vtmRegPos;
+	DWORD			orgCfgPos;
+	
+	OACBPARA_t		oaCbPara;		//网管回调用参数 zhuyn 20160704
+
+}USER_NODE;
+
 //added end
 
 

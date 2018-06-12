@@ -1363,6 +1363,22 @@ enum amsTellerType
 	AMS_TELLER_MAX,
 };
 
+
+
+//zry added for scc 2018
+#ifdef ecc
+enum amsTerminalType
+{
+	AMS_TERMINAL_RSVD						= 0,
+
+	AMS_TERMINAL_ROBOT						= 1,
+	AMS_TERMINAL_TELLER						= 2,
+	AMS_TERMINAL_MOBILEPHONE				= 3,
+	AMS_TERMINAL_PC							= 4,
+
+	AMS_TERMINAL_MAX
+};
+#else
 enum amsTerminalType
 {
 	AMS_TERMINAL_RSVD                        = 0,
@@ -1374,8 +1390,10 @@ enum amsTerminalType
 
 	AMS_TERMINAL_MAX,
 };
+#endif
 
-//zry added for scc 2018
+
+
 enum amsSeatServiceFlag
 {
 	AMS_SEAT_UNINSTALL                     = 0,
@@ -1500,6 +1518,21 @@ enum amsStateType
 	AMS_CUSTOMER_STATE,
 };
 
+//zry added for scc 2018
+#ifdef scc
+enum amsSeatState
+{
+	AMS_SEAT_STATE_IDLE = 0,
+	AMS_SEAT_STATE_BUSY,
+	AMS_SEAT_STATE_REST,
+	AMS_SEAT_STATE_PREPARE,
+	AMS_SEAT_STATE_OFFLINE,
+//	AMS_VTA_STATE_LEAVE,
+	
+	AMS_SEAT_STATE_RSVD, 	//AMS_VTA_STATE_RSVD 5
+}
+
+#else
 enum amsVtaState
 {
 	AMS_VTA_STATE_IDLE = 0,
@@ -1511,6 +1544,8 @@ enum amsVtaState
 	
 	AMS_VTA_STATE_RSVD,  	//AMS_VTA_STATE_RSVD 5
 };
+#endif
+#added end
 
 enum amsCallState
 {
@@ -1541,6 +1576,17 @@ enum amsVtmState
 
 	AMS_VTM_STATE_RSVD
 };
+
+
+//zry added for scc 2018
+enum amsUserState
+{
+	AMS_USER_STATE_IDLE=0,
+	AMS_USER_STATE_BUSY,
+	AMS_USER_STATE_OFFLINE,
+	AMS_USER_STATE_RSVD
+};
+//added end
 
 enum amsCustomerServiceState
 {

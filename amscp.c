@@ -3281,5 +3281,367 @@ int SeatRegReqProc(int iThreadId,MESSAGE_t *pMsg)
 		
 }
 
+int SeatGetReqProc(int iThreadId,MESSAGE_t *pMsg)
+{
+	int				iret = AMS_CMS_PROCESS_SUCCESS;
+	LP_AMS_DATA_t	*lpAmsData = NULL;       //Ω¯≥Ã ˝æ›«¯÷∏’Î
+	LP_AMS_DATA_t	*lpOriginAmsData = NULL; //Ω¯≥Ã ˝æ›«¯÷∏’Î
+	LP_QUEUE_DATA_t	*lpQueueData = NULL;	 //≈≈∂”Ω¯≥Ã ˝æ›«¯÷∏’Î
+	SEAT_NODE		*pSeatNode = NULL;
+	SEAT_NODE		*pOriginSeatNode = NULL;
+	SEAT_NODE		*pTargetSeatNode = NULL;
+	USER_NODE		*pUserNode = NULL;
+	CALL_TARGET		callTarget;
+	unsigned char	srvGrpSelfAdapt = 0;
+	int				tps = 0;
+	int				pid = 0;
+	int				originPid = 0;
+	unsigned int	amsPid = 0;
+	unsigned char	userIdLen=0;
+	unsigned char	userId[AMS_MAX_USER_ID_LEN + 1] = {0};
+	unsigned char	callIdLen=0;
+	unsigned char   callId[AMS_MAX_CALL_ID_LEN + 1]={0};
+	unsigned int	terminalType=-0;
+	unsigned char	targetTellerId[AMS_MAX_TELLER_ID_LEN + 1] = {0};
+	unsigned char   srvgrpidlen=0;
+	unsigned char	srvGrpId[AMS_MAX_GRPID_LEN + 1]={0};
+	unsigned char   servicetypelen=0;
+	unsigned char	serviceType[AMS_MAX_SERVICETYPE_LEN + 1] = {0};
+	unsigned char   servicetypersvdlen=0;
+	unsigned char	serviceTypeRsvd[AMS_MAX_SERVICETYPE_LEN + 1]={0};
+	unsigned short	callType = 0;
+	unsigned int	i=0;
+	unsigned char   *p;
+
+#ifdef AMS_TEST_LT
+	time_t			currentTime;
+#endif
+
+
+	//get remote pid
+	pid = pMsg->s_SenderPid.iProcessId;
+
+	//ºÏ≤ÈΩ” ’Ω¯≥Ã∫≈
+	if(pMsg->s_ReceiverPid.iProcessId != 0)
+	{
+		dbgprint("SeatGetReqProc[%d] Pid:%d Err", pid, pMsg->s_ReceiverPid.iProcessId);
+		iret = AMS_CMS_GET_VTA_PARA_ERR;
+		AmsSendCmsVtaGetRsp(NULL,pMsg,iret,NULL,NULL);
+
+		return AMS_ERROR;
+	}
+
+	//œ˚œ¢≥§∂»ºÏ≤È
+	if(pMsg->iMessageLength < 23)
+	{
+		dbgprint("SeatGetReqProc[%d] Len[%d] Err", pid, pMsg->iMessageLength);
+		iret = AMS_CMS_GET_VTA_LEN_ERR;
+		AmsSendCmsVtaGetRsp(NULL,pMsg,iret,NULL,NULL);
+		return AMS_ERROR;
+	}
+
+	p = pMsg->cMessageBody;
+
+	//¡˜ÀÆ∫≈ºÏ≤È
+	//callidµƒ∏Ò ΩÂ LV∏Ò Ω string∂º «LV∏Ò Ω µ⁄“ª∏ˆ◊÷Ω⁄ «len ∫Û√Ê «◊÷∑˚¥Æ
+	callIdLen=*p++;
+	if(callIdLen > AMS_MAX_CALLID_LEN)
+	{
+		dbgprint("SeatGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
+		iret = AMS_CMS_GET_VTA_CALL_ID_ERR;
+		AmsSendCmsVtaGetRsp(NULL,pMsg,iret,NULL,NULL);	
+		return AMS_ERROR;
+	}
+	memcpy(callId,p+1,callIdLen);
+	p+=callIdLen;
+
+	//÷’∂À¿‡–ÕºÏ≤È
+	BEGETLONG(terminalType, p);
+	if(terminalType < AMS_TERMINAL_ROBOT || terminalType >= AMS_TERMINAL_MAX)
+	{
+		dbgprint("SeatGetReqProc[%d] TerminalType[%d]Err", pid, terminalType);
+		iret = AMS_CMS_GET_VTA_TERMINAL_TYPE_ERR;
+		AmsSendCmsVtaGetRsp(NULL,pMsg,iret,NULL,NULL);
+		return AMS_ERROR;		
+	}	
+	p += 4;
+
+
+	if(AMS_TERMINAL_MOBILEPHONE == terminalType)
+	{
+		userIdLen=*p++;
+		if(userIdLen > AMS_MAX_USERID_LEN)
+		{
+			dbgprint("SeatGetReqProc[%d] termidlen[%u]Err", 
+				pid, userIdLen);
+			iret = AMS_CMS_GET_VTA_CALL_ID_ERR;
+			AmsSendCmsVtaGetRsp(NULL,pMsg,iret,NULL,NULL);
+			return AMS_ERROR;		
+		}
+		memcpy(userId,p,userIdLen);
+		p+=userIdLen;
+
+		/*find user node in process */
+		for(i = 0;i < AMS_MAX_SERVICE_GROUP_NUM;i++)
+		{
+			pUserNode = AmsSearchUserNode(i,userId);
+			if(NULL != pUserNode)
+			{
+				break;
+			}
+		}
+
+		if(NULL == pUserNode)
+		{
+			dbgprint("SeatGetReqProc[%d] User[%s]Err", pid, userId);
+			iret = 	AMS_CMS_GET_VTA_VTM_ID_ERR;
+			AmsSendCmsVtaGetRsp(NULL,pMsg,iret,NULL,NULL);
+			return AMS_ERROR;		
+		}
+
+		//user ◊¥Ã¨“Ï≥£±£ª§
+		if(AMS_USER_STATE_IDLE != pUserNode->state)
+		{
+			//set user state and state start time
+			AmsSetUserState(iThreadId,pUserNode,AMS_USER_STATE_IDLE);
+			
+		}
+
+		if(AMS_CALL_STATE_NULL != pUserNode->callState)
+		{
+			//set user call state and state start time
+			AmsSetUserCallState(pUserNode,AMS_CALL_STATE_NULL);
+		}
+
+		if(AMS_CUSTOMER_SERVICE_NULL != pUserNode->servicestate)
+		{
+			if(AMS_CUSTOMER_IN_QUEUE == pUserNode->serviceState)
+			{
+				if(pUserNode->customerPid > 0 && pUserNode->customerPid < LOGIC_PROCESS_SIZE)
+				{
+					if(pUserNode->customerPid > 0 && pUserNode->customerPid < LOGIC_PROCESS_SIZE)
+					{
+						lpQueueData=(LP_QUEUE_DATA_t *)ProcessData[pUserNode->customerPid];
+						
+						/* …±µÙ∂® ±∆˜ */
+						if(lpQueueData->iTimerId >= 0)
+						{
+							AmsQueueKillTimer(pUserNode->customerPid, &lpQueueData->iTimerId);//ªÚ lpQueueData->myPid.iProcessId
+							AmsTimerStatProc(T_AMS_CUSTOMER_IN_QUEUE_TIMER, AMS_KILL_TIMER);
+						} 
+
+						//release lpQueueData Pid
+						AmsReleassPid(lpQueueData->myPid, END);
+					}
+				}					
+			}		
+
+			//set Vtm Service State and State Start Time
+			AmsSetUserServiceState(pUserNode, AMS_CUSTOMER_SERVICE_NULL);	
+		}
+
+		//reset amsPid
+		pUserNode->amsPid = 0;
+
+		//reset customerPid
+		pUserNode->customerPid = 0;		
+
+		//“µŒÒ◊È±‡∫≈
+		srvgrpidlen=*p++;
+		if(srvgrpidlen > AMS_MAX_GRPID_LEN)
+		{
+			dbgprint("SeatGetReqProc[%d] srvgrpidlen[%u]Err", pid, srvgrpidlen);
+			iret = AMS_CMS_GET_VTA_ORIGIN_TELLER_ID_ERR;
+			AmsSendCmsVtaGetRsp(NULL,pMsg,iret,NULL,NULL);
+			return AMS_ERROR;		
+		}
+		memcpy(srvGrpId,p,srvgrpidlen);
+		p += srvgrpidlen;
+		
+		//“µŒÒ¿‡–Õ		
+		servicetypelen=*p++;
+		if(servicetypelen > AMS_MAX_SERVICETYPE_LEN)
+		{
+			dbgprint("SeatGetReqProc[%d] servicetypelen[%u]Err", pid, servicetypelen);
+			iret = AMS_CMS_GET_VTA_ORIGIN_TELLER_ID_ERR;
+			AmsSendCmsVtaGetRsp(NULL,pMsg,iret,NULL,NULL);
+			return AMS_ERROR;
+
+		}
+		memcpy(serviceType,p,servicetypelen);
+		p += servicetypersvdlen;
+
+	}
+
+	//ºÏ≤È“µŒÒ◊È±‡∫≈”Î“µŒÒ¿‡–Õ◊È∫œ
+	if(0 == srvgrpidlen && 0 == servicetypelen)
+	{
+		dbgprint("SeatGetReqProc[%d] User[%s] SrvGrpId[%s]ServiceType[%s]Err", 
+			pid, userId, srvGrpId, serviceType);
+		iret = 	AMS_CMS_GET_VTA_NO_VALID_SERVICE_GROUP_ID_OR_TYPE;
+		AmsSendCmsVtaGetRsp(NULL,pMsg,iret,NULL,NULL);
+		return AMS_ERROR;
+	}
+
+	//Ωˆ–Ø¥¯“µŒÒ¿‡–Õ£¨√ª”–÷∏√˜“µŒÒ◊È±‡∫≈
+	if(0 == srvgrpidlen && 0 != servicetypelen)
+	{
+		//∏˘æ›“µŒÒ¿‡–Õ—°‘Ò“µŒÒ◊È
+		iret = AmsSelectSrvGrpIdByServiceType(userId,serviceType,srvGrpId);
+		
+		if(AMS_OK != iret)
+		{
+			AmsSendCmsVtaGetRsp(NULL,pMsg,iret,NULL,NULL);		
+			return AMS_ERROR;			
+		}	
+
+		srvGrpSelfAdapt = 1;
+	}
+
+	//–¬∫ÙΩ–ÃÌº”µΩ¡¥±ÌŒ≤
+	/*del user node from origin list */
+	Sem_wait(&AmsSrvData(pUserNode->userInfo.srvGrpNo).userCtrl);
+	lstDelete(&AmsSrvData(pUserNode->userInfo.srvGrpNo).userList, (NODE *)pUserNode);
+	Sem_post(&AmsSrvData(pUserNode->userInfo.srvGrpNo).userCtrl);
+
+	/* add user node to new list */
+	Sem_wait(&AmsSrvData(srvGrpNo).userCtrl);
+	lstAdd(&AmsSrvData(srvGrpNo).userList, (NODE *)pUserNode);
+	Sem_post(&AmsSrvData(srvGrpNo).userCtrl);
+
+	//∏¸–¬µ±«∞”√ªßµƒ“µŒÒ◊È±‡∫≈
+	if(0 != strcmp(pUserNode->userInfo.srvGrpId,srvGrpId))
+	{
+		//update srvgrpid
+		memset(pUserNode->userInfo.srvGrpId,0,AMS_MAX_SRVGRPID_LEN);
+		memcpy(pUserNode->userInfo.srvGrpId,srvGrpId,srvgrpidlen);
+	}
+
+	//“µŒÒ÷«ƒ‹¬∑”…
+	pSeatNode = AmsServiceIntelligentSelectSeat(userId,userno,srvGrpNo,serviceType,servicetypelen,pUserNode->userInfo.orgNo,pUserNode->orgCfgPos,&iret);
+	if(NULL == pSeatNode)
+	{
+		if(AMS_CMS_GET_VTA_SERVICE_IN_QUEUE != iret)
+		{
+			dbgprint("SeatGetReqProc[%d] Vtm[%s][%u] OriginTeller[%s][%u] SISelectVta Failed", 
+				pid, userId, userNo, originSeatId, originTellerNo);
+			
+			if(AMS_ERROR == iret)
+			{
+				iret = AMS_CMS_GET_VTA_SERVICE_INTELLIGENT_ROUTING_ERR;
+			}
+					
+			AmsSendCmsVtaGetRsp(NULL,pMsg,iret,NULL,NULL);		
+			return AMS_ERROR;	
+		}
+
+		iret = AmsStartCustomerQueueProcess(pMsg,pUserNode,srvGrpNo,serviceType,servicetypelen,callIdLen,srvGrpSelfAdapt);
+		if(AMS_OK != iret)
+		{
+			AmsSendCmsVtaGetRsp(NULL,pMsg,iret,NULL,NULL);		
+			return AMS_ERROR;			
+		}
+
+		//customer in queue...
+		iret = AMS_CMS_GET_VTA_SERVICE_IN_QUEUE;
+
+		//update Customer Service State
+		AmsSetUserServiceState(pUserNode,AMS_CUSTOMER_IN_QUEUE);
+
+		//init enterqueuetime
+		time(&pUserNode->enterQueueTime);
+
+		//record servicetype
+		memcpy(pUserNode->serviceType,serviceType,servicetypelen);
+
+		
+	}
+	else
+	{
+		//ºÏ≤ÈΩ¯≥Ã∫≈
+		//get local pid
+		pid = pSeatNode->amsPid & 0xffff;
+		if((0 == pid) || (pid >= LOGIC_PROCESS_SIZE))
+		{
+			dbgprint("SeatGetReqProc Vtm[%s][%u] Teller[%s][%u] Pid[0x%x][%d]Err", 
+				vtmNo, vtmId, pVtaNode->vtaInfo.tellerNo, pVtaNode->vtaInfo.tellerId,
+				pSeatNode->amsPid, pid);
+			iret = AMS_CMS_GET_VTA_AMS_PID_ERR;
+			AmsSendCmsVtaGetRsp(NULL,pMsg,iret,pSeatNode,NULL);
+			return AMS_ERROR;
+		}
+
+		lpAmsData=(LP_AMS_DATA_t *)ProcessData[pid];
+
+		//∏¸–¬Ω¯≥Ã ˝æ›
+		//record userid
+		if(pUserNode->userinfo.useridlen <= AMS_MAX_USERID_LEN)
+		{
+			memset(lpAmsData->userid, 0, (AMS_MAX_USERID_LEN + 1));
+			memcpy(lpAmsData->userid, pUserNode->userInfo.userId, pUserNode->userInfo.userIdLen);
+			lpAmsData->useridLen = pUserNode->userInfo.useridLen;
+		}
+
+		//record vtmPos
+		lpAmsData->vtmPos = pUserNode->vtmCfgPos;
+		
+		//Set seat call State, only one pthread!!!
+		AmsSetSeatCallState(lpAmsData, pSeatNode, AMS_CALL_STATE_WAIT_ANSWER);
+
+#ifdef AMS_TEST_LT
+	    //calc vta workInfo
+		time(&currentTime);	   
+		AmsUpdateSingleSeatWorkInfo(pSeatNode, currentTime);
+	
+		//set Vta State and State Start Time
+		AmsSetSeatState(iThreadId, lpAmsData, pSeatNode, AMS_SEAT_STATE_BUSY, 0);
+#endif
+
+		//record vtmPid
+        memcpy(&lpAmsData->vtmPid,&pUserNode->rPid,sizeof(PID_t));
+		
+		//record callId
+	    lpAmsData->callIdLen = callIdLen;
+		memcpy(lpAmsData->callId, &pMsg->cMessageBody[1], callIdLen);
+
+		//record amsPid
+		pUserNode->amsPid = pSeatNode->amsPid;
+
+		//record serviceType	
+		memcpy(pUserNode->serviceType,serviceType,servicetypelen);
+		
+	    //update Customer Service State
+		AmsSetUserServiceState(pUserNode, AMS_CUSTOMER_IN_SERVICE);
+
+		//update cmsPid
+		lpAmsData->cmsPid.cModuleId	   = pMsg->s_SenderPid.cModuleId;
+		lpAmsData->cmsPid.cFunctionId  = pMsg->s_SenderPid.cFunctionId;
+		lpAmsData->cmsPid.iProcessId   = pMsg->s_SenderPid.iProcessId;
+
+	}
+
+	//update cmsPid
+	pUserNode->cmsPid.cModuleId	  = pMsg->s_SenderPid.cModuleId;
+	pUserNode->cmsPid.cFunctionId  = pMsg->s_SenderPid.cFunctionId;
+	pUserNode->cmsPid.iProcessId   = pMsg->s_SenderPid.iProcessId;
+	
+    //set Vtm State and State Start Time
+	AmsSetUserState(iThreadId, pUserNode, AMS_USER_STATE_BUSY);
+
+	//send Vta Get Rsp to CMS
+	if(AMS_CUSTOMER_IN_SERVICE == pUserNode->serviceState)
+	{
+		//lpAmsData ø…Œ™NULL
+    	AmsSendCmsVtaGetRsp(lpAmsData,pMsg,iret,pSeatNode,NULL);
+	}
+	
+	if(AMS_CUSTOMER_IN_QUEUE == pUserNode->serviceState)
+	{
+		//lpAmsData ø…Œ™NULL
+    	AmsSendCmsVtaGetRsp(lpAmsData,pMsg,iret,NULL,pUserNode);
+	}
+	
+	return iret;
+}
 
 //added end
