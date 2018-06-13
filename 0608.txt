@@ -1,6 +1,0 @@
-1.坐席HASH
-原来的索引 tellerid 从dword 变成了 string型
-
-2.坐席CFG
-3.坐席节点
-4.坐席节点内容
