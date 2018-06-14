@@ -9,7 +9,7 @@ int ConfigAmsSrv(char *cFileName)
 	WORD_t		  word[MAXWORDNUMALINE];
 	int 		  wordCount = 0;
 	int 		  count = 0; 
-	unsigned int  currId = 0;
+	unsigned char *currId[MAXWORDNUMALINE] = 0;
 
 	memset(sItem, 0, sizeof(sItem));
 	
@@ -27,7 +27,7 @@ int ConfigAmsSrv(char *cFileName)
 			continue;
 		}
 
-		section = ConfigSrv(word, wordCount, section, &currId);
+		section = ConfigSrv(word, wordCount, section, currId);
 		memset(sItem, 0, sizeof(sItem));
 
 		count++;
@@ -340,6 +340,255 @@ int ConfigSrv(WORD_t *word,int wordcount,int section,unsigned  int *pCurrId)
 	}
 
 	return section;
+}
+
+int AmsSrvServiceSenten(WORD_t *word,int wordcount,unsigned char *pCurrId)
+{
+	char			stringword[AMS_MAX_STRING_WORD_LEN];
+	unsigned char	serviceNameLen;
+	int				i = 0;
+	int				j = 0;
+	unsigned int	serviceId = 0;
+
+	if(NULL == pCurrId)
+	{
+		return FAILURE;
+	}
+	
+	memset(stringword, 0, sizeof(stringword));
+
+	if(0 == strcmp(stringword,"servicename"))
+	{
+		memset(stringword,0,sizeof(stringword));
+		if(word[2].Len <= AMS_MAX_STRING_WORD_LEN)
+		{
+			memcpy(stringword, word[2].Body, word[2].Len);
+		}
+		else
+		{
+			Display("Service Senten servicename[%s] len[%d]Err!\r\n",
+				stringword, word[2].Len);
+			return FAILURE;
+		}
+
+		serviceNameLen = strlen(stringword);
+        if(serviceNameLen > 0 && serviceNameLen <= AMS_MAX_SERVICE_NAME_LEN)
+        {       	
+			for(i = 0; i < AMS_MAX_SERVICE_NUM; i++)
+			{				
+				if(AmsCfgService(i).serviceNameLen == serviceNameLen)
+				{
+					if(0 == memcmp(AmsCfgService(i).serviceName, stringword, serviceNameLen))
+					{
+						Display("Service Senten serviceName[%s]has been Used[%d]!\r\n",
+							stringword, j);
+						return FAILURE;
+					}
+				}
+			}
+			for(i = 0; i< AMS_MAX_SERVICE_NUM; i++)
+			{
+				if(AMS_SERVICE_UNINSTALL == AmsCfgService(i).flag)
+				{	
+					strcpy((char *)AmsCfgService(i).serviceName, stringword); 	
+					AmsCfgService(i).serviceName[serviceNameLen] = '\0';
+					AmsCfgService(i).serviceNameLen = serviceNameLen;
+					AmsCfgService(i).flag = AMS_SERVICE_INSTALL;
+					Display("Service[%s]Installed!\r\n", AmsCfgService(i).serviceName);
+					break;
+				}
+			}
+			if(i >= AMS_MAX_SERVICE_NUM)
+			{
+				Display("Service Num Installed over MaxNum[%d]!\r\n", AMS_MAX_SERVICE_NUM);
+				
+				return FAILURE;
+			}
+        }
+		else
+		{
+			Display("Service Senten servicename[%s] len[%d]Err!\r\n",
+				stringword, serviceNameLen);
+			return FAILURE;
+		}
+	}
+	else
+	{
+		return FAILURE;	
+	}
+
+	return SUCCESS;
+}
+
+int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char *pCurrId)
+{
+	char                 stringword[AMS_MAX_STRING_WORD_LEN];
+	unsigned char        srvGroupNameLen;
+	unsigned char		 srvNameLen;
+	int                  i = 0;	
+	int                  j = 0;	
+	unsigned int         srvGrpId = 0;
+	unsigned int         serviceId = 0;
+	unsigned int         serviceType = 0;	
+	unsigned int		 serviceIdpos = 0;
+	unsigned int         srvRsvdType = 0xffffffff;		
+	char                 serviceName[AMS_MAX_SERVICE_NAME_LEN];
+	unsigned char        isAutoFlag = 0;	
+
+	if(0 == strcmp(stringword,"servicegroupname"))
+	{
+		memset(stringword,0,sizeof(stringword));
+		if(word[2].Len <= AMS_MAX_STRING_WORD_LEN)
+		{
+			memcpy(stringword, word[2].Body, word[2].Len);
+		}
+		else
+		{
+			Display("ServiceGroup Senten serviceGroupName[%s] len[%d]Err!\r\n",
+				stringword, word[2].Len);
+			return FAILURE;
+		}
+
+		srvGroupNameLen = strlen(stringword);
+        if(srvGroupNameLen > 0 && srvGroupNameLen <= AMS_MAX_SERVICE_GROUP_NAME_LEN)
+        {
+        	/* check service group name is used or not */
+			for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
+			{
+				if(AmsCfgSrvGroup(i).srvGroupNameLen == srvGroupNameLen)
+				{
+					if(0 == memcmp(AmsCfgSrvGroup(j).srvGroupName, stringword, srvGroupNameLen))
+					{
+						Display("ServiceGroup Senten serviceGroupName[%s]has been Used[%d]!\r\n",
+							stringword, j);
+						return FAILURE;
+					}
+				}
+			}
+			for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
+			{
+				if(AMS_SERVICE_GROUP_UNINSTALL == AmsCfgSrvGroup(i).flag)
+				{
+					strcpy((char *)AmsCfgSrvGroup(i).srvGroupName, stringword); 	
+					AmsCfgSrvGroup(i).srvGroupName[srvGroupNameLen] = '\0';
+					AmsCfgSrvGroup(i).srvGroupNameLen = srvGroupNameLen;
+					AmsCfgSrvGroup(i).flag = AMS_SERVICE_GROUP_INSTALL;
+					strcpy(pCurrId,stringword);
+					pCurrId[srvGroupNameLen] = '\0';
+				}
+			}
+        }
+		else
+		{
+			Display("ServiceGroup Senten serviceGroupName[%s] len[%d]Err!\r\n",
+				stringword, srvGroupNameLen);
+			return FAILURE;
+		}
+	}
+
+	//判断业务组是否已经安装
+	for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
+	{
+		if( (AMS_SERVICE_GROUP_INSTALL == AmsCfgSrvGroup(i).flag)
+			&& (0 == strcmp(AmsCfgSrvGroup(i).srvGroupName,pCurrId)))
+		{
+			serviceIdpos = i;
+			break;
+		}
+	}
+	if(i > AMS_MAX_SERVICE_NUM;i++)
+	{
+		Display("ServiceGroup[%S]Senten not find!\r\n", pCurrId);
+		return FAILURE;
+	}
+	
+	if(0 == strcmp(stringword,"servicename"))
+	{
+		memset(stringword,0,sizeof(stringword));
+		if(word[2].Len <= AMS_MAX_STRING_WORD_LEN)
+		{
+			memcpy(stringword, word[2].Body, word[2].Len);
+		}
+		else
+		{
+			Display("ServiceGroup Senten serviceName[%s] len[%d]Err!\r\n",
+				stringword, word[2].Len);
+			return FAILURE;
+		}
+
+		srvNameLen =strlen (stringword);
+		//判断业务类型是不是业务类型列表中
+		//不是 返回错误
+		//是 将业务类型添加到业务组数组中
+		if(AMS_ERROR == amsCheckServiceName(stringword))
+		{
+			Display("ServiceGroup[%s]Senten amsCheckServiceName[%s]Err!\r\n",
+				serviceId);
+			return FAILURE;
+		}
+
+		for(i = 0; i < AMS_MAX_SERVICE_NUM;i++)
+		{		//判断业务类型是否已经安装过
+			if(0 == strcmp(AmsCfgSrvGroup(serviceIdpos).srvInfo[i].serviceName,stringword))
+			{
+				Display("ServiceGroup[%s]Senten Service already installed[%s]!\r\n",
+					serviceId,stringword);
+				return FAILURE;
+			}
+		}
+		
+		j = AmsCfgSrvGroup(serviceIdpos).srvlogpos;
+		strcpy(AmsCfgSrvGroup(serviceIdpos).srvInfo[j].serviceName,stringword);
+		AmsCfgSrvGroup(i).srvType[j].serviceName[srvNameLen] = '\0';
+		AmsCfgSrvGroup(i).srvType[j].serviceNameLen = srvNameLen;
+		AmsCfgSrvGroup(serviceIdpos).srvlogpos++ ;
+	}
+	if(0 == strcmp(stringword,"isAutoFlag"))
+	{
+		isAutoFlag = atoi((const char *)word[2].Body);
+
+		if(isAutoFlag > 1)
+		{
+			Display("ServiceGroup[%s] Senten isAutoFlag[%d] Err!\r\n",*pCurrId, isAutoFlag);
+			return FAILURE;
+		}
+
+		AmsCfgSrvGroup(i).isAutoFlag = isAutoFlag;
+	}
+	else
+	{
+		return FAILURE;
+	}
+}
+
+int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char *pCurrId)
+{
+	char				stringword[AMS_MAX_STRING_WORD_LEN];
+	unsigned char		tellerIdLen;
+	unsigned char		srvGrpIdLen;
+	unsigned char		transIpLen;
+	unsigned int		vtaIp = 0;
+	unsigned int		tellerIdpos = 0;
+	int                  i = 0;
+	int                  j = 0;	
+	unsigned int         id = 0;
+	int                  idPos = -1;
+	int                  vtaNum = 0;
+	int                  result = FAILURE;
+
+	if(NULL == pCurrId)
+	{
+		return FAILURE;
+	}
+
+	memset(stringword, 0, sizeof(stringword));
+	memcpy(stringword, word[0].Body, word[0].Len);
+	vtaNum = Min(SystemData.AmsPriData.amsCfgData.maxVtaNum, AMS_MAX_VTA_NUM);
+
+	if(0 == strcmp(stringword,"id"))
+	{
+		
+	}
 }
 
 

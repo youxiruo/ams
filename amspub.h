@@ -1,11 +1,11 @@
 #ifndef AMSPUB_H
 #define	AMSPUB_H
 
-#define AMS_MAX_SEAT_NUM				(10000)
-#define AMS_MAX_USER_NUM				(5000)
+#define AMS_MAX_VTA_NUM				(10000)
+#define AMS_MAX_VTM_NUM				(5000)
 
-#define AMS_MAX_SEAT_NODES				(10000) //最大坐席节点数
-#define AMS_MAX_USER_NODES				(5000) //最大用户节点数
+#define AMS_MAX_VTA_NODES				(10000) //最大坐席节点数
+#define AMS_MAX_VTM_NODES				(5000) //最大用户节点数
 #define AMS_MAX_SERVICE_TYPE_NUM		(128) //AMS业务类型最大配置数
 
 #define AMS_MAX_SERVICE_NUM				(64)
@@ -197,7 +197,11 @@ typedef struct tellerInfoNode_t
 	NODE	node;
 	struct tellerInfoNode_t *hashNext;
 
-	TELLER_INFO	tellerInfo;	
+	unsigned int	tellerInfopos; //amsCfgData里tellerinfo数组对应的下标
+	
+	unsigned char	tellerIdLen;
+	unsigned char	tellerId[AMS_MAX_TELLER_ID_LEN + 1];
+	
 }TELLER_INFO_NODE;
 
 typedef struct vtmInfo_t
@@ -241,7 +245,10 @@ typedef struct vtmInfoNode_t
 	NODE	node;
 	struct vtmInfoNode_t *hashNext;
 
-	VTM_INFO	vtmInfo;
+	unsigned int	vtmInfopos; //amsCfgData里vtminfo数组对应的下标
+	
+	unsigned char	vtmIdLen;
+	unsigned char	vtmId[AMS_MAX_VTM_ID_LEN + 1];	
 }VTM_INFO_NODE;
 
 typedef struct serviceInfo_t
@@ -259,13 +266,16 @@ typedef struct serviceGroupInfo_t
 {
 	unsigned char   flag;                          //是否配置
 
-	unsigned char   isHighLevel;                   //是否高等级
+	unsigned char   isAutoFlag;                   //是否智能坐席 1 智能坐席 2 非智能坐席
 	
 	DWORD           srvGrpIdLen;                      //业务组编号
 	unsigned char	srvGrpId[AMS_MAX_SERVICE_GROUP_NAME_LEN + 1];
 	
-	DWORD           srvTypeRsvd;                   //Service Rsvd 预留业务
-	DWORD           serviceType;                   //Service  业务
+	//DWORD           srvTypeRsvd;                   //Service Rsvd 预留业务
+	//DWORD           serviceType;                   //Service  业务
+	
+	unsigned int 	srvlogpos; 						//配置的位置
+	SERVICE_INFO    srvInfo[AMS_MAX_SERVICE_NUM]; //业务
 
 //	unsigned char   srvGroupNameLen;               //业务组合名称长度
 //	unsigned char   srvGroupName[AMS_MAX_SERVICE_GROUP_NAME_LEN + 1];	
@@ -458,23 +468,95 @@ typedef struct amsDataSysCfg_t
 
 	//ORG_INFO           orgInfo[AMS_MAX_ORG_NUM];
 	
-	//TELLER_INFO        tellerInfo[AMS_MAX_VTA_NUM];
+	TELLER_INFO        tellerInfo[AMS_MAX_VTA_NUM];
 	TELLER_INFO_NODE	*tellerInfoHashTbl[AMS_TELLINFO_HASH_SIZE];
 
-	//VTM_INFO           vtmInfo[AMS_MAX_VTM_NUM];
+	VTM_INFO           vtmInfo[AMS_MAX_VTM_NUM];
 	VTM_INFO_NODE		*vtmInfoHashTbl[AMS_VTMINFO_HASH_SIZE];
 
 	VTA_ID_NODE        *VtaIdHashTbl[AMS_VTA_ID_HASH_SIZE];	
 
 	VTM_ID_NODE        *VtmIdHashTbl[AMS_VTM_ID_HASH_SIZE];
 
-	ORG_ID_NODE        *OrgIdHashTbl[AMS_ORG_ID_HASH_SIZE];
+	//ORG_ID_NODE        *OrgIdHashTbl[AMS_ORG_ID_HASH_SIZE];
 
 
 
 	//zry added for scc 20
 	
 }AMS_DATA_SYSCFG;
+
+/* struct of ams data register */
+typedef struct amsDataRegister_t
+{
+	
+    TELLER_REGISTER_INFO_NODE	*tellerRegisterInfoHashTbl[AMS_TELLINFO_HASH_SIZE];
+
+
+}AMS_DATA_REGISTER;
+
+
+
+/* struct of serviec proc */
+typedef struct amsServiecProc_t
+{
+	int              serviceState;
+//	DWORD            preSrvTellerId;
+	
+	sem_t	         vtaCtrl;	
+	LIST 		     vtaList;
+
+	sem_t	         vtmCtrl;
+	LIST 		     vtmList;
+	
+}AMS_SERVICE_MANAGE;
+
+
+typedef struct
+{
+	int i;
+
+	AMS_SERVICE_MANAGE amsServiceManageData[AMS_MAX_SERVICE_GROUP_NUM];
+
+	//AMS_RCAS_DATA amsRcasData;
+
+	//AMS_DATA_LIC amsLicData;
+	
+	AMS_DATA_SYSCFG amsCfgData;
+
+	AMS_DATA_REGISTER amsRegData;
+		
+	//AMS_ALARM  amsAlarm;
+	
+	//AMS_DEBUG  amsDebug;
+	
+	//AMS_STAT   amsStat;
+	
+    //AMS_DBOPR   amsDbopr;   //zhuyn added 
+	
+}AMS_PRI_AREA_t;
+
+#define AmsCfgTellerHashTbl	(SystemData.AmsPriData.amsCfgData.tellerInfoHashTbl)
+#define AmsCfgVtmHashTbl	(SystemData.AmsPriData.amsCfgData.vtmInfoHashTbl)
+#define AmsCfgService(i)	(SystemData.AmsPriData.amsCfgData.serviceInfo[i])
+#define AmsCfgSrvGroup(i)	(SystemData.AmsPriData.amsCfgData.srvGroupInfo[i])
+#define AmsCfgQueueSys(i)	(SystemData.AmsPriData.amsCfgData.queueSysInfo[i])
+
+#define	AmsVtaIdHashTbl		(SystemData.AmsPriData.amsCfgData.VtaIdHashTbl)
+#define AmsVtmIdHashTbl    	(SystemData.AmsPriData.amsCfgData.VtmIdHashTbl)
+
+#define AmsRegTellerHashTbl	(SystemData.AmsPriData.amsRegData.tellerRegisterInfoHashTbl)
+#define AmsSrvData			(SystemData.AmsPriData.amsServiceManageData)
+
+extern int ConfigAmsSrv(char * cFileName);
+extern int SrvDivSen(char * s,WORD_t * word);
+extern int AmsSrvServiceSenten(WORD_t * word,int wordcount);
+extern int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount);
+extern int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned int *pCurrId);
+extern int AmsSrvVtmSenten(WORD_t *word,int wordcount,unsigned int *pCurrId);
+extern int AmsSrvQueueSenten(WORD_t *word,int wordcount,unsigned int *pCurrId);
+extern int AmsCfgDataInit();
+
 #endif
 
 
