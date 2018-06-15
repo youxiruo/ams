@@ -9,7 +9,7 @@ int ConfigAmsSrv(char *cFileName)
 	WORD_t		  word[MAXWORDNUMALINE];
 	int 		  wordCount = 0;
 	int 		  count = 0; 
-	unsigned char *currId[MAXWORDNUMALINE] = 0;
+	unsigned char currId[MAXWORDNUMALINE] = 0;
 
 	memset(sItem, 0, sizeof(sItem));
 	
@@ -267,7 +267,7 @@ int SrvGetAWord(char *string,WORD_t *word)
 }
 
 
-int ConfigSrv(WORD_t *word,int wordcount,int section,unsigned  int *pCurrId)
+int ConfigSrv(WORD_t *word,int wordcount,int section,unsigned  char pCurrId[])
 {
 	char			stringword[100];
 	unsigned char	c = 0;
@@ -342,7 +342,7 @@ int ConfigSrv(WORD_t *word,int wordcount,int section,unsigned  int *pCurrId)
 	return section;
 }
 
-int AmsSrvServiceSenten(WORD_t *word,int wordcount,unsigned char *pCurrId)
+int AmsSrvServiceSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 {
 	char			stringword[AMS_MAX_STRING_WORD_LEN];
 	unsigned char	serviceNameLen;
@@ -420,7 +420,7 @@ int AmsSrvServiceSenten(WORD_t *word,int wordcount,unsigned char *pCurrId)
 	return SUCCESS;
 }
 
-int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char *pCurrId)
+int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 {
 	char                 stringword[AMS_MAX_STRING_WORD_LEN];
 	unsigned char        srvGroupNameLen;
@@ -561,7 +561,7 @@ int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char *pCurrId)
 	}
 }
 
-int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char *pCurrId)
+int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 {
 	char				stringword[AMS_MAX_STRING_WORD_LEN];
 	unsigned char		tellerIdLen;
@@ -575,6 +575,7 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char *pCurrId)
 	int                  idPos = -1;
 	int                  vtaNum = 0;
 	int                  result = FAILURE;
+	TELLER_INFO_NODE	*pTellerInfoNode = NULL;
 
 	if(NULL == pCurrId)
 	{
@@ -587,9 +588,316 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char *pCurrId)
 
 	if(0 == strcmp(stringword,"id"))
 	{
+		//获取id的值
+		memset(stringword,0,sizeof(stringword));
+		if(word[2].Len <= AMS_MAX_STRING_WORD_LEN)
+		{
+			memcpy(stringword, word[2].Body, word[2].Len);
+		}
+		else
+		{
+			Display("AmsSrvTeller Senten id[%s] len[%d]Err!\r\n",
+				stringword, word[2].Len);
+			return FAILURE;
+		}
+
+		tellerIdLen = strlen(stringword);
 		
+		if(tellerIdLen > 0 && tellerIdLen <= AMS_MAX_TELLER_ID_LEN)
+		{
+			/* check teller in cfg or not */
+			pTellerInfoNode = AmsSearchTellerInfoHash(stringword);
+			if( NULL != pTellerInfoNode)
+			{
+				Display("Teller Senten id[%s] has been used!\r\n",id);
+
+				i = pTellerInfoNode->tellerInfopos;
+				
+				memset(&AmsCfgTeller(i), 0, sizeof(TELLER_INFO));
+
+				strcpy(AmsCfgTeller(i).tellerId,stringword,tellerIdLen);
+				AmsCfgTeller(i).tellerId[tellerIdLen] = '\0';
+				AmsCfgTeller(i).tellerIdLen = tellerIdLen;
+				AmsCfgTeller(i).flag = AMS_TELLER_INSTALL;
+					
+				idPos = i;			
+			}
+
+			if(-1 == idPos)
+			{
+				/* record tellerId*/
+				for(i = 0;i < vtaNum; i++)
+				{
+					if(AMS_TELLER_UNINSTALL == AmsCfgTeller(i).flag)
+					{
+						strcpy(AmsCfgTeller(i).tellerId,stringword,tellerIdLen);
+						AmsCfgTeller(i).tellerId[tellerIdLen] = '\0';
+						AmsCfgTeller(i).tellerIdLen = tellerIdLen;
+						AmsCfgTeller(i).flag = AMS_TELLER_INSTALL;
+
+						//插入hash
+						pTellerInfoNode = AmsGetTellerInfoNode(stringword,tellerIdLen);
+						if(NULL != pTellerInfoNode)
+						{
+							strcpy(pTellerInfoNode->tellerId,stringword,tellerIdLen);
+							pTellerInfoNode->tellerIdLen=tellerIdLen;
+							pTellerInfoNode->tellerId[tellerIdLen]='\0';
+							pTellerInfoNode->tellerInfopos=i;
+
+							AmsInsertTellerInfoHash(pTellerInfoNode);
+						}
+					}
+				}
+				if(i >= vtaNum)
+				{
+					Display("All Teller has been Installed[%u]!\r\n", id);
+					return FAILURE;
+				}
+			}
+
+			strcpy(pCurrId,stringword,tellerIdLen);
+			pCurrId[tellerIdLen]='\0';
+
+			
+			Display("Teller[%s] Installed!\r\n", pCurrId);
+				
+			return SUCCESS;
+		}
+		else
+		{
+			Display("AmsSrvTeller Senten id[%s] len[%d]Err!\r\n",
+							stringword, tellerIdLen);
+			return FAILURE;
+		}
+
 	}
+
+	/*find teller in cfg or not */
+	pTellerInfoNode = AmsSearchTellerInfoHash(pCurrId);
+	if(NULL == pTellerInfoNode)
+	{
+		Display("Teller[%s]Senten not find Id!\r\n", pCurrId);
+		memset(pCurrId,0,MAXWORDNUMALINE);
+		return FAILURE;		
+	}
+
+	i = pTellerInfoNode->tellerInfopos;
+
+	//其他teller涉及到的参数配置
+
+	return SUCCESS;
 }
+
+int AmsSrvVtmSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
+{
+	char				stringword[AMS_MAX_STRING_WORD_LEN];
+	unsigned char		vtmIdLen;
+	unsigned char		vtmNameLen;
+	unsigned char		vtmPwdLen;
+	unsigned char		transIpLen = 0;
+	unsigned int		vtmIp=0;
+	int					i = 0;
+	int 				j = 0;
+	unsigned int 		id = 0;
+	int					idPos = -1;
+	int					vtmNum = 0;
+	int					result = 0;
+	VTM_INFO_NODE		*pVtmInfoNode=NULL;
+
+	memset(stringword, 0, sizeof(stringword));
+	memcpy(stringword, word[0].Body, word[0].Len);
+	vtmNum = Min(SystemData.AmsPriData.amsCfgData.maxVtmNum, AMS_MAX_VTM_NUM);
+
+	if(0 == strcmp(stringword,"id"))
+	{
+		//获取id的值
+		memset(stringword,0,sizeof(stringword));
+		if(word[2].Len <= AMS_MAX_STRING_WORD_LEN)
+		{
+			memcpy(stringword, word[2].Body, word[2].Len);
+		}
+		else
+		{
+			Display("AmsSrvVtmSenten Senten id[%s] len[%d]Err!\r\n",
+				stringword, word[2].Len);
+			return FAILURE;
+		}
+
+		vtmIdLen = strlen(stringword);
+		
+		if(vtmIdLen > 0 && vtmIdLen <= AMS_MAX_VTM_ID_LEN)
+		{
+			/* check vtm in cfg or not */
+			pVtmInfoNode = AmsSearchVtmInfoHash(stringword,vtmIdLen);
+			if( NULL != pVtmInfoNode)
+			{
+				Display("AmsSrvVtmSenten Senten id[%s] has been used!\r\n",stringword);
+
+				i = pVtmInfoNode->tellerInfopos;
+				
+				memset(&AmsCfgVtm(i), 0, sizeof(VTM_INFO));
+				strcpy(AmsCfgVtm(i).vtmId,stringword,vtmIdLen);
+				AmsCfgVtm(i).vtmId[vtmIdLen] = '\0';
+				AmsCfgVtm(i).vtmIdLen = vtmIdLen;
+				AmsCfgVtm(i).flag = AMS_VTM_INSTALL;
+					
+				idPos = i;			
+			}
+
+			if(-1 == idPos)
+			{
+				/* record vtmId*/
+				for(i = 0;i < vtmNum; i++)
+				{
+					if(AMS_VTM_UNINSTALL == AmsCfgVtm(i).flag)
+					{
+						strcpy(AmsCfgVtm(i).vtmId,stringword,vtmIdLen);
+						AmsCfgVtm(i).VtmId[vtmIdLen] = '\0';
+						AmsCfgVtm(i).VtmIdLen = VtmIdLen;
+						AmsCfgVtm(i).flag = AMS_VTM_INSTALL;
+
+						//插入hash
+						pVtmInfoNode = AmsGetVtmInfoNode(stringword,vtmIdLen);
+						if(NULL != pVtmInfoNode)
+						{
+							strcpy(pVtmInfoNode->vtmId,stringword,vtmIdLen);
+							pVtmInfoNode->vtmIdLen=vtmIdLen;
+							pVtmInfoNode->vtmId[vtmIdLen]='\0';
+							pVtmInfoNode->vtmInfopos=i;
+
+							AmsInsertVtmInfoHash(pVtmInfoNode);
+						}
+					}
+				}
+				if(i >= vtmNum)
+				{
+					Display("All Teller has been Installed[%u]!\r\n", id);
+					return FAILURE;
+				}
+			}
+
+			strcpy(pCurrId,stringword,vtmIdLen);
+			pCurrId[vtmIdLen]='\0';
+
+			
+			Display("Vtm[%s] Installed!\r\n", pCurrId);
+				
+			return SUCCESS;
+		}
+		else
+		{
+			Display("AmsSrvVtmSenten Senten id[%s] len[%d]Err!\r\n",
+							stringword, vtmIdLen);
+			return FAILURE;
+		}
+	}
+
+	/*find vtm in cfg or not */
+	pVtmInfoNode = AmsSearchVtmInfoHash(pCurrId);
+	if(NULL == pVtmInfoNode)
+	{
+		Display("AmsSrvVtmSenten[%s]Senten not find Id!\r\n", pCurrId);
+		memset(pCurrId,0,MAXWORDNUMALINE);
+		return FAILURE;		
+	}
+
+	i = pVtmInfoNode->vtmInfopos;
+
+	//其他vtm涉及到的参数配置
+
+	return SUCCESS;
+}
+
+
+int AmsSrvQueueSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
+{
+	char				stringword[AMS_MAX_STRING_WORD_LEN];
+	int					i = 0;
+	unsigned char		srvGrpIdLen = 0;
+	unsigned char		srvGrpId[AMS_MAX_SERVICE_GROUP_NAME_LEN + 1]={0};
+	int					idPos= -1;
+	unsigned short		maxQueLen = 0;
+	unsigned short		avgSrvTime = 0;
+	int					result = 0;
+
+	memset(stringword, 0, sizeof(stringword));
+	memcpy(stringword, word[0].Body, word[0].Len);
+
+	if(0 == strcmp(stringword,"srvgrpid"))
+	{
+		//获取srvgrpid的值
+		memset(stringword,0,sizeof(stringword));
+		if(word[2].Len <= AMS_MAX_STRING_WORD_LEN)
+		{
+			memcpy(stringword, word[2].Body, word[2].Len);
+		}
+		else
+		{
+			Display("AmsSrvQueueSenten Senten id[%s] len[%d]Err!\r\n",
+				stringword, word[2].Len);
+			return FAILURE;
+		}
+
+		srvGrpIdLen = strlen(stringword);
+		
+		if(srvGrpIdLen > 0 && srvGrpIdLen <= AMS_MAX_SERVICE_GROUP_NAME_LEN)
+		{
+			/* check QueueSys in cfg or not */
+			for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
+			{
+				if(AMS_QUEUE_CFG == AmsCfgQueueSys(i).flag 
+					&& (0 == strcmp(AmsCfgQueueSys(i).srvGrpId,stringword)))
+				{
+					Display("Queue Senten srvGrpId[%s] has been used!\r\n",
+										pCurrId);
+					
+					memset(&AmsCfgQueueSys(i), 0, sizeof(QUEUE_SYS_INFO));
+					
+					strcpy(AmsCfgQueueSys(i).srvGrpId,stringword,srvGrpIdLen);
+					AmsCfgQueueSys(i).srvGrpId[srvGrpIdLen] = '\0';
+					AmsCfgQueueSys(i).srvGrpIdLen = srvGrpIdLen;
+					AmsCfgQueueSys(i).flag = AMS_QUEUE_CFG;
+						
+					idPos = i;
+					break;
+				}
+			}
+
+			if(-1 == idPos)
+			{
+				/* record queue srvGrpId */
+				for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
+				{
+					if(AMS_QUEUE_NOT_CFG == AmsCfgQueueSys(i).flag)
+					{
+						memset(&AmsCfgQueueSys(i), 0, sizeof(QUEUE_SYS_INFO));
+					
+						strcpy(AmsCfgQueueSys(i).srvGrpId,stringword,srvGrpIdLen);
+						AmsCfgQueueSys(i).srvGrpId[srvGrpIdLen] = '\0';
+						AmsCfgQueueSys(i).srvGrpIdLen = srvGrpIdLen;
+						AmsCfgQueueSys(i).flag = AMS_QUEUE_CFG;
+						break;
+					}
+				}
+
+				if(i >= AMS_MAX_SERVICE_GROUP_NUM)
+				{
+					Display("All Queue has been Configed[%d]!\r\n", srvGrpId);
+					memset(pCurrId,0,MAXWORDNUMALINE);
+					return FAILURE;
+				}
+			}
+		}
+		strcpy(pCurrId,stringword,srvGrpIdLen);
+		pCurrId[srvGrpIdLen] = '\0';
+
+		Display("Queue[%s] Configed!\r\n", pCurrId);
+		return SUCCESS;
+	}
+
+	return SUCCESS;
+}
+
 
 
 

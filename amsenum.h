@@ -20,6 +20,24 @@ enum amsServiceFlag
 	AMS_SERVICE_INSTALL                      = 1,	
 };
 
+enum amsTellerServiceFlag
+{
+	AMS_TELLER_UNINSTALL                     = 0,
+	AMS_TELLER_INSTALL                       = 1,
+};
+
+enum amsVtmFlag
+{
+	AMS_VTM_UNINSTALL                        = 0,
+	AMS_VTM_INSTALL                          = 1,
+};
+
+enum amsQueueFlag
+{
+	AMS_QUEUE_NOT_CFG                        = 0,
+	AMS_QUEUE_CFG                            = 1,
+};
+
 
 enum amsCommonResult
 {

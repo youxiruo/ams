@@ -467,12 +467,14 @@ typedef struct amsDataSysCfg_t
 	QUEUE_SYS_INFO     queueSysInfo[AMS_MAX_SERVICE_GROUP_NUM];
 
 	//ORG_INFO           orgInfo[AMS_MAX_ORG_NUM];
-	
-	TELLER_INFO        tellerInfo[AMS_MAX_VTA_NUM];
-	TELLER_INFO_NODE	*tellerInfoHashTbl[AMS_TELLINFO_HASH_SIZE];
 
+	unsigned int		vtacfgnum;
+	TELLER_INFO        tellerInfo[AMS_MAX_VTA_NUM];
+	TELLER_INFO_NODE	*tellerInfoHashTbl[AMS_VTA_ID_HASH_SIZE];
+
+	unsigned int		vtmcfgnum;
 	VTM_INFO           vtmInfo[AMS_MAX_VTM_NUM];
-	VTM_INFO_NODE		*vtmInfoHashTbl[AMS_VTMINFO_HASH_SIZE];
+	VTM_INFO_NODE		*vtmInfoHashTbl[AMS_VTM_ID_HASH_SIZE];
 
 	VTA_ID_NODE        *VtaIdHashTbl[AMS_VTA_ID_HASH_SIZE];	
 
@@ -536,8 +538,12 @@ typedef struct
 	
 }AMS_PRI_AREA_t;
 
+#define AmsCfgData         (SystemData.AmsPriData.amsCfgData)
+
 #define AmsCfgTellerHashTbl	(SystemData.AmsPriData.amsCfgData.tellerInfoHashTbl)
 #define AmsCfgVtmHashTbl	(SystemData.AmsPriData.amsCfgData.vtmInfoHashTbl)
+#define AmsCfgTeller(i)		(SystemData.AmsPriData.amsCfgData.tellerInfo[i])
+#define AmsCfgVtm(i)		(SystemData.AmsPriData.amsCfgData.vtmInfo[i])
 #define AmsCfgService(i)	(SystemData.AmsPriData.amsCfgData.serviceInfo[i])
 #define AmsCfgSrvGroup(i)	(SystemData.AmsPriData.amsCfgData.srvGroupInfo[i])
 #define AmsCfgQueueSys(i)	(SystemData.AmsPriData.amsCfgData.queueSysInfo[i])
@@ -550,11 +556,11 @@ typedef struct
 
 extern int ConfigAmsSrv(char * cFileName);
 extern int SrvDivSen(char * s,WORD_t * word);
-extern int AmsSrvServiceSenten(WORD_t * word,int wordcount);
-extern int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount);
-extern int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned int *pCurrId);
-extern int AmsSrvVtmSenten(WORD_t *word,int wordcount,unsigned int *pCurrId);
-extern int AmsSrvQueueSenten(WORD_t *word,int wordcount,unsigned int *pCurrId);
+extern int AmsSrvServiceSenten(WORD_t * word,int wordcount,unsigned char pCurrId[]);
+extern int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char pCurrId[]);
+extern int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[]);
+extern int AmsSrvVtmSenten(WORD_t *word,int wordcount,unsigned char pCurrId[]);
+extern int AmsSrvQueueSenten(WORD_t *word,int wordcount,unsigned char pCurrId[]);
 extern int AmsCfgDataInit();
 
 #endif
