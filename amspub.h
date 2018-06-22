@@ -75,8 +75,7 @@ typedef struct tellerRegisterInfoNode_t
 	NODE	node;
 	struct tellLoginInfoNode_t *hashNext;
 
-	TELLER_REGISTER_INFO	tellerRegisterInfo;
-
+	TELLER_REGISTER_INFO tellerRegInfo;
 }TELLER_REGISTER_INFO_NODE;
 
 //struct tm {
@@ -491,8 +490,9 @@ typedef struct amsDataSysCfg_t
 /* struct of ams data register */
 typedef struct amsDataRegister_t
 {
-	
+	unsigned int 	tellerregnum;
     TELLER_REGISTER_INFO_NODE	*tellerRegisterInfoHashTbl[AMS_TELLINFO_HASH_SIZE];
+	TELLER_REGISTER_INFO 		tellerRegisterInfo[AMS_MAX_VTA_NUM];
 
 
 }AMS_DATA_REGISTER;
@@ -512,6 +512,73 @@ typedef struct amsServiecProc_t
 	LIST 		     vtmList;
 	
 }AMS_SERVICE_MANAGE;
+
+
+
+/* struct of teller stat */
+typedef struct amsTellerStat_t
+{
+	unsigned char tellerIdLen;                      //柜员工号
+	unsigned char tellerId[AMS_MAX_TELLER_ID_LEN];
+	
+	unsigned long  loginNum;
+	unsigned long  logoutNum;
+	unsigned long  handshakeNum;
+	
+	unsigned long  setIdleNum;
+	unsigned long  setBusyNum;	
+	unsigned long  setRestNum;	
+	unsigned long  setCancelRestlNum;	
+	unsigned long  setPreparaNum;	
+	unsigned long  setPreparaCompletelyNum;
+	
+	unsigned long  connectTotalNum;	
+	unsigned long  transferCallNum;	
+	
+	unsigned long  volumeCtrlNum;	
+	unsigned long  audioRecordNum;	
+	unsigned long  screenRecordNum;	
+	unsigned long  remoteCoopNum;	
+	unsigned long  snapNum;	
+
+	//the stat below are updated after teller logined
+	TELLER_WORK_INFO  vtaWorkInfo;                        //柜员工作信息             
+	TELLER_STATE_INFO  vtaStateInfo;                      //柜员状态信息
+	
+	unsigned long  totalScore;                            //柜员客户评分总得分
+	unsigned long  averageScore;                          //柜员客户评分均分
+	
+	unsigned long  unknownStat;	
+	
+}AMS_TELLER_STAT;
+
+
+/* struct of stat */
+typedef struct amsStat_t
+{
+	//MsgStat
+	//AMS_MSG_STAT msgStat;
+
+	//TimerStat
+	//AMS_TIMER_STAT timerStat;
+
+	//QueueSystemStat
+	//AMS_QUEUE_SYSTEM_STAT queueSystemStat;
+
+	//ServiceStat
+	//AMS_SERVICE_STAT serviceStat; 
+
+	//TellerStat
+	AMS_TELLER_STAT tellerStat[AMS_MAX_VTA_NUM];
+
+	//VtmStat
+	//AMS_VTM_STAT vtmStat[AMS_MAX_VTM_NUM];
+
+	//ResultStat
+	//AMS_RESULT_STAT resultStat;
+
+}AMS_STAT;
+
 
 
 typedef struct
@@ -552,7 +619,9 @@ typedef struct
 #define AmsVtmIdHashTbl    	(SystemData.AmsPriData.amsCfgData.VtmIdHashTbl)
 
 #define AmsRegTellerHashTbl	(SystemData.AmsPriData.amsRegData.tellerRegisterInfoHashTbl)
-#define AmsSrvData			(SystemData.AmsPriData.amsServiceManageData)
+#define AmsRegTeller(i)    (SystemData.AmsPriData.amsRegData.tellerRegisterInfo[i])
+
+#define AmsSrvData(i)			(SystemData.AmsPriData.amsServiceManageData[i])
 
 extern int ConfigAmsSrv(char * cFileName);
 extern int SrvDivSen(char * s,WORD_t * word);
@@ -562,6 +631,9 @@ extern int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[]
 extern int AmsSrvVtmSenten(WORD_t *word,int wordcount,unsigned char pCurrId[]);
 extern int AmsSrvQueueSenten(WORD_t *word,int wordcount,unsigned char pCurrId[]);
 extern int AmsCfgDataInit();
+
+
+extern int ProcessAmsMessage(int iThreadId, MESSAGE_t *pMsg);
 
 #endif
 

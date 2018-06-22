@@ -606,7 +606,7 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 		if(tellerIdLen > 0 && tellerIdLen <= AMS_MAX_TELLER_ID_LEN)
 		{
 			/* check teller in cfg or not */
-			pTellerInfoNode = AmsSearchTellerInfoHash(stringword);
+			pTellerInfoNode = AmsSearchTellerInfoHash(stringword,tellerIdLen);
 			if( NULL != pTellerInfoNode)
 			{
 				Display("Teller Senten id[%s] has been used!\r\n",id);
