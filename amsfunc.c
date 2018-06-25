@@ -219,6 +219,230 @@ VTA_NODE *AmsSearchVtaNode(unsigned int srvGrpId, unsigned char tellerId[],unsig
 	
 }
 
+//no offline
+int AmsUpdateVtaState(int iThreadId, LP_AMS_DATA_t *lpAmsData, VTA_NODE *pVtaNode, int stateOperate, int stateReason)
+{
+	int                 iret = AMS_OK;
+	int                 newState = AMS_VTA_STATE_RSVD;
+	time_t              currentTime;
+
+	if(NULL == lpAmsData || NULL == pVtaNode)
+	{
+		iret = AMS_ERROR;
+		return iret;
+	}
+
+    switch(pVtaNode->state)
+	{
+	case AMS_VTA_STATE_IDLE:
+		if(stateOperate == VTA_STATE_OPERATE_BUSY)
+		{
+			newState = AMS_VTA_STATE_BUSY;
+		}
+		else if(stateOperate == VTA_STATE_OPERATE_REST)
+		{
+			newState = AMS_VTA_STATE_REST;
+		}	
+		else if(stateOperate == VTA_STATE_OPERATE_PREPARE)
+		{
+			newState = AMS_VTA_STATE_PREPARE;
+		}
+//		else if(stateOperate == VTA_STATE_OPERATE_LEAVE)
+//		{
+//			newState = AMS_VTA_STATE_LEAVE;
+//		}
+		else if(stateOperate == VTA_STATE_OPERATE_IDLE)
+		{
+//			return iret;
+			newState = AMS_VTA_STATE_IDLE;
+		}
+		else
+		{
+			dbgprint("AMS Recv Err Operate[%d] in Idle State", stateOperate);
+			iret = AMS_ERROR;
+		}	
+		break;	
+	case AMS_VTA_STATE_BUSY:
+		if(stateOperate == VTA_STATE_OPERATE_IDLE)
+		{
+			newState = AMS_VTA_STATE_IDLE;
+		}
+		else if(stateOperate == VTA_STATE_OPERATE_REST)
+		{
+			newState = AMS_VTA_STATE_REST;
+		}		
+		else if(stateOperate == VTA_STATE_OPERATE_PREPARE)
+		{
+			newState = AMS_VTA_STATE_PREPARE;
+		}
+//		else if(stateOperate == VTA_STATE_OPERATE_LEAVE)
+//		{
+//			newState = AMS_VTA_STATE_LEAVE;
+//		}
+		else if(stateOperate == VTA_STATE_OPERATE_BUSY)
+		{
+//			return iret;
+			newState = AMS_VTA_STATE_BUSY;
+		}
+		else
+		{
+			dbgprint("AMS Recv Err Operate[%d] in Busy State", stateOperate);
+			iret = AMS_ERROR;
+		}	
+		break;
+	case AMS_VTA_STATE_REST:
+		if(stateOperate == VTA_STATE_OPERATE_IDLE)
+		{
+			newState = AMS_VTA_STATE_IDLE;
+		}
+		else if(stateOperate == VTA_STATE_OPERATE_PREPARE)
+		{
+			newState = AMS_VTA_STATE_PREPARE;
+		}
+//		else if(stateOperate == VTA_STATE_OPERATE_LEAVE)
+//		{
+//			newState = AMS_VTA_STATE_LEAVE;
+//		}		
+		else if(stateOperate == VTA_STATE_OPERATE_REST)
+		{
+//			return iret;
+			newState = AMS_VTA_STATE_REST;
+		}
+		else
+		{
+			dbgprint("AMS Recv Err Operate[%d] in Rest State", stateOperate);
+			iret = AMS_ERROR;
+		}		
+		break;		
+	case AMS_VTA_STATE_PREPARE:
+		if(stateOperate == VTA_STATE_OPERATE_REST)
+		{
+			newState = AMS_VTA_STATE_REST;
+		}	
+		else if(stateOperate == AMS_VTA_STATE_PREPARE)
+		{
+//			return iret;
+			newState = AMS_VTA_STATE_PREPARE;
+		}
+		else
+		{
+			dbgprint("AMS Recv Err Operate[%d] in Prepara State", stateOperate);
+			iret = AMS_ERROR;
+		}
+		break;	
+	case AMS_VTA_STATE_OFFLINE:
+		if(stateOperate == VTA_STATE_OPERATE_IDLE)
+		{
+			newState = AMS_VTA_STATE_IDLE;
+		}
+		else if(stateOperate == AMS_VTA_STATE_OFFLINE)
+		{
+//			return iret;
+			newState = AMS_VTA_STATE_OFFLINE;
+		}		
+		else
+		{
+			dbgprint("AMS Recv Err Operate[%d] in Offline State", stateOperate);
+			iret = AMS_ERROR;
+		}
+		break;			
+	default:
+		dbgprint("AMS Err State[%d]",pVtaNode->state);
+		iret = AMS_ERROR;
+		break;
+	}
+	
+	if(AMS_OK != iret)
+	{
+		return iret;
+	}
+	
+    //calc vta workInfo
+	time(&currentTime);	   
+	AmsUpdateSingleVtaWorkInfo(pVtaNode, currentTime);
+	
+	//set Vta State and State Start Time
+	AmsSetVtaState(iThreadId, lpAmsData, pVtaNode, newState, stateReason);
+
+	return iret;
+}
+
+
+int AmsKillVtaAllCallTimer(LP_AMS_DATA_t *lpAmsData, int pid)
+{
+	if(NULL == lpAmsData)
+	{
+		return AMS_ERROR;
+	}
+
+	if((0 == pid) || (pid >= LOGIC_PROCESS_SIZE))
+	{
+		return AMS_ERROR;
+	}
+	
+	if(lpAmsData->callTimerId >= 0)
+	{
+	    AmsKillTimer(pid, &lpAmsData->callTimerId);
+		AmsTimerStatProc(T_AMS_CALL_EVENT_IND_TIMER, AMS_KILL_TIMER);
+	} 
+
+	if(lpAmsData->rcasRemoteCoopTimerId >= 0)
+	{
+	    AmsKillTimer(pid, &lpAmsData->rcasRemoteCoopTimerId);
+		AmsTimerStatProc(T_AMS_RCAS_REMOTE_COOP_TIMER, AMS_KILL_TIMER);
+	} 
+
+	if(lpAmsData->vtmRemoteCoopTimerId >= 0)
+	{
+	    AmsKillTimer(pid, &lpAmsData->vtmRemoteCoopTimerId);
+		AmsTimerStatProc(T_AMS_VTM_REMOTE_COOP_TIMER, AMS_KILL_TIMER);
+	} 
+	
+	if(lpAmsData->snapTimerId >= 0)
+	{
+	    AmsKillTimer(pid, &lpAmsData->snapTimerId);
+		AmsTimerStatProc(T_AMS_SNAP_TIMER, AMS_KILL_TIMER);
+	}
+
+	if(lpAmsData->sendMsgToVtaTimerId >= 0)
+	{
+	    AmsKillTimer(pid, &lpAmsData->sendMsgToVtaTimerId);
+		AmsTimerStatProc(T_AMS_VTA_RECV_MSG_TIMER, AMS_KILL_TIMER);
+	} 
+
+	if(lpAmsData->sendMsgToVtmTimerId >= 0)
+	{
+	    AmsKillTimer(pid, &lpAmsData->sendMsgToVtmTimerId);
+		AmsTimerStatProc(T_AMS_VTM_RECV_MSG_TIMER, AMS_KILL_TIMER);
+	}
+
+	if(lpAmsData->sendFileToVtaTimerId >= 0)
+	{
+	    AmsKillTimer(pid, &lpAmsData->sendFileToVtaTimerId);
+		AmsTimerStatProc(T_AMS_VTA_RECV_FILE_TIMER, AMS_KILL_TIMER);
+	} 
+
+	if(lpAmsData->sendFileToVtmTimerId >= 0)
+	{
+	    AmsKillTimer(pid, &lpAmsData->sendFileToVtmTimerId);
+		AmsTimerStatProc(T_AMS_VTM_RECV_FILE_TIMER, AMS_KILL_TIMER);
+	} 
+
+	if(lpAmsData->multiSessTimerId >= 0)
+	{
+	    AmsKillTimer(pid, &lpAmsData->multiSessTimerId);
+		AmsTimerStatProc(T_AMS_MULTI_SESS_TIMER, AMS_KILL_TIMER);
+	}
+
+	if(lpAmsData->monitorTimerId >= 0)
+	{
+	    AmsKillTimer(pid, &lpAmsData->monitorTimerId);
+		AmsTimerStatProc(T_AMS_MONITOR_TIMER, AMS_KILL_TIMER);
+	}
+
+	return AMS_OK;	
+}
+
 
 
 static int			freeAmsTellerInfoListInitialled = 0;

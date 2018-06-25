@@ -28,6 +28,14 @@
 #define AMS_MAX_PWD_LEN					32
 
 #define AMS_MAX_CALLID_LEN				30
+#define	AMS_MAX_FILEPATH_LEN	                       128
+#define	AMS_MAX_FILENAME_LEN	                       128
+
+
+#define T_AMS_REST_TIMER_LENGTH_MAX                    (10000)       //AMS休息最大定时10000s
+#define AMS_VTA_ID_HASH_SIZE                           (AMS_MAX_VTA_NUM)
+#define AMS_VTM_ID_HASH_SIZE                           (AMS_MAX_VTM_NUM)
+
 
 
 typedef struct tellerLoginInfo_t
@@ -153,6 +161,7 @@ typedef struct tellerInfo_t
 
 	DWORD           srvGrpIdLen;                      //业务组编号
 	unsigned char   srvGrpId[AMS_MAX_SERVICE_GROUP_NAME_LEN +1];
+	DWORD			srvGrpIdpos;
 
 	DWORD           tellerSrvAuthRsvd;             //Service Authority 业务处理权限预留
 	DWORD           tellerSrvAuth;                 //Service Authority 业务处理权限
@@ -552,6 +561,31 @@ typedef struct amsTellerStat_t
 	
 }AMS_TELLER_STAT;
 
+/* struct of timer stat */
+typedef struct amsTimerStat_t
+{
+	unsigned long  WaitVtaOperateIndRsp[3]; 
+	unsigned long  WaitCallEventIndRsp[3];
+	unsigned long  WaitCustomerGetTeller[3];
+	unsigned long  WaitVolumeCtrlRsp[3];	
+	unsigned long  WaitRcasRemoteCoopRsp[3];	
+	unsigned long  WaitVtmRemoteCoopRsp[3];		
+	unsigned long  WaitSnapRsp[3];
+	unsigned long  WaitRestRsp[3];
+	unsigned long  WaitVtaRecvMsgRsp[3];
+	unsigned long  WaitVtmRecvMsgRsp[3];
+	unsigned long  WaitVtaRecvFileRsp[3];
+	unsigned long  WaitVtmRecvFileRsp[3];	
+	unsigned long  WaitMultiSessRsp[3];
+	unsigned long  WaitMonitorRsp[3];	
+	unsigned long  WaitVtaParaCfgRsp[3];	
+	unsigned long  WaitVtmParaCfgRsp[3];		
+	unsigned long  WaitParaCfgRsp[3];	
+			
+	unsigned long  UnknownTimer[3];
+
+}AMS_TIMER_STAT;
+
 
 /* struct of stat */
 typedef struct amsStat_t
@@ -560,7 +594,7 @@ typedef struct amsStat_t
 	//AMS_MSG_STAT msgStat;
 
 	//TimerStat
-	//AMS_TIMER_STAT timerStat;
+	AMS_TIMER_STAT timerStat;
 
 	//QueueSystemStat
 	//AMS_QUEUE_SYSTEM_STAT queueSystemStat;
@@ -599,7 +633,7 @@ typedef struct
 	
 	//AMS_DEBUG  amsDebug;
 	
-	//AMS_STAT   amsStat;
+	AMS_STAT   amsStat;
 	
     //AMS_DBOPR   amsDbopr;   //zhuyn added 
 	

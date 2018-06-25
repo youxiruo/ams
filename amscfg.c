@@ -671,7 +671,6 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 		}
 
 	}
-
 	/*find teller in cfg or not */
 	pTellerInfoNode = AmsSearchTellerInfoHash(pCurrId);
 	if(NULL == pTellerInfoNode)
@@ -684,6 +683,51 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 	i = pTellerInfoNode->tellerInfopos;
 
 	//其他teller涉及到的参数配置
+
+	
+	else if(0 == strcmp(stringword,"srvgrpid"))
+	{
+		//获取id的值
+		memset(stringword,0,sizeof(stringword));
+		if(word[2].Len <= AMS_MAX_STRING_WORD_LEN)
+		{
+			memcpy(stringword, word[2].Body, word[2].Len);
+		}
+		else
+		{
+			Display("AmsSrvTeller Senten id[%s] len[%d]Err!\r\n",
+				stringword, word[2].Len);
+			return FAILURE;
+		}
+		srvGrpIdLen = strlen(stringword);		
+		if(srvGrpIdLen > AMS_MAX_SERVICE_GROUP_NAME_LEN)
+		{
+			Display("AmsSrvTeller Senten srvGrpId[%s] len[%d]Err!\r\n",
+										stringword, srvGrpIdLen);
+						return FAILURE;
+		}
+		else
+		{
+			for(j=0:j<AMS_MAX_SERVICE_GROUP_NUM;j++)
+			{
+				if(AmsCfgSrvGroup(j).flag == AMS_SERVICE_GROUP_UNINSTALL)
+				{
+					continue;
+				}
+				if( AmsCfgSrvGroup(j).srvGrpIdLen == srvGrpIdLen
+					&& 0 == strcmp(AmsCfgSrvGroup(j).srvGrpId,stringword,srvGrpIdLen))
+				{
+					AmsCfgTeller(i).srvGrpIdpos = j;
+					strcpy(AmsCfgTeller(i).srvGrpId,stringword,srvGrpIdLen);
+					AmsCfgTeller(i).srvGrpId[srvGrpIdLen] = '\0';
+					AmsCfgTeller(i).srvGrpIdLen = srvGrpIdLen;
+					break;
+				}
+			}
+		}
+	}
+
+
 
 	return SUCCESS;
 }

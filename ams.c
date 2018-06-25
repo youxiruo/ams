@@ -156,13 +156,13 @@ int AmsProcCmsMsg(int iThreadId, MESSAGE_t *pMsg)
 			
         /*case A_TERM_NETINFO_QUERY_REQ:	
 			iret = AmsQueryTermNetInfoReqProc(iThreadId,pMsg); 
-			break;	
+			break;	*/
 			
         case A_AMS_CALL_EVENT_NOTICE:	
 			iret = CallEventNoticeProc(iThreadId,pMsg); 
 			break;	
 
-        case A_AMS_CALL_EVENT_IND_CNF:	
+        /*case A_AMS_CALL_EVENT_IND_CNF:	
 			iret = CallEventIndCnfProc(iThreadId,pMsg); 
 			break;	*/
 		

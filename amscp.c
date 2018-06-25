@@ -463,6 +463,371 @@ int VtaAuthinfoReqProc(int iThreadId, MESSAGE_t *pMsg)
 	
 }
 
+
+int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
+{
+	int 				iret = AMS_CMS_PRCOESS_SUCCESS;
+	LP_AMS_DATA_t		*lpAmsData = NULL;			//进程数据区指针
+	//LP_QUEUE_DATA_t 	*lpQueueData = NULL;		//排队进程数据区指针	
+	LP_AMS_DATA_t		*lpOriginAmsData = NULL;	//进程数据区指针	
+	VTA_NODE			*pVtaNode = NULL;	
+	VTM_NODE			*pVtmNode = NULL;	
+	VTA_NODE			*pOriginVtaNode = NULL; 		
+	int 				pid = 0;
+	int 				originPid = 0;		
+	unsigned int		amsPid = 0;
+	unsigned char		callIdLen = 0;	
+	unsigned int		callEventNotice = 0;
+	unsigned int		tellerIdLen = 0;
+	unsigned char		tellerId[AMS_MAX_TELLER_ID_LEN + 1] = { 0 };		
+	unsigned int		originId = 0;
+	unsigned char		vtmIdLen = 0;		
+	unsigned char		vtmId[AMS_MAX_VTM_ID_LEN + 1] = { 0 };	
+	unsigned int		originTellerId = 0; 
+	unsigned char		originVtaNo[AMS_MAX_TELLER_NO_LEN + 1] = { 0 }; 		
+	unsigned int		newState = 0;
+	unsigned int		i = 0;
+	unsigned char		*p;
+	DWORD				termType;
+		
+#ifdef AMS_TEST_LT
+		time_t				currentTime;
+#endif
+
+	//检查接收进程号
+	pid = pMsg->s_ReceiverPid.iProcessId;
+	if(0 == pid)
+	{
+		dbgprint("CallEventNoticeProc[%d] Err", pMsg->s_SenderPid.iProcessId);
+		iret = AMS_CMS_EVENT_NOTICE_PARA_ERR;
+		AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);			
+		return AMS_ERROR;
+	}
+
+	//流水线检查
+	p = pMsg->cMessageBody;
+	callIdLen = *p++;
+	if(callIdLen > AMS_MAX_CALLID_LEN)
+	{
+		dbgprint("CallEventNoticeProc[%d] CallIdLen[%d]Err", pid, callIdLen);
+		iret = AMS_CMS_EVENT_NOTICE_CALL_ID_ERR;
+		AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  			
+		return AMS_ERROR;		
+	}
+	p+=callIdLen;
+
+	//获取事件通知码
+	BEGETLONG(callEventNotice, p);
+	p += 4;
+
+	//获取AMS进程号
+	BEGETLONG(amsPid,p);
+	p+=4;
+
+	//获取坐席号
+	tellerIdLen = *p++;
+	if(tellerIdLen > AMS_MAX_TELLER_ID_LEN)
+	{
+		dbgprint("CallEventNoticeProc[%d] TellerIdLen[%d]Err", pid, tellerIdLen);
+		iret = AMS_CMS_EVENT_NOTICE_CALL_ID_ERR;
+		AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  			
+		return AMS_ERROR;	
+	}
+	memcpy(tellerId,p,tellerIdLen);
+	p+=tellerIdLen;
+
+	//获取TERMTYPE
+	BEGETLONG(termType,p);
+	p+=4;
+
+	vtmIdLen=*p++;
+	if(vtmIdLen > AMS_MAX_VTM_ID_LEN)
+	{
+		dbgprint("CallEventNoticeProc[%d] TellerIdLen[%d]Err", pid, tellerIdLen);
+		iret = AMS_CMS_EVENT_NOTICE_CALL_ID_ERR;
+		AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);			
+		return AMS_ERROR;	
+	}
+	memcpy(vtmId,p,vtmIdLen);
+	p+=vtmIdLen;
+
+	if(		CMS_CALL_EVENT_NOTICE_VTA_RING == callEventNotice
+		||	CMS_CALL_EVENT_NOTICE_VTA_ANSWER == callEventNotice
+		||  CMS_CALL_EVENT_NOTICE_VTA_RELEASE == callEventNotice)
+	{
+		//查看tellerid 是否登陆
+		for(i = 0;i < AMS_MAX_SERVICE_GROUP_NUM;i++)
+		{
+			pOriginVtaNode = AmsSearchVtaNode(i,tellerId,tellerIdLen);
+			if(NULL != pOriginVtaNode)
+			{
+				break;
+			}
+		}
+		if(NULL == pOriginVtaNode)
+		{
+			dbgprint("CallEventNoticeProc[%d] Event[%d] OriginTeller[%s]Id[%u] not Login.",
+				pid, callEventNotice, originVtaNo, originTellerId);
+			iret = AMS_CMS_EVENT_NOTICE_ORIGIN_TELLER_ID_ERR;
+			AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret); 
+			return AMS_ERROR;		
+		}
+
+		//检查进程号
+		originPid = pOriginVtaNode->amsPid & 0xffff;
+		if((0 == originPid) || (originPid >= LOGIC_PROCESS_SIZE))
+		{
+			dbgprint("CallEventNoticeProc[%d] Event[%d] OriginTeller[%s][%u]targetPid[0x%x][%d]Err", 
+				pid, callEventNotice, originVtaNo, originTellerId, 
+				pOriginVtaNode->amsPid, originPid);
+			iret = AMS_CMS_EVENT_NOTICE_ORIGIN_TELLER_AMS_PID_ERR;
+			AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret); 
+			return AMS_ERROR;
+		}
+
+		lpOriginAmsData=(LP_AMS_DATA_t *)ProcessData[originPid];
+				
+		//进程号匹配性检查
+		if(lpOriginAmsData->myPid.iProcessId != originPid)
+		{
+			dbgprint("CallEventNoticeProc[%d] Event[%d] OriginTeller[%s][%u] PID[%d][%d] Not Equal", 
+				pid, callEventNotice, originVtaNo, originTellerId,
+				lpOriginAmsData->myPid.iProcessId, originPid);
+			iret = AMS_CMS_EVENT_NOTICE_ORIGIN_TELLER_AMS_PID_ERR;
+			AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret); 
+			return AMS_ERROR;
+		}
+
+		//坐席业务组编号检查
+		if(lpOriginAmsData->srvGrpIdPos > AMS_MAX_SERVICE_GROUP_NUM) 
+		{
+			dbgprint("CallEventNoticeProc[%d] Event[%d] OriginTeller[%s][%u] SrvGrpId[%u]Err", 
+ 				pid, callEventNotice, originVtaNo, originTellerId, 
+ 				lpOriginAmsData->srvGrpId);
+			iret = AMS_CMS_EVENT_NOTICE_ORIGIN_TELLER_SERVICE_GROUP_ID_ERR;
+			AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret); 
+			return AMS_ERROR;		
+		}	
+
+		//坐席业务状态检查
+		if(AMS_SERVICE_ACTIVE != AmsSrvData(lpOriginAmsData->srvGrpIdPos).serviceState)
+		{
+			dbgprint("CallEventNoticeProc[%d] Event[%d] OriginTeller[%s][%d] ServiceState[%d]Err", 
+				pid, callEventNotice, originVtaNo, originTellerId, 
+				AmsSrvData(lpOriginAmsData->srvGrpId).serviceState);
+			iret = AMS_CMS_EVENT_NOTICE_ORIGIN_TELLER_SERVICE_STATE_ERR;
+			AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret); 
+			return AMS_ERROR;			
+		}
+
+		//坐席状态检查
+		if(pOriginVtaNode->state >= AMS_VTA_STATE_OFFLINE)
+		{
+			dbgprint("CallEventNoticeProc[%d] Event[%d] OriginTeller[%s][%d] State[%d]Err", 
+				pid, callEventNotice, originVtaNo, originTellerId, 
+				pOriginVtaNode->state);
+			iret = AMS_CMS_EVENT_NOTICE_ORIGIN_TELLER_STATE_ERR;
+			AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);
+			return AMS_ERROR;		
+		}
+	}
+	if(		CMS_CALL_EVENT_NOTICE_VTM_RING == callEventNotice
+		||	CMS_CALL_EVENT_NOTICE_VTM_ANSWER == callEventNotice
+		||  CMS_CALL_EVENT_NOTICE_VTM_RELEASE == callEventNotice)
+	{
+			//ams->crm 坐席事件指示	
+	}
+
+	lpAmsData = (LP_AMS_DATA_t *)ProcessData[pid];
+
+	//流水号检查
+	p = pMsg->cMessageBody;
+	if(callIdLen != lpAmsData->callIdLen)
+	{
+		dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s][%u] Vtm[%s][%u]CallIdLen[%d][%d]Err", 
+			pid, callEventNotice, lpAmsData->tellerNo, lpAmsData->tellerId, 
+			lpAmsData->vtmNo, lpAmsData->vtmId, 
+			callIdLen, lpAmsData->callIdLen); 
+		iret = AMS_CMS_EVENT_NOTICE_CALL_ID_ERR;
+	    AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  			
+		return AMS_ERROR;		
+	}
+
+	p++;
+	if(0 != memcmp(lpAmsData->callId, p, callIdLen))
+	{
+		dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s][%u] Vtm[%s][%u]CallIdErr", 
+			pid, callEventNotice, lpAmsData->tellerNo, lpAmsData->tellerId, 
+			lpAmsData->vtmNo, lpAmsData->vtmId); 
+		iret = AMS_CMS_EVENT_NOTICE_CALL_ID_ERR;
+	    AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  			
+		return AMS_ERROR;		
+	}
+	p += callIdLen;
+
+	//事件通知码检查
+	if(    callEventNotice < CMS_CALL_EVENT_NOTICE_VTA_ANSWER 
+		|| callEventNotice >= CMS_CALL_EVENT_NOTICE_MAX)
+	{
+		dbgprint("CallEventNoticeProc[%d] Teller[%s][%u] Vtm[%s][%u] EventCode[%d]Err", 
+			pid, lpAmsData->tellerNo, lpAmsData->tellerId, 
+			lpAmsData->vtmNo, lpAmsData->vtmId, callEventNotice); 
+		iret = AMS_CMS_EVENT_NOTICE_CODE_ERR;
+	    AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  			
+		return AMS_ERROR;			
+	}
+
+	//坐席号检查
+	if(		CMS_CALL_EVENT_NOTICE_VTA_RING == callEventNotice
+		||	CMS_CALL_EVENT_NOTICE_VTA_ANSWER == callEventNotice
+		||	CMS_CALL_EVENT_NOTICE_VTA_RELEASE == callEventNotice)
+	{
+		if(0 != memcmp(lpAmsData->tellerId,tellerId,tellerIdLen))
+		{
+			dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s]Id[%u][%u]Err", 
+				pid, callEventNotice, 
+				lpAmsData->tellerNo, lpAmsData->tellerId, tellerId);
+			iret = AMS_CMS_EVENT_NOTICE_TELLER_ID_ERR;
+	    	AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  				
+			return AMS_ERROR;	
+		}
+	}
+
+	//用户信息检查
+	if(		CMS_CALL_EVENT_NOTICE_VTM_RING == callEventNotice
+		||	CMS_CALL_EVENT_NOTICE_VTM_ANSWER == callEventNotice
+		||	CMS_CALL_EVENT_NOTICE_VTM_RELEASE == callEventNotice)
+	{
+		if(0 != memcmp(lpAmsData->vtmId,vtmId,vtmIdLen))
+		{
+			dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s][%u] Vtm[%s]Id[%u][%u]Err", 
+				pid, callEventNotice, 
+				lpAmsData->tellerNo, lpAmsData->tellerId, 
+				lpAmsData->vtmNo, lpAmsData->vtmId, vtmId);
+			iret = AMS_CMS_EVENT_NOTICE_VTM_ID_ERR;
+		    AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  	
+			return AMS_ERROR;			
+		}
+	}
+
+	//业务组编号检查
+	if(lpAmsData->srvGrpIdPos > AMS_MAX_SERVICE_GROUP_NUM)
+	{
+		dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s][%u] Vtm[%s][%u] SrvGrpId[%u]Err", 
+			pid, callEventNotice, 
+			lpAmsData->tellerNo, lpAmsData->tellerId, 
+			lpAmsData->vtmNo, lpAmsData->vtmId, lpAmsData->srvGrpId);
+		iret = AMS_CMS_EVENT_NOTICE_SERVICE_GROUP_ID_ERR;
+		AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  	
+		return AMS_ERROR;		
+	}
+
+    //业务状态检查
+	if(AMS_SERVICE_ACTIVE != AmsSrvData(lpAmsData->srvGrpIdPos).serviceState)
+	{
+		dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s][%u] Vtm[%s][%u] ServiceState[%d]Err", 
+			pid, callEventNotice, 
+			lpAmsData->tellerNo, lpAmsData->tellerId, 
+			lpAmsData->vtmNo, lpAmsData->vtmId, 
+			AmsSrvData(lpAmsData->srvGrpId).serviceState);
+		iret = AMS_CMS_EVENT_NOTICE_SERVICE_STATE_ERR;
+		AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  	
+		return AMS_ERROR;		
+	}
+
+	//update vta state
+	if( CMS_CALL_EVENT_NOTICE_VTA_RING == callEventNotice
+		|| CMS_CALL_EVENT_NOTICE_VTA_ANSWER == callEventNotice
+		|| CMS_CALL_EVENT_NOTICE_VTA_RELEASE == callEventNotice)
+	{
+		/*find vta node*/
+		pVtaNode = AmsSearchVtaNode(lpAmsData->srvGrpIdPos,lpAmsData->tellerId,lpAmsData->tellerIdLen);
+		if(NULL == pVtaNode)
+		{
+			dbgprint("CallEventNoticeProc[%d] Event[%d] Vtm[%s][%u] Teller[%s]Id[%u]Err", 
+				pid, callEventNotice, 
+				lpAmsData->vtmNo, lpAmsData->vtmId,
+				lpAmsData->tellerNo, lpAmsData->tellerId);	
+			iret = AMS_CMS_EVENT_NOTICE_TELLER_ID_ERR;
+			AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  	
+			return AMS_ERROR;		
+		}
+
+		//坐席状态查询
+		if( pVtaNode->state >= AMS_VTA_STATE_OFFLINE
+			&& CMS_CALL_EVENT_NOTICE_VTA_RELEASE != callEventNotice)
+		{
+			dbgprint("CallEventNoticeProc[%d] Event[%d] Vtm[%s][%u]Teller[%s][%u]State[%d]Err", 
+				pid, callEventNotice, 
+				lpAmsData->vtmNo, lpAmsData->vtmId, 
+				lpAmsData->tellerNo, lpAmsData->tellerId, pVtaNode->state);		
+			iret = AMS_CMS_EVENT_NOTICE_VTA_STATE_ERR;
+	    	AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  				
+			return AMS_ERROR;				
+		}
+		if(CMS_CALL_EVENT_NOTICE_VTA_RING == callEventNotice)
+		{
+			newState = AMS_CALL_STATE_WAIT_ANSWER;
+		}
+		//update vta callstate,not check vta state and callstate
+		if(CMS_CALL_EVENT_NOTICE_VTA_ANSWER == callEventNotice)
+		{
+			newState = AMS_CALL_STATE_ANSWER;
+
+			//AmsTellerStatProc(lpAmsData->tellerId, lpAmsData->tellerPos, AMS_TELLER_CALL_CONNECT, iret);
+			pVtaNode->vtaWorkInfo.connectNum++;
+
+			//reset callTransferNum
+			pVtaNode->callTransferNum = 0;			
+		}
+		
+		if(CMS_CALL_EVENT_NOTICE_VTA_RELEASE == callEventNotice)
+		{
+			//reset vta call state
+			newState = AMS_CALL_STATE_NULL;
+
+			//杀掉定时器
+			//			AmsKillVtaAllTimer(lpAmsData, pid);
+
+			//仅杀掉呼叫相关定时器，包括消息、文件收发
+			AmsKillVtaAllCallTimer(lpAmsData, pid);
+			
+			//update time
+			memset(&pVtaNode->callStateStartLocalTime, 0, sizeof(TIME_INFO)); 
+			memset(&pVtaNode->callStateStartTime, 0, sizeof(time_t));	
+
+			//reset callTransferNum
+			//			pVtaNode->callTransferNum = 0;
+
+#ifdef AMS_TEST_LT
+			//calc vta workInfo
+			time(&currentTime);    
+			AmsUpdateSingleVtaWorkInfo(pVtaNode, currentTime);
+	
+			//set Vta State and State Start Time
+			AmsSetVtaState(iThreadId, lpAmsData, pVtaNode, AMS_VTA_STATE_IDLE, 0);
+#endif			
+			//AmsInsertDbServiceSDR(iThreadId, AMS_SDR_ITEM_BASE, lpAmsData, NULL, 0, 0, NULL);
+
+			//reset sessStat
+			//memset(&lpAmsData->sessStat, 0, sizeof(AMS_SESSION_STAT));	
+
+		}
+		AmsSetVtaCallState(lpAmsData, pVtaNode, newState);
+	}
+
+	//update vtm state and state start time
+	if( CMS_CALL_EVENT_NOTICE_VTM_RING == callEventNotice
+		|| CMS_CALL_EVENT_NOTICE_VTM_ANSWER == callEventNotice
+		|| CMS_CALL_EVENT_NOTICE_VTM_RELEASE == callEventNotice)
+	{
+		// ams->crm 
+		AmsSendTellerEventInd(lpAmsData,callEventNotice,vtmId,vtmIdLen,iret);
+	}
+
+	return AMS_OK;
+}
+
 int AmsSendCmsVtaRegRsp(TELLER_REGISTER_INFO_NODE *tellerRegisterInfo,MESSAGE_t *pMsg,int iret)
 {
 	MESSAGE_t           s_Msg;

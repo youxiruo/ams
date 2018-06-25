@@ -230,4 +230,48 @@ int AmsCfgDataInit()
 	return AMS_SUCCESS;
 }
 
+int AmsUpdateSingleVtaWorkInfo(VTA_NODE *pVtaNode, time_t currentTime)
+{
+	if(NULL == pVtaNode)
+	{
+		return AMS_ERROR;
+	}
+	
+	if(currentTime > pVtaNode->stateStartTime && currentTime > pVtaNode->workInfoUpdateTime)
+	{
+		if(AMS_VTA_STATE_BUSY == pVtaNode->state || AMS_VTA_STATE_PREPARE == pVtaNode->state)
+		{
+			if(pVtaNode->workInfoUpdateTime > pVtaNode->stateStartTime)
+			{
+				pVtaNode->vtaWorkInfo.workSeconds += (currentTime - pVtaNode->workInfoUpdateTime);
+			}
+			else
+			{
+				pVtaNode->vtaWorkInfo.workSeconds += (currentTime - pVtaNode->stateStartTime);
+			}
+			
+			pVtaNode->workInfoUpdateTime = currentTime;
+
+			return AMS_OK;
+		}
+	
+		if(AMS_VTA_STATE_IDLE == pVtaNode->state || AMS_VTA_STATE_REST == pVtaNode->state)
+		{
+			if(pVtaNode->workInfoUpdateTime > pVtaNode->stateStartTime)
+			{
+				pVtaNode->vtaWorkInfo.idleSeconds += (currentTime - pVtaNode->workInfoUpdateTime);
+			}
+			else
+			{
+				pVtaNode->vtaWorkInfo.idleSeconds += (currentTime - pVtaNode->stateStartTime);
+			}
+			
+			pVtaNode->workInfoUpdateTime = currentTime;
+
+			return AMS_OK;
+		}
+	}
+
+	return AMS_ERROR;
+}
 

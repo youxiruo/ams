@@ -9,6 +9,8 @@
 #define AMS_ERROR                       (-1)
 
 #define AmsTellerStat(i)                (SystemData.AmsPriData.amsStat.tellerStat[i])
+#define AmsTimerStat                    (SystemData.AmsPriData.amsStat.timerStat)
+
 
 
 //业务处理进程数与VTA数量一致，数量固定
@@ -40,6 +42,7 @@ typedef struct
 	
 	unsigned char srvGrpIdLen;
 	unsigned char srvGrpId[AMS_MAX_SERVICE_GROUP_NAME_LEN];
+	DWORD   srvGrpIdPos;
 
 	DWORD   tellerPos;
 	DWORD   vtmPos;
