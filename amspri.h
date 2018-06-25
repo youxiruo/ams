@@ -37,11 +37,11 @@ typedef struct
 
 	DWORD   amsPid;
 	//DWORD   tellerId;
-	DWORD   vtmId;
+	DWORD   vtmId[AMS_MAX_VTM_ID_LEN+1];
 	DWORD   assocTellerId;
 	
 	unsigned char srvGrpIdLen;
-	unsigned char srvGrpId[AMS_MAX_SERVICE_GROUP_NAME_LEN];
+	unsigned char srvGrpId[AMS_MAX_SERVICE_GROUP_NAME_LEN+1];
 	DWORD   srvGrpIdPos;
 
 	DWORD   tellerPos;

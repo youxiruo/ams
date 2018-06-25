@@ -1,5 +1,74 @@
 #include "amsfunc.h"
 
+
+void *ServiceProcTask(void *pThreadId)
+{
+	int	iThread         = (int)pThreadId;
+	cpu_set_t           mask;  
+	cpu_set_t           get; 
+	int                 cpuNum = 1;
+	int                 cpuId = 0;
+	int                 i = 0;
+
+	Display("AMS ServiceProcTask[%d] started\r\n", iThread);
+
+	//绑定CPU SET 
+	cpuNum = sysconf(_SC_NPROCESSORS_CONF);//统计cpu个数   
+	dbgprint("ams has %d processor(s)\n", cpuNum);  
+	if(cpuNum <= 0)
+	{
+		Display("AMS-ServiceProcTask[%d] cpu num[%d] error!\n", iThread, cpuNum);
+		return NULL;
+	}
+
+	// sched_setaffinity
+	if(cpuNum <= MAX_MSG_PROCESSORS)
+	{
+		cpuId = (iThread%cpuNum);
+	}
+	else
+	{
+		cpuId = iThread%(cpuNum - MAX_MSG_PROCESSORS);
+		cpuId += MAX_MSG_PROCESSORS;
+	}
+
+	CPU_ZERO(&mask);
+	CPU_SET(cpuId, &mask);
+	if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &mask) < 0) 
+	{
+		Display("AMS-ServiceProcTask[%d] set thread affinity cpu[%d] failed\n", iThread, cpuId); 
+	}
+	else
+	{
+		dbgprint("AMS-ServiceProcTask[%d] set thread affinity cpu[%d] success\n", iThread, cpuId); 
+	}
+
+	/*check setaffinity*/
+	CPU_ZERO(&get);  
+	if (pthread_getaffinity_np(pthread_self(), sizeof(get), &get) < 0) 
+	{  
+		Display("AMS-ServiceProcTask[%d] get thread affinity failed\n", iThread);
+	}  
+	for (i = 0; i < cpuNum; i++) 
+	{  
+		if (CPU_ISSET(i, &get)) 
+		{  
+			dbgprint("AMS-ServiceProcTask[%d] is running in cpu[%d]\n", iThread, i);
+		}  
+	}	
+	
+	while(1)
+	{
+        //do something ...
+        
+		AmsSendServiceProcMsg();
+		sleep(2);
+	}
+
+	return NULL;
+}
+
+
 int ProcessAmsMessage(int iThreadId,MESSAGE_t *pMsg)
 {
 	int	iret=0,type;
@@ -114,7 +183,7 @@ int AmsProcVtaMsg(int iThreadId, MESSAGE_t *pMsg)
 		case A_VTA_LOGIN_REQ:
 			iret = VtaLoginReqProc(iThreadId,pMsg); 
 			break;
-		case A_VTA_STATE_OPERATE_REQ
+		case A_VTA_STATE_OPERATE_REQ:
 			iret = VtaStateOperateReqProc(iThreadId,pMsg); 
 			break;
 		default:

@@ -107,14 +107,13 @@ int VtaRegReqProc(int iThreadId, MESSAGE_t *pMsg)
 	}
 	else //未注册，则记录注册信息
 	{
-		pRegTellerInfoNode=AmsGetRegTellerInfoNode(tellerId,tellerIdLen)
+		pRegTellerInfoNode=AmsGetRegTellerInfoNode(tellerId,tellerIdLen);
 		if(NULL == pRegTellerInfoNode)
 		{
-			dbgprint("VtaRegReqProc[%d][%d][%d] Teller[%s][%u] ResourceLimited", 
+			dbgprint("VtaRegReqProc[%d][%d][%d] Teller[%s] ResourceLimited", 
 				pMsg->s_SenderPid.cModuleId,
 			    pMsg->s_SenderPid.cFunctionId,
-			    pMsg->s_SenderPid.iProcessId,
-				tellerNo, tellerId);		
+			    pMsg->s_SenderPid.iProcessId,tellerId);		
 			
 			iret = AMS_CMS_VTA_REG_RESOURCE_LIMITED;
 			AmsSendCmsVtaRegRsp(NULL,pMsg,iret);		
@@ -154,24 +153,24 @@ int VtaGetReqProc(int iThreadId, MESSAGE_t *pMsg)
 	int					iret = AMS_CMS_PRCOESS_SUCCESS;
 	LP_AMS_DATA_t		*lpAmsData = NULL;          //进程数据区指针
 	LP_AMS_DATA_t		*lpOriginAmsData = NULL;    //进程数据区指针	
-	LP_QUEUE_DATA_t     *lpQueueData = NULL;        //排队进程数据区指针 
+//	LP_QUEUE_DATA_t     *lpQueueData = NULL;        //排队进程数据区指针 
 	VTA_NODE            *pVtaNode = NULL;	
 	VTA_NODE            *pOriginVtaNode = NULL;	
 	VTA_NODE            *pTargetVtaNode = NULL;
 	VTM_NODE            *pVtmNode = NULL;	
-	CALL_TARGET         callTarget;	
+	//CALL_TARGET         callTarget;	
 	unsigned char       srvGrpSelfAdapt = 0;
 	int                 tps = 0;
 	int                 pid = 0;	
 	int                 originPid = 0;	
 	unsigned int        amsPid = 0;
-	unsigned int        originTellerId = 0;
-	unsigned char       originVtaNo[AMS_MAX_TELLER_NO_LEN + 1] = { 0 };	
+//	unsigned int        originTellerId = 0;
+//	unsigned char       originVtaNo[AMS_MAX_TELLER_ID_LEN + 1] = { 0 };	
 	unsigned char       callIdLen = 0;   
 	unsigned int        vtmId = 0;	
-	unsigned char       vtmNo[AMS_MAX_VTM_NO_LEN + 1] = { 0 };	
+//	unsigned char       vtmNo[AMS_MAX_VTM_NO_LEN + 1] = { 0 };	
 	unsigned int        terminalType = 0;	
-	unsigned char       targetVtaNo[AMS_MAX_TELLER_NO_LEN + 1] = { 0 };			
+//	unsigned char       targetVtaNo[AMS_MAX_TELLER_NO_LEN + 1] = { 0 };			
 	unsigned int        srvGrpId = 0;	
 	unsigned int        serviceType = 0;	
 	unsigned int        serviceTypeRsvd = 0;
@@ -200,13 +199,13 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	int                 pid = 0;	
 	int                 originPid = 0;	
 	unsigned int        amsPid = 0;
-	unsigned int        originTellerId = 0;
-	unsigned char       originVtaNo[AMS_MAX_TELLER_NO_LEN + 1] = { 0 };	
+	//unsigned int        originTellerId = 0;
+	//unsigned char       originVtaNo[AMS_MAX_TELLER_NO_LEN + 1] = { 0 };	
 	unsigned char       callIdLen = 0;   
 	unsigned int        vtmId = 0;	
-	unsigned char       vtmNo[AMS_MAX_VTM_NO_LEN + 1] = { 0 };	
+	//unsigned char       vtmNo[AMS_MAX_VTM_NO_LEN + 1] = { 0 };	
 	unsigned int        terminalType = 0;	
-	unsigned char       targetVtaNo[AMS_MAX_TELLER_NO_LEN + 1] = { 0 };			
+	//unsigned char       targetVtaNo[AMS_MAX_TELLER_NO_LEN + 1] = { 0 };			
 	unsigned int        srvGrpId = 0;	
 	unsigned int        serviceType = 0;	
 	unsigned int        serviceTypeRsvd = 0;
@@ -219,7 +218,6 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	unsigned char		srvtype[AMS_MAX_SERVICE_NAME_LEN+1];
 	TELLER_INFO_NODE	*tellinfonode=NULL;
 	TELLER_REGISTER_INFO_NODE *regtellinfonode=NULL;
-	VTA_NODE			*vtanode=NULL;
 	DWORD				CallOutType=0;
 
 	//get remote pid
@@ -230,7 +228,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	{
 		dbgprint("VtaGetReqProc[%d] Pid:%d Err", pid, pMsg->s_ReceiverPid.iProcessId);
 		iret = AMS_CMS_GET_VTA_PARA_ERR;
-		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL,NULL);
+		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL);
 		return AMS_ERROR;
 	}
 	
@@ -241,7 +239,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	{
 		dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
 		iret = AMS_CMS_CALLOUT_VTA_CALL_ID_ERR;
-		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL,NULL);	
+		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL);	
 		return AMS_ERROR;		
 	}
 	p += callIdLen;
@@ -252,7 +250,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	{
 		dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
 		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
-		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL,NULL);	
+		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL);	
 		return AMS_ERROR;
 
 	}
@@ -265,7 +263,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	{
 		dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
 		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
-		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL,NULL);	
+		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL);	
 		return AMS_ERROR;
 	}
 	memcpy(srvgrpid,p,srvgrpidlen);
@@ -277,7 +275,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	{
 		dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
 		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
-		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL,NULL);	
+		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL);	
 		return AMS_ERROR;		
 	}
 	memcpy(srvtype,p,srvtypelen);
@@ -305,26 +303,26 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	{
 		dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
 		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
-		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL,NULL);	
+		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,CallOutType);	
 		return AMS_ERROR;
 	}
 
 	//tellerid in regnode or not
-	regtellinfonode=AmsSearchRegTellerInfoHash(tellerId,telleridlen)
+	regtellinfonode=AmsSearchRegTellerInfoHash(tellerId,telleridlen);
 	if(NULL == regtellinfonode && AmsCfgSrvGroup(i).isAutoFlag == AMS_SRVGRP_HUMAN)
 	{
 			dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
 			iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
-			AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL,NULL);	
+			AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,CallOutType);	
 			return AMS_ERROR;		
 	} 
 
-	vtanode = AmsSearchVtaNode(srvGrpId,tellerId,telleridlen)
-	if(NULL == vtanode)
+	pVtaNode = AmsSearchVtaNode(srvGrpId,tellerId,telleridlen);
+	if(NULL == pVtaNode)
 	{
-		dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
+		//dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
 		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
-		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL,NULL);	
+		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,CallOutType);	
 		return AMS_ERROR;
 	}
 	
@@ -332,12 +330,11 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	pid = pVtaNode->amsPid & 0xffff;
 	if((0 == pid) || (pid >= LOGIC_PROCESS_SIZE))
 	{
-		dbgprint("VtaGetReqProc Teller[%s][%u] Vtm[%s][%u] CallType[%d] TargetTeller[%s][%u]Pid:%d Err", 
-			originVtaNo, originTellerId, 
-			lpOriginAmsData->vtmNo, lpOriginAmsData->vtmId, 
-			callType, targetVtaNo, callTarget.targetTellerId, pid);
+		//dbgprint("VtaGetReqProc Teller[%s]CallType[%d] Pid:%d Err", 
+		//	pVtaNode->tellerId,  
+		//	callType, pid);
 		iret = AMS_CMS_GET_VTA_AMS_PID_ERR;
-		AmsSendCmsVtaGetRsp(NULL,pMsg,iret,pVtaNode,NULL);
+		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,CallOutType);
 		return AMS_ERROR;
 	}
 	
@@ -345,23 +342,23 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	//tellerid state in work or not
 	if(AMS_VTA_STATE_BUSY == pVtaNode->state)
 	{
-		dbgprint("VtaGetReqProc Teller[%s][%u] Vtm[%s][%u] CallType[%d] TargetTeller[%s][%u]Pid:%d Err", 
+		/*dbgprint("VtaGetReqProc Teller[%s][%u] Vtm[%s][%u] CallType[%d] TargetTeller[%s][%u]Pid:%d Err", 
 					originVtaNo, originTellerId, 
 					lpOriginAmsData->vtmNo, lpOriginAmsData->vtmId, 
-					callType, targetVtaNo, callTarget.targetTellerId, pid);
+					callType, targetVtaNo, callTarget.targetTellerId, pid);*/
 		iret = AMS_CMS_GET_VTA_AMS_PID_ERR;
-		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,pVtaNode,NULL);
+		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,CallOutType);
 		return AMS_ERROR;
 	}
 
 	if(AMS_CALL_STATE_NULL != pVtaNode->callState)
 	{
-		dbgprint("VtaGetReqProc Teller[%s][%u] Vtm[%s][%u] CallType[%d] TargetTeller[%s][%u]Pid:%d Err", 
+		/*dbgprint("VtaGetReqProc Teller[%s][%u] Vtm[%s][%u] CallType[%d] TargetTeller[%s][%u]Pid:%d Err", 
 					originVtaNo, originTellerId, 
 					lpOriginAmsData->vtmNo, lpOriginAmsData->vtmId, 
-					callType, targetVtaNo, callTarget.targetTellerId, pid);
+					callType, targetVtaNo, callTarget.targetTellerId, pid);*/
 		iret = AMS_CMS_GET_VTA_AMS_PID_ERR;
-		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,pVtaNode,NULL);
+		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,CallOutType);
 		return AMS_ERROR;
 	}
 
@@ -390,7 +387,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	lpAmsData->cmsPid.iProcessId   = pMsg->s_SenderPid.iProcessId;
 
 	//lpAmsData 可为NULL
-	AmsSendCmsVtaCalloutRsp(lpAmsData,pMsg,iret,pVtaNode,NULL);	
+	AmsSendCmsVtaCalloutRsp(lpAmsData,pMsg,iret,CallOutType);	
 
 	//send vta busy
 	
@@ -408,6 +405,8 @@ int VtaAuthinfoReqProc(int iThreadId, MESSAGE_t *pMsg)
 	TELLER_INFO_NODE	*tellinfonode=NULL;
 	TELLER_REGISTER_INFO_NODE *regtellinfonode=NULL;
 	VTA_NODE			*vtanode=NULL;
+	unsigned int		iret = 0;
+	unsigned int		srvGrpIdPos=0;
 	
 	//get remote pid
 	pid = pMsg->s_SenderPid.iProcessId;
@@ -417,22 +416,22 @@ int VtaAuthinfoReqProc(int iThreadId, MESSAGE_t *pMsg)
 	{
 		dbgprint("VtaGetReqProc[%d] Pid:%d Err", pid, pMsg->s_ReceiverPid.iProcessId);
 		iret = AMS_CMS_GET_VTA_PARA_ERR;
-		AmsSendCmsVtaGetRsp(NULL,pMsg,iret,NULL,NULL);
+		AmsSendCmsAuthinfoRsp(NULL,pMsg,iret);
 
 		return AMS_ERROR;
 	}
 	p = pMsg->cMessageBody;
 
-	BEPUTSHORT(p,QueryType);
+	BEGETSHORT(QueryType,p);
 	p+=2;
 
 	//tellerid 检查
 	tellerIdLen=*p++;
 	if(tellerIdLen>AMS_MAX_TELLER_ID_LEN)
 	{
-		dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
+		//dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
 		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
-		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL,NULL);	
+		AmsSendCmsAuthinfoRsp(NULL,pMsg,iret);	
 		return AMS_ERROR;
 
 	}
@@ -440,26 +439,27 @@ int VtaAuthinfoReqProc(int iThreadId, MESSAGE_t *pMsg)
 	p+=tellerIdLen;
 
 	//是否注册
-	tellinfonode=AmsSearchTellerInfoHash(tellerId,telleridlen);
+	tellinfonode=AmsSearchTellerInfoHash(tellerId,tellerIdLen);
 	if(NULL == tellinfonode || (AmsCfgTeller(tellinfonode->tellerInfopos).flag == AMS_TELLER_UNINSTALL))
 	{
-		dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
+		//dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
 		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
-		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL,NULL);	
+		AmsSendCmsAuthinfoRsp(NULL,pMsg,iret);	
 		return AMS_ERROR;
 	}
 
 	//tellerid in regnode or not
-	regtellinfonode=AmsSearchRegTellerInfoHash(tellerId,telleridlen)
-	if(NULL == regtellinfonode && AmsCfgSrvGroup(i).isAutoFlag == AMS_SRVGRP_HUMAN)
+	srvGrpIdPos = AmsCfgTeller(tellinfonode->tellerInfopos).srvGrpIdPos;
+	regtellinfonode=AmsSearchRegTellerInfoHash(tellerId,tellerIdLen);
+	if(NULL == regtellinfonode && AmsCfgSrvGroup(srvGrpIdPos).isAutoFlag == AMS_SRVGRP_HUMAN)
 	{
-		dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
+		//dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callid);
 		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
-		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL,NULL);	
+		AmsSendCmsAuthinfoRsp(NULL,pMsg,iret);	
 		return AMS_ERROR;		
 	} 
 
-	AmsSendCmsAuthinfoRsp(AmsCfgTeller(tellinfonode->tellerInfopos),pMsg,iret);
+	AmsSendCmsAuthinfoRsp(&AmsCfgTeller(tellinfonode->tellerInfopos),pMsg,iret);
 	
 }
 
@@ -483,8 +483,8 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 	unsigned int		originId = 0;
 	unsigned char		vtmIdLen = 0;		
 	unsigned char		vtmId[AMS_MAX_VTM_ID_LEN + 1] = { 0 };	
-	unsigned int		originTellerId = 0; 
-	unsigned char		originVtaNo[AMS_MAX_TELLER_NO_LEN + 1] = { 0 }; 		
+	//unsigned int		originTellerId = 0; 
+	//unsigned char		originVtaNo[AMS_MAX_TELLER_NO_LEN + 1] = { 0 }; 		
 	unsigned int		newState = 0;
 	unsigned int		i = 0;
 	unsigned char		*p;
@@ -551,7 +551,7 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 	memcpy(vtmId,p,vtmIdLen);
 	p+=vtmIdLen;
 
-	if(		CMS_CALL_EVENT_NOTICE_VTA_RING == callEventNotice
+	/*if(		CMS_CALL_EVENT_NOTICE_VTA_RING == callEventNotice
 		||	CMS_CALL_EVENT_NOTICE_VTA_ANSWER == callEventNotice
 		||  CMS_CALL_EVENT_NOTICE_VTA_RELEASE == callEventNotice)
 	{
@@ -612,21 +612,21 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 		//坐席业务状态检查
 		if(AMS_SERVICE_ACTIVE != AmsSrvData(lpOriginAmsData->srvGrpIdPos).serviceState)
 		{
-			dbgprint("CallEventNoticeProc[%d] Event[%d] OriginTeller[%s][%d] ServiceState[%d]Err", 
+			/*dbgprint("CallEventNoticeProc[%d] Event[%d] OriginTeller[%s][%d] ServiceState[%d]Err", 
 				pid, callEventNotice, originVtaNo, originTellerId, 
-				AmsSrvData(lpOriginAmsData->srvGrpId).serviceState);
+				AmsSrvData(lpOriginAmsData->srvGrpIdPos).serviceState);*/
 			iret = AMS_CMS_EVENT_NOTICE_ORIGIN_TELLER_SERVICE_STATE_ERR;
 			AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret); 
 			return AMS_ERROR;			
-		}
+		/*}
 
 		//坐席状态检查
 		if(pOriginVtaNode->state >= AMS_VTA_STATE_OFFLINE)
 		{
-			dbgprint("CallEventNoticeProc[%d] Event[%d] OriginTeller[%s][%d] State[%d]Err", 
+			/*dbgprint("CallEventNoticeProc[%d] Event[%d] OriginTeller[%s][%d] State[%d]Err", 
 				pid, callEventNotice, originVtaNo, originTellerId, 
-				pOriginVtaNode->state);
-			iret = AMS_CMS_EVENT_NOTICE_ORIGIN_TELLER_STATE_ERR;
+				pOriginVtaNode->state);*/
+		/*	iret = AMS_CMS_EVENT_NOTICE_ORIGIN_TELLER_STATE_ERR;
 			AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);
 			return AMS_ERROR;		
 		}
@@ -636,7 +636,7 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 		||  CMS_CALL_EVENT_NOTICE_VTM_RELEASE == callEventNotice)
 	{
 			//ams->crm 坐席事件指示	
-	}
+	}*/
 
 	lpAmsData = (LP_AMS_DATA_t *)ProcessData[pid];
 
@@ -644,9 +644,9 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 	p = pMsg->cMessageBody;
 	if(callIdLen != lpAmsData->callIdLen)
 	{
-		dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s][%u] Vtm[%s][%u]CallIdLen[%d][%d]Err", 
-			pid, callEventNotice, lpAmsData->tellerNo, lpAmsData->tellerId, 
-			lpAmsData->vtmNo, lpAmsData->vtmId, 
+		dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s] Vtm[%s]CallIdLen[%d][%d]Err", 
+			pid, callEventNotice, lpAmsData->tellerId, 
+			lpAmsData->vtmId, 
 			callIdLen, lpAmsData->callIdLen); 
 		iret = AMS_CMS_EVENT_NOTICE_CALL_ID_ERR;
 	    AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  			
@@ -654,11 +654,11 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 	}
 
 	p++;
-	if(0 != memcmp(lpAmsData->callId, p, callIdLen))
+	if(0 != strcmp(lpAmsData->callId, p))
 	{
-		dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s][%u] Vtm[%s][%u]CallIdErr", 
-			pid, callEventNotice, lpAmsData->tellerNo, lpAmsData->tellerId, 
-			lpAmsData->vtmNo, lpAmsData->vtmId); 
+		dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s] Vtm[%s]CallIdErr", 
+			pid, callEventNotice, lpAmsData->tellerId, 
+			lpAmsData->vtmId); 
 		iret = AMS_CMS_EVENT_NOTICE_CALL_ID_ERR;
 	    AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  			
 		return AMS_ERROR;		
@@ -669,9 +669,9 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 	if(    callEventNotice < CMS_CALL_EVENT_NOTICE_VTA_ANSWER 
 		|| callEventNotice >= CMS_CALL_EVENT_NOTICE_MAX)
 	{
-		dbgprint("CallEventNoticeProc[%d] Teller[%s][%u] Vtm[%s][%u] EventCode[%d]Err", 
-			pid, lpAmsData->tellerNo, lpAmsData->tellerId, 
-			lpAmsData->vtmNo, lpAmsData->vtmId, callEventNotice); 
+		dbgprint("CallEventNoticeProc[%d] Teller[%s] Vtm[%s]EventCode[%d]Err", 
+			pid,lpAmsData->tellerId, 
+			lpAmsData->vtmId, callEventNotice); 
 		iret = AMS_CMS_EVENT_NOTICE_CODE_ERR;
 	    AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  			
 		return AMS_ERROR;			
@@ -682,11 +682,11 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 		||	CMS_CALL_EVENT_NOTICE_VTA_ANSWER == callEventNotice
 		||	CMS_CALL_EVENT_NOTICE_VTA_RELEASE == callEventNotice)
 	{
-		if(0 != memcmp(lpAmsData->tellerId,tellerId,tellerIdLen))
+		if(0 != strcmp(lpAmsData->tellerId,tellerId))
 		{
-			dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s]Id[%u][%u]Err", 
+			dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s]Err", 
 				pid, callEventNotice, 
-				lpAmsData->tellerNo, lpAmsData->tellerId, tellerId);
+				lpAmsData->tellerId);
 			iret = AMS_CMS_EVENT_NOTICE_TELLER_ID_ERR;
 	    	AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  				
 			return AMS_ERROR;	
@@ -698,12 +698,12 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 		||	CMS_CALL_EVENT_NOTICE_VTM_ANSWER == callEventNotice
 		||	CMS_CALL_EVENT_NOTICE_VTM_RELEASE == callEventNotice)
 	{
-		if(0 != memcmp(lpAmsData->vtmId,vtmId,vtmIdLen))
+		if(0 != strcmp(lpAmsData->vtmId,vtmId))
 		{
-			dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s][%u] Vtm[%s]Id[%u][%u]Err", 
+			dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s]Vtm[%s]Err", 
 				pid, callEventNotice, 
-				lpAmsData->tellerNo, lpAmsData->tellerId, 
-				lpAmsData->vtmNo, lpAmsData->vtmId, vtmId);
+				lpAmsData->tellerId, 
+			lpAmsData->vtmId, vtmId);
 			iret = AMS_CMS_EVENT_NOTICE_VTM_ID_ERR;
 		    AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  	
 			return AMS_ERROR;			
@@ -713,10 +713,10 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 	//业务组编号检查
 	if(lpAmsData->srvGrpIdPos > AMS_MAX_SERVICE_GROUP_NUM)
 	{
-		dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s][%u] Vtm[%s][%u] SrvGrpId[%u]Err", 
+		dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s] Vtm[%s]SrvGrpId[%u]Err", 
 			pid, callEventNotice, 
-			lpAmsData->tellerNo, lpAmsData->tellerId, 
-			lpAmsData->vtmNo, lpAmsData->vtmId, lpAmsData->srvGrpId);
+			lpAmsData->tellerId, 
+			lpAmsData->vtmId, lpAmsData->srvGrpIdPos);
 		iret = AMS_CMS_EVENT_NOTICE_SERVICE_GROUP_ID_ERR;
 		AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  	
 		return AMS_ERROR;		
@@ -725,11 +725,11 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
     //业务状态检查
 	if(AMS_SERVICE_ACTIVE != AmsSrvData(lpAmsData->srvGrpIdPos).serviceState)
 	{
-		dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s][%u] Vtm[%s][%u] ServiceState[%d]Err", 
+		dbgprint("CallEventNoticeProc[%d] Event[%d] Teller[%s] Vtm[%s]ServiceState[%d]Err", 
 			pid, callEventNotice, 
-			lpAmsData->tellerNo, lpAmsData->tellerId, 
-			lpAmsData->vtmNo, lpAmsData->vtmId, 
-			AmsSrvData(lpAmsData->srvGrpId).serviceState);
+			lpAmsData->tellerId, 
+			lpAmsData->vtmId, 
+			AmsSrvData(lpAmsData->srvGrpIdPos).serviceState);
 		iret = AMS_CMS_EVENT_NOTICE_SERVICE_STATE_ERR;
 		AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  	
 		return AMS_ERROR;		
@@ -744,10 +744,10 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 		pVtaNode = AmsSearchVtaNode(lpAmsData->srvGrpIdPos,lpAmsData->tellerId,lpAmsData->tellerIdLen);
 		if(NULL == pVtaNode)
 		{
-			dbgprint("CallEventNoticeProc[%d] Event[%d] Vtm[%s][%u] Teller[%s]Id[%u]Err", 
+			dbgprint("CallEventNoticeProc[%d] Event[%d] Vtm[%s] Teller[%s]Err", 
 				pid, callEventNotice, 
-				lpAmsData->vtmNo, lpAmsData->vtmId,
-				lpAmsData->tellerNo, lpAmsData->tellerId);	
+				lpAmsData->vtmId,
+				lpAmsData->tellerId);	
 			iret = AMS_CMS_EVENT_NOTICE_TELLER_ID_ERR;
 			AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  	
 			return AMS_ERROR;		
@@ -757,10 +757,10 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 		if( pVtaNode->state >= AMS_VTA_STATE_OFFLINE
 			&& CMS_CALL_EVENT_NOTICE_VTA_RELEASE != callEventNotice)
 		{
-			dbgprint("CallEventNoticeProc[%d] Event[%d] Vtm[%s][%u]Teller[%s][%u]State[%d]Err", 
+			dbgprint("CallEventNoticeProc[%d] Event[%d] Vtm[%s]Teller[%s]State[%d]Err", 
 				pid, callEventNotice, 
-				lpAmsData->vtmNo, lpAmsData->vtmId, 
-				lpAmsData->tellerNo, lpAmsData->tellerId, pVtaNode->state);		
+				lpAmsData->vtmId, 
+				lpAmsData->tellerId, pVtaNode->state);		
 			iret = AMS_CMS_EVENT_NOTICE_VTA_STATE_ERR;
 	    	AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  				
 			return AMS_ERROR;				
@@ -822,7 +822,7 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 		|| CMS_CALL_EVENT_NOTICE_VTM_RELEASE == callEventNotice)
 	{
 		// ams->crm 
-		AmsSendTellerEventInd(lpAmsData,callEventNotice,vtmId,vtmIdLen,iret);
+		AmsSendTellerEventInd(lpAmsData,callEventNotice,vtmId,vtmIdLen,termType,iret);
 	}
 
 	return AMS_OK;
@@ -878,9 +878,6 @@ int AmsSendCmsVtaRegRsp(TELLER_REGISTER_INFO_NODE *tellerRegisterInfo,MESSAGE_t 
 
 int AmsSendCmsVtaCalloutRsp(LP_AMS_DATA_t *lpAmsData,MESSAGE_t *pMsg,int iret,DWORD callouttype)
 {
-	MESSAGE_t           s_Msg;
-	unsigned char       *p;
-
 	MESSAGE_t           s_Msg;
 	unsigned char       *p;
 	

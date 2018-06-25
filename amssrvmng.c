@@ -275,3 +275,39 @@ int AmsUpdateSingleVtaWorkInfo(VTA_NODE *pVtaNode, time_t currentTime)
 	return AMS_ERROR;
 }
 
+int AmsSendServiceProcMsg()
+{
+	MESSAGE_t           s_Msg;
+
+	memset(&s_Msg,0,sizeof(MESSAGE_t));
+	
+	s_Msg.eMessageAreaId = C;
+	
+	s_Msg.s_ReceiverPid.cModuleId   = SystemData.cMid;  
+	s_Msg.s_ReceiverPid.cFunctionId = FID_AMS;
+	s_Msg.s_ReceiverPid.iProcessId  = 0; 
+	
+	s_Msg.s_SenderPid.cModuleId     = SystemData.cMid;
+	s_Msg.s_SenderPid.cFunctionId   = FID_AMS;
+	s_Msg.s_SenderPid.iProcessId    = 0;
+	s_Msg.iMessageType = C_AMS_SERVICE_PROC_REQ;
+	s_Msg.iMessageLength = 0;
+	
+	SendMsgBuff(&s_Msg,0);
+/*
+	if(AmsMsgTrace)
+	{	
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"send C_AMS_SERVICE_PROC_REQ msg \n");	
+		AmsTraceToFile(s_Msg.s_ReceiverPid,s_Msg.s_SenderPid,"C_AMS_SERVICE_PROC_REQ",description,
+			           descrlen,s_Msg.cMessageBody,s_Msg.iMessageLength,"ams");				
+	}
+*/
+
+	//not need result stat
+
+	return SUCCESS;
+}
+

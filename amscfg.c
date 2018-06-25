@@ -9,7 +9,7 @@ int ConfigAmsSrv(char *cFileName)
 	WORD_t		  word[MAXWORDNUMALINE];
 	int 		  wordCount = 0;
 	int 		  count = 0; 
-	unsigned char currId[MAXWORDNUMALINE] = 0;
+	unsigned char currId[MAXWORDNUMALINE] = {0};
 
 	memset(sItem, 0, sizeof(sItem));
 	
@@ -455,9 +455,9 @@ int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
         	/* check service group name is used or not */
 			for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
 			{
-				if(AmsCfgSrvGroup(i).srvGroupNameLen == srvGroupNameLen)
+				if(AmsCfgSrvGroup(i).srvGrpIdLen == srvGroupNameLen)
 				{
-					if(0 == memcmp(AmsCfgSrvGroup(j).srvGroupName, stringword, srvGroupNameLen))
+					if(0 == memcmp(AmsCfgSrvGroup(j).srvGrpId, stringword, srvGroupNameLen))
 					{
 						Display("ServiceGroup Senten serviceGroupName[%s]has been Used[%d]!\r\n",
 							stringword, j);
@@ -469,9 +469,9 @@ int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 			{
 				if(AMS_SERVICE_GROUP_UNINSTALL == AmsCfgSrvGroup(i).flag)
 				{
-					strcpy((char *)AmsCfgSrvGroup(i).srvGroupName, stringword); 	
-					AmsCfgSrvGroup(i).srvGroupName[srvGroupNameLen] = '\0';
-					AmsCfgSrvGroup(i).srvGroupNameLen = srvGroupNameLen;
+					strcpy((char *)AmsCfgSrvGroup(i).srvGrpId, stringword); 	
+					AmsCfgSrvGroup(i).srvGrpId[srvGroupNameLen] = '\0';
+					AmsCfgSrvGroup(i).srvGrpIdLen = srvGroupNameLen;
 					AmsCfgSrvGroup(i).flag = AMS_SERVICE_GROUP_INSTALL;
 					strcpy(pCurrId,stringword);
 					pCurrId[srvGroupNameLen] = '\0';
@@ -490,13 +490,13 @@ int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 	for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
 	{
 		if( (AMS_SERVICE_GROUP_INSTALL == AmsCfgSrvGroup(i).flag)
-			&& (0 == strcmp(AmsCfgSrvGroup(i).srvGroupName,pCurrId)))
+			&& (0 == strcmp(AmsCfgSrvGroup(i).srvGrpId,pCurrId)))
 		{
 			serviceIdpos = i;
 			break;
 		}
 	}
-	if(i > AMS_MAX_SERVICE_NUM;i++)
+	if(i > AMS_MAX_SERVICE_NUM)
 	{
 		Display("ServiceGroup[%S]Senten not find!\r\n", pCurrId);
 		return FAILURE;
@@ -539,8 +539,8 @@ int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 		
 		j = AmsCfgSrvGroup(serviceIdpos).srvlogpos;
 		strcpy(AmsCfgSrvGroup(serviceIdpos).srvInfo[j].serviceName,stringword);
-		AmsCfgSrvGroup(i).srvType[j].serviceName[srvNameLen] = '\0';
-		AmsCfgSrvGroup(i).srvType[j].serviceNameLen = srvNameLen;
+		AmsCfgSrvGroup(i).srvInfo[j].serviceName[srvNameLen] = '\0';
+		AmsCfgSrvGroup(i).srvInfo[j].serviceNameLen = srvNameLen;
 		AmsCfgSrvGroup(serviceIdpos).srvlogpos++ ;
 	}
 	if(0 == strcmp(stringword,"isAutoFlag"))
@@ -615,7 +615,7 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 				
 				memset(&AmsCfgTeller(i), 0, sizeof(TELLER_INFO));
 
-				strcpy(AmsCfgTeller(i).tellerId,stringword,tellerIdLen);
+				strcpy(AmsCfgTeller(i).tellerId,stringword);
 				AmsCfgTeller(i).tellerId[tellerIdLen] = '\0';
 				AmsCfgTeller(i).tellerIdLen = tellerIdLen;
 				AmsCfgTeller(i).flag = AMS_TELLER_INSTALL;
@@ -630,7 +630,7 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 				{
 					if(AMS_TELLER_UNINSTALL == AmsCfgTeller(i).flag)
 					{
-						strcpy(AmsCfgTeller(i).tellerId,stringword,tellerIdLen);
+						strcpy(AmsCfgTeller(i).tellerId,stringword);
 						AmsCfgTeller(i).tellerId[tellerIdLen] = '\0';
 						AmsCfgTeller(i).tellerIdLen = tellerIdLen;
 						AmsCfgTeller(i).flag = AMS_TELLER_INSTALL;
@@ -639,7 +639,7 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 						pTellerInfoNode = AmsGetTellerInfoNode(stringword,tellerIdLen);
 						if(NULL != pTellerInfoNode)
 						{
-							strcpy(pTellerInfoNode->tellerId,stringword,tellerIdLen);
+							strcpy(pTellerInfoNode->tellerId,stringword);
 							pTellerInfoNode->tellerIdLen=tellerIdLen;
 							pTellerInfoNode->tellerId[tellerIdLen]='\0';
 							pTellerInfoNode->tellerInfopos=i;
@@ -655,7 +655,7 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 				}
 			}
 
-			strcpy(pCurrId,stringword,tellerIdLen);
+			strcpy(pCurrId,stringword);
 			pCurrId[tellerIdLen]='\0';
 
 			
@@ -672,7 +672,8 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 
 	}
 	/*find teller in cfg or not */
-	pTellerInfoNode = AmsSearchTellerInfoHash(pCurrId);
+	tellerIdLen = strlen(pCurrId);
+	pTellerInfoNode = AmsSearchTellerInfoHash(pCurrId,tellerIdLen);
 	if(NULL == pTellerInfoNode)
 	{
 		Display("Teller[%s]Senten not find Id!\r\n", pCurrId);
@@ -685,7 +686,7 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 	//其他teller涉及到的参数配置
 
 	
-	else if(0 == strcmp(stringword,"srvgrpid"))
+	if(0 == strcmp(stringword,"srvgrpid"))
 	{
 		//获取id的值
 		memset(stringword,0,sizeof(stringword));
@@ -708,17 +709,17 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 		}
 		else
 		{
-			for(j=0:j<AMS_MAX_SERVICE_GROUP_NUM;j++)
+			for(j=0;j<AMS_MAX_SERVICE_GROUP_NUM;j++)
 			{
 				if(AmsCfgSrvGroup(j).flag == AMS_SERVICE_GROUP_UNINSTALL)
 				{
 					continue;
 				}
 				if( AmsCfgSrvGroup(j).srvGrpIdLen == srvGrpIdLen
-					&& 0 == strcmp(AmsCfgSrvGroup(j).srvGrpId,stringword,srvGrpIdLen))
+					&& 0 == strcmp(AmsCfgSrvGroup(j).srvGrpId,stringword))
 				{
-					AmsCfgTeller(i).srvGrpIdpos = j;
-					strcpy(AmsCfgTeller(i).srvGrpId,stringword,srvGrpIdLen);
+					AmsCfgTeller(i).srvGrpIdPos = j;
+					strcpy(AmsCfgTeller(i).srvGrpId,stringword);
 					AmsCfgTeller(i).srvGrpId[srvGrpIdLen] = '\0';
 					AmsCfgTeller(i).srvGrpIdLen = srvGrpIdLen;
 					break;
@@ -777,10 +778,10 @@ int AmsSrvVtmSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 			{
 				Display("AmsSrvVtmSenten Senten id[%s] has been used!\r\n",stringword);
 
-				i = pVtmInfoNode->tellerInfopos;
+				i = pVtmInfoNode->vtmInfopos;
 				
 				memset(&AmsCfgVtm(i), 0, sizeof(VTM_INFO));
-				strcpy(AmsCfgVtm(i).vtmId,stringword,vtmIdLen);
+				strcpy(AmsCfgVtm(i).vtmId,stringword);
 				AmsCfgVtm(i).vtmId[vtmIdLen] = '\0';
 				AmsCfgVtm(i).vtmIdLen = vtmIdLen;
 				AmsCfgVtm(i).flag = AMS_VTM_INSTALL;
@@ -795,16 +796,16 @@ int AmsSrvVtmSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 				{
 					if(AMS_VTM_UNINSTALL == AmsCfgVtm(i).flag)
 					{
-						strcpy(AmsCfgVtm(i).vtmId,stringword,vtmIdLen);
-						AmsCfgVtm(i).VtmId[vtmIdLen] = '\0';
-						AmsCfgVtm(i).VtmIdLen = VtmIdLen;
+						strcpy(AmsCfgVtm(i).vtmId,stringword);
+						AmsCfgVtm(i).vtmId[vtmIdLen] = '\0';
+						AmsCfgVtm(i).vtmIdLen = vtmIdLen;
 						AmsCfgVtm(i).flag = AMS_VTM_INSTALL;
 
 						//插入hash
 						pVtmInfoNode = AmsGetVtmInfoNode(stringword,vtmIdLen);
 						if(NULL != pVtmInfoNode)
 						{
-							strcpy(pVtmInfoNode->vtmId,stringword,vtmIdLen);
+							strcpy(pVtmInfoNode->vtmId,stringword);
 							pVtmInfoNode->vtmIdLen=vtmIdLen;
 							pVtmInfoNode->vtmId[vtmIdLen]='\0';
 							pVtmInfoNode->vtmInfopos=i;
@@ -820,7 +821,7 @@ int AmsSrvVtmSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 				}
 			}
 
-			strcpy(pCurrId,stringword,vtmIdLen);
+			strcpy(pCurrId,stringword);
 			pCurrId[vtmIdLen]='\0';
 
 			
@@ -836,8 +837,10 @@ int AmsSrvVtmSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 		}
 	}
 
+	vtmIdLen = strlen(pCurrId);
+	
 	/*find vtm in cfg or not */
-	pVtmInfoNode = AmsSearchVtmInfoHash(pCurrId);
+	pVtmInfoNode = AmsSearchVtmInfoHash(pCurrId,vtmIdLen);
 	if(NULL == pVtmInfoNode)
 	{
 		Display("AmsSrvVtmSenten[%s]Senten not find Id!\r\n", pCurrId);
@@ -897,7 +900,7 @@ int AmsSrvQueueSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 					
 					memset(&AmsCfgQueueSys(i), 0, sizeof(QUEUE_SYS_INFO));
 					
-					strcpy(AmsCfgQueueSys(i).srvGrpId,stringword,srvGrpIdLen);
+					strcpy(AmsCfgQueueSys(i).srvGrpId,stringword);
 					AmsCfgQueueSys(i).srvGrpId[srvGrpIdLen] = '\0';
 					AmsCfgQueueSys(i).srvGrpIdLen = srvGrpIdLen;
 					AmsCfgQueueSys(i).flag = AMS_QUEUE_CFG;
@@ -916,7 +919,7 @@ int AmsSrvQueueSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 					{
 						memset(&AmsCfgQueueSys(i), 0, sizeof(QUEUE_SYS_INFO));
 					
-						strcpy(AmsCfgQueueSys(i).srvGrpId,stringword,srvGrpIdLen);
+						strcpy(AmsCfgQueueSys(i).srvGrpId,stringword);
 						AmsCfgQueueSys(i).srvGrpId[srvGrpIdLen] = '\0';
 						AmsCfgQueueSys(i).srvGrpIdLen = srvGrpIdLen;
 						AmsCfgQueueSys(i).flag = AMS_QUEUE_CFG;
@@ -932,7 +935,7 @@ int AmsSrvQueueSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 				}
 			}
 		}
-		strcpy(pCurrId,stringword,srvGrpIdLen);
+		strcpy(pCurrId,stringword);
 		pCurrId[srvGrpIdLen] = '\0';
 
 		Display("Queue[%s] Configed!\r\n", pCurrId);

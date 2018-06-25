@@ -36,6 +36,7 @@
 #define AMS_VTA_ID_HASH_SIZE                           (AMS_MAX_VTA_NUM)
 #define AMS_VTM_ID_HASH_SIZE                           (AMS_MAX_VTM_NUM)
 
+#define	AMS_MAX_TIMER_PARA_LEN                         (PARA_LEN)
 
 
 typedef struct tellerLoginInfo_t
@@ -161,7 +162,7 @@ typedef struct tellerInfo_t
 
 	DWORD           srvGrpIdLen;                      //业务组编号
 	unsigned char   srvGrpId[AMS_MAX_SERVICE_GROUP_NAME_LEN +1];
-	DWORD			srvGrpIdpos;
+	DWORD			srvGrpIdPos;
 
 	DWORD           tellerSrvAuthRsvd;             //Service Authority 业务处理权限预留
 	DWORD           tellerSrvAuth;                 //Service Authority 业务处理权限
@@ -427,6 +428,15 @@ typedef struct vtmId_t{
 
 } VTM_ID_NODE;
 
+typedef struct cmsInfo_t
+{
+	unsigned char    cModuleId;
+
+    
+}CMS_INFO;
+
+
+
 /* struct of ams data sys cfg */
 typedef struct amsDataSysCfg_t
 {
@@ -458,7 +468,7 @@ typedef struct amsDataSysCfg_t
 	unsigned int       maxVtmNum;
 	unsigned int       maxRcasNum;
 
-	//CMS_INFO           cmsInfo;
+	CMS_INFO           cmsInfo;
 	//RCAS_INFO          rcasInfo[AMS_MAX_RCAS_NUM];
 	//RFB_INIT_PARA      rfbInitParaForVtm;   //remote Cooperative, VTA is Server
 	//RFB_INIT_PARA      rfbInitParaForVta;   //remote Cooperative, RCAS is Server, transProto get from vta
@@ -500,7 +510,7 @@ typedef struct amsDataSysCfg_t
 typedef struct amsDataRegister_t
 {
 	unsigned int 	tellerregnum;
-    TELLER_REGISTER_INFO_NODE	*tellerRegisterInfoHashTbl[AMS_TELLINFO_HASH_SIZE];
+    TELLER_REGISTER_INFO_NODE	*tellerRegisterInfoHashTbl[AMS_VTA_ID_HASH_SIZE];
 	TELLER_REGISTER_INFO 		tellerRegisterInfo[AMS_MAX_VTA_NUM];
 
 
@@ -668,6 +678,8 @@ extern int AmsCfgDataInit();
 
 
 extern int ProcessAmsMessage(int iThreadId, MESSAGE_t *pMsg);
+extern void *LicenseProcTask(void *pThreadId);
+extern void *ServiceProcTask(void *pThreadId);
 
 #endif
 

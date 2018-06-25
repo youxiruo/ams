@@ -93,7 +93,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 		
 
 		//比较配置的pwd和登陆的pwd是否一致
-		if(0 != memcmp(AmsCfgTeller(tellerCfgPos).tellerPwd, tellerPwd, tellerPwdLen))
+		if(0 != strcmp(AmsCfgTeller(tellerCfgPos).tellerPwd, tellerPwd))
 		{
 			dbgprint("VtaLoginReqProc[%d] Pwd[%s]Err", pid, tellerPwd);
 			iret = AMS_VTA_LOGIN_TELLER_PWD_ERR;
@@ -121,13 +121,13 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 		//check teller type
 
 		/* check teller in process or not*/
-		if(AMS_SERVICE_ACTIVE == AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpId).serviceState)
+		if(AMS_SERVICE_ACTIVE == AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).serviceState)
 		{
 			pVtaNode = AmsSearchVtaNode(AmsCfgTeller(tellerCfgPos).srvGrpIdPos, AmsCfgTeller(tellerCfgPos).tellerId,AmsCfgTeller(tellerCfgPos).tellerIdLen);
 			if(NULL != pVtaNode)
 			{
-				dbgprint("VtaLoginReqProc[%d] TellerNo[%s]Id[%u]has been Logined[%d]", 
-					pid, tellerId, AmsCfgTeller(tellerCfgPos).tellerId, tellerCfgPos);		
+				dbgprint("VtaLoginReqProc[%d] TellerNo[%s]Idhas been Logined[%d]", 
+					pid, tellerId, tellerCfgPos);		
 				iret = AMS_VTA_LOGIN_TELLER_LOGIN_REPEATEDLY;
 				AmsSendVtaLoginRsp(NULL,pMsg,iret);		
 				return AMS_ERROR;
@@ -139,7 +139,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 		iret = AmsAllocPid(&Pid);
 		if(-1 == iret)
 		{
-			dbgprint("VtaLoginReqProc[%d] Teller[%s] AmsAllocPid: SysBusy", pid, tellerNo);
+			dbgprint("VtaLoginReqProc[%d] Teller[%s] AmsAllocPid: SysBusy", pid, tellerId);
 			iret = AMS_VTA_LOGIN_LP_RESOURCE_LIMITED;
 			AmsSendVtaLoginRsp(NULL,pMsg,iret);
 			return AMS_ERROR;
@@ -149,7 +149,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 		pVtaNode = VtaNodeGet();
 		if(NULL == pVtaNode)
 		{
-	 		dbgprint("VtaLoginReqProc[%d] Teller[%s] VtaNodeGet Failed", pid, tellerNo);
+	 		dbgprint("VtaLoginReqProc[%d] Teller[%s] VtaNodeGet Failed", pid, tellerId);
 			iret = AMS_VTA_LOGIN_NODE_RESOURCE_LIMITED;
 			AmsSendVtaLoginRsp(NULL,pMsg,iret);
 			AmsReleassPid(Pid, FAILURE);
@@ -261,9 +261,9 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 		AmsSetVtaCallState(lpAmsData, pVtaNode, AMS_CALL_STATE_NULL);
 
 		/* Add Vta Node to List */
-	    Sem_wait(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdpos).vtaCtrl);
-		lstAdd(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdpos).vtaList, (NODE *)pVtaNode);
-		Sem_post(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdpos).vtaCtrl);
+	    Sem_wait(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).vtaCtrl);
+		lstAdd(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).vtaList, (NODE *)pVtaNode);
+		Sem_post(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).vtaCtrl);
 
 		//send Login Rsp to Vta
 		AmsSendVtaLoginRsp(lpAmsData,pMsg,iret);
@@ -301,7 +301,7 @@ int VtaStateOperateReqProc(int iThreadId, MESSAGE_t *pMsg)
 
 	//进程号有效检查
 	pid = pMsg->s_ReceiverPid.iProcessId;
-	/if((0 == pid) || (pid >= LOGIC_PROCESS_SIZE))
+	if((0 == pid) || (pid >= LOGIC_PROCESS_SIZE))
 	{
 		dbgprint("VtaStateOperateReqProc Pid:%d Err", pid);
 		iret = AMS_VTA_STATE_OPERATE_PARA_ERR;
@@ -348,7 +348,7 @@ int VtaStateOperateReqProc(int iThreadId, MESSAGE_t *pMsg)
 	}
 
 	memcpy(tellerId,p,tellerIdLen);
-	if(0 != (memcmp(tellerId,lpAmsData->tellerId,tellerIdLen)))
+	if(0 != (strcmp(tellerId,lpAmsData->tellerId)))
 	{
 		dbgprint("VtaStateOperateReqProc[%d] TellerId[%u][%u]Err", 
 			pid, lpAmsData->tellerId, tellerId);
@@ -387,7 +387,7 @@ int VtaStateOperateReqProc(int iThreadId, MESSAGE_t *pMsg)
 		iret = AmsUnpackStateOperateReqOpartPara(p ,pMsg->iMessageLength-tellerIdLen-7,&stateOpInfo);
 		if(AMS_OK != iret)
 		{
-			dbgprint("VtaStateOperateReqProc[%d] Teller[%s] UnpackOpartParaErr", pid, tellerNo);
+			dbgprint("VtaStateOperateReqProc[%d] Teller[%s] UnpackOpartParaErr", pid, tellerId);
 			if(AMS_ERROR == iret)
 			{
 				iret = AMS_VTA_STATE_OPERATE_PARA_ERR;
@@ -424,7 +424,7 @@ int VtaStateOperateReqProc(int iThreadId, MESSAGE_t *pMsg)
 	if(AMS_SERVICE_ACTIVE != AmsSrvData(lpAmsData->srvGrpIdPos).serviceState)
 	{
 		dbgprint("VtaStateOperateReqProc[%d] Teller[%s] ServiceState[%u]Err", 
-			pid, tellerId, AmsSrvData(lpAmsData->srvGrpId).serviceState);
+			pid, tellerId, AmsSrvData(lpAmsData->srvGrpIdPos).serviceState);
 		iret = AMS_VTA_STATE_OPERATE_SERVICE_STATE_ERR;
 		AmsSendVtaStateOperateRsp(lpAmsData,pMsg,iret);
 		return AMS_ERROR;		
@@ -566,7 +566,7 @@ int AmsSendVtaLoginRsp(LP_AMS_DATA_t *lpAmsData,MESSAGE_t *pMsg,int iret)
 		BEPUTSHORT(lpAmsData->amsTellerNum, p);
 		p+=2;
 
-		BEPUTLONG(lpAmsData->amsPid,p)
+		BEPUTLONG(lpAmsData->amsPid,p);
 		p+=4;
 
 		*p=lpAmsData->tellerIdLen;
@@ -647,8 +647,7 @@ int AmsSendVtaStateOperateRsp(LP_AMS_DATA_t *lpAmsData,MESSAGE_t *pMsg,int iret)
 		BEPUTLONG(lpAmsData->amsPid, p);
 		p += 4;
 		
-		p = lpAmsData->tellerIdLen;
-		p += 1;
+		*p++= lpAmsData->tellerIdLen;
 		memcpy(p,lpAmsData->tellerId,lpAmsData->tellerIdLen);
 		p += lpAmsData->tellerIdLen;
 		
@@ -660,9 +659,9 @@ int AmsSendVtaStateOperateRsp(LP_AMS_DATA_t *lpAmsData,MESSAGE_t *pMsg,int iret)
 		memcpy(p, pMsg->cMessageBody, 4);
 		p[4]=pMsg->cMessageBody[4];
 		p+=5;
-		memcpy(p, pMsg->cMessageBody[5],pMsg->cMessageBody[4]);
+		memcpy(p,&pMsg->cMessageBody[5],pMsg->cMessageBody[4]);
 		p+=pMsg->cMessageBody[4];
-		memcpy(p,pMsg->cMessageBody[5+pMsg->cMessageBody[4]],2);
+		memcpy(p,&pMsg->cMessageBody[5+pMsg->cMessageBody[4]],2);
 		p+=2;
 	}
 	

@@ -200,7 +200,7 @@ VTA_NODE *AmsSearchVtaNode(unsigned int srvGrpId, unsigned char tellerId[],unsig
 	pVtaNode = (VTA_NODE *)lstFirst(&AmsSrvData(srvGrpId).vtaList);
 	while(NULL != pVtaNode && i < AMS_MAX_VTA_NODES)
 	{
-        if(0 == memcmp(pVtaNode->vtaInfo.tellerId,tellerId,tellerIdLen))
+        if(0 == strcmp(pVtaNode->vtaInfo.tellerId,tellerId))
         {
 			find = 1;
 			break;			
@@ -625,7 +625,7 @@ VTM_INFO_NODE  *AmsGetVtmInfoNode()
 *
 * RETURNS: teller info hash table index
 */
-static int AmsCalcTellerInfoHashIdx(unsigned char tellerId[],unsigned int len)
+static int AmsCalcTellerInfoHashIdx(unsigned char tellerId[],unsigned char len)
 {
 	return __BKDRHash(tellerId,len)%AMS_VTA_ID_HASH_SIZE;
 }
@@ -635,7 +635,7 @@ static int AmsCalcTellerInfoHashIdx(unsigned char tellerId[],unsigned int len)
 *
 * RETURNS: a pointer to teller info node
 */
-TELLER_INFO_NODE *AmsSearchTellerInfoHash(unsigned char tellerId[],,unsigned int len)
+TELLER_INFO_NODE *AmsSearchTellerInfoHash(unsigned char tellerId[],unsigned char len)
 {
 	int                 hashIdx;
 	TELLER_INFO_NODE    *pTellerInfoNode = NULL;
@@ -672,7 +672,7 @@ void AmsInsertTellerInfoHash(TELLER_INFO_NODE *pTellerInfoNode)
 		return;
 	}
 
-	hashIdx = AmsCalcTellerInfoHashIdx(pTellerInfoNode->tellerId);
+	hashIdx = AmsCalcTellerInfoHashIdx(pTellerInfoNode->tellerId,pTellerInfoNode->tellerIdLen);
 	pTellerInfoNode->hashNext = AmsCfgTellerHashTbl[hashIdx];
 	AmsCfgTellerHashTbl[hashIdx] = pTellerInfoNode;
 }
@@ -684,7 +684,7 @@ void AmsInsertTellerInfoHash(TELLER_INFO_NODE *pTellerInfoNode)
 *
 * RETURNS: a pointer to teller info node
 */
-TELLER_REGISTER_INFO_NODE *AmsSearchRegTellerInfoHash(unsigned char tellerId[],,unsigned int len)
+TELLER_REGISTER_INFO_NODE *AmsSearchRegTellerInfoHash(unsigned char tellerId[],unsigned char len)
 {
 	int                 hashIdx;
 	TELLER_REGISTER_INFO_NODE    *pTellerInfoNode = NULL;
@@ -722,7 +722,7 @@ void AmsInsertRegTellerInfoHash(TELLER_REGISTER_INFO_NODE *pTellerInfoNode)
 		return;
 	}
 
-	hashIdx = AmsCalcTellerInfoHashIdx(pTellerInfoNode->tellerId);
+	hashIdx = AmsCalcTellerInfoHashIdx(pTellerInfoNode->tellerRegInfo.tellerId,pTellerInfoNode->tellerRegInfo.tellerIdLen);
 	pTellerInfoNode->hashNext = AmsRegTellerHashTbl[hashIdx];
 	AmsRegTellerHashTbl[hashIdx] = pTellerInfoNode;
 }
@@ -733,7 +733,7 @@ void AmsInsertRegTellerInfoHash(TELLER_REGISTER_INFO_NODE *pTellerInfoNode)
 *
 * RETURNS: vtm info hash table index
 */
-static int AmsCalcVtmInfoHashIdx(unsigned char vtmId[],unsigned int len)
+static int AmsCalcVtmInfoHashIdx(unsigned char vtmId[],unsigned char len)
 {
 	return __BKDRHash(vtmId,len)%AMS_VTM_ID_HASH_SIZE;
 }
@@ -743,7 +743,7 @@ static int AmsCalcVtmInfoHashIdx(unsigned char vtmId[],unsigned int len)
 *
 * RETURNS: a pointer to teller info node
 */
-VTM_INFO_NODE *AmsSearchVtmInfoHash(unsigned char vtmId[],unsigned int len)
+VTM_INFO_NODE *AmsSearchVtmInfoHash(unsigned char vtmId[],unsigned char len)
 {
 	int                 hashIdx;
 	VTM_INFO_NODE    *pVtmInfoNode = NULL;
@@ -780,7 +780,7 @@ void AmsInsertVtmInfoHash(VTM_INFO_NODE *pVtmInfoNode)
 		return;
 	}
 
-	hashIdx = AmsCalcVtmInfoHashIdx(pVtmInfoNode->vtmId);
+	hashIdx = AmsCalcVtmInfoHashIdx(pVtmInfoNode->vtmId,pVtmInfoNode->vtmIdLen);
 	pVtmInfoNode->hashNext = AmsCfgVtmHashTbl[hashIdx];
 	AmsCfgVtmHashTbl[hashIdx] = pVtmInfoNode;
 }

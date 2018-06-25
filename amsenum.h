@@ -2,7 +2,20 @@
 #define AMSENUM_H
 
 
+#define AMS_COMMON_REASON_BASE                            0X0000
+#define AMS_VTA_QUEUE_MNG_REASON_BASE                     0X1000
+#define AMS_VTM_MNG_REASON_BASE                           0X5000
+#define AMS_CALL_REASON_BASE                              0X7000
+
+
 #define AMS_SERVICE_RSVD_VALUE                            0XFFFFFFFF
+
+
+enum amsOParaId_t
+{
+	
+	AMS_STATE_OP_INFO_ID = 0x03,
+};
 
 enum amsTimerType_t
 {
@@ -43,7 +56,7 @@ enum amsSrvGrpAutoFlag
 {
 	AMS_SRVGRP_AUTO								=1,
 	AMS_SRVGRP_HUMAN							=2,
-}
+};
 
 enum amsParaId
 {
@@ -340,6 +353,9 @@ enum amsCmsProcessResult
 
 	AMS_CMS_GET_VTA_LICENSE_TIMEOUT, //LIC
 	AMS_CMS_GET_VTA_TPS_BEYOND_LIC,//LIC
+
+	AMS_CMS_CALLOUT_VTA_CALL_ID_ERR,
+	AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR,
 	
 	AMS_CMS_GET_VTA_SERVICE_IN_QUEUE = (0x0300 + AMS_CALL_REASON_BASE),//0x0300 0x7300
 	AMS_CMS_GET_VTA_SERVICE_INTELLIGENT_ROUTING_ERR,

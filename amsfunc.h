@@ -1,7 +1,16 @@
 #ifndef AMSFUNC_H
 #define AMSFUNC_H
 
+#include "amspri.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 //func defined in ams.c
+void *ServiceProcTask(void *pThreadId);
 int ProcessAmsMessage(int iThreadId,MESSAGE_t *pMsg);
 int AmsProcAMsg(int iThreadId,MESSAGE_t *pMsg);
 int AmsProcVtaMsg(int iThreadId, MESSAGE_t *pMsg);
@@ -29,6 +38,7 @@ VTA_NODE * VtaNodeGet(void);
 void VtaNodeFree(VTA_NODE *pNode);
 int AmsCfgDataInit();
 int AmsUpdateSingleVtaWorkInfo(VTA_NODE *pVtaNode, time_t currentTime);
+int AmsSendServiceProcMsg();
 
 
 
@@ -52,14 +62,13 @@ int VtmInfoListInit();
 TELLER_INFO_NODE  *AmsGetTellerInfoNode();
 TELLER_REGISTER_INFO_NODE  *AmsGetRegTellerInfoNode();
 VTM_INFO_NODE  *AmsGetVtmInfoNode();
-static int AmsCalcTellerInfoHashIdx(unsigned char tellerId[]);
-TELLER_INFO_NODE *AmsSearchTellerInfoHash(unsigned char tellerId[]);
+static int AmsCalcTellerInfoHashIdx(unsigned char tellerId[],unsigned char len);
+TELLER_INFO_NODE *AmsSearchTellerInfoHash(unsigned char tellerId[],unsigned char len);
 void AmsInsertTellerInfoHash(TELLER_INFO_NODE *pTellerInfoNode);
-static int AmsCalcVtmInfoHashIdx(unsigned char vtmId[]);
-TELLER_REGISTER_INFO_NODE *AmsSearchRegTellerInfoHash(unsigned char tellerId[],,unsigned int len);
+TELLER_REGISTER_INFO_NODE *AmsSearchRegTellerInfoHash(unsigned char tellerId[],unsigned char len);
 void AmsInsertRegTellerInfoHash(TELLER_REGISTER_INFO_NODE *pTellerInfoNode);
-static int AmsCalcVtmInfoHashIdx(unsigned char vtmId[],unsigned int len);
-VTM_INFO_NODE *AmsSearchVtmInfoHash(unsigned char vtmId[]);
+static int AmsCalcVtmInfoHashIdx(unsigned char vtmId[],unsigned char len);
+VTM_INFO_NODE *AmsSearchVtmInfoHash(unsigned char vtmId[],unsigned char len);
 void AmsInsertVtmInfoHash(VTM_INFO_NODE *pVtmInfoNode);
 
 
