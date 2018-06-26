@@ -624,6 +624,28 @@ typedef struct amsStat_t
 }AMS_STAT;
 
 
+/* struct of ams license data */
+typedef struct amsDataLic_t
+{
+	pthread_mutex_t    amsLicProcMtx;
+	unsigned char      licState;
+	
+	unsigned int       vtaNum;
+	unsigned int       vtmNum;
+	unsigned int       tps;
+
+	char               licRunTimeCheckStart;
+	char               dayPerm;
+	char               validTimeLenFlag;
+	unsigned int	   validTimeLen;
+	
+	unsigned char      firstRunTimeRec;
+	TIME_INFO          firstRunTime;
+	time_t             lastRunTime;            //AmsReserveData1
+	unsigned int       usedTime;               //AmsReserveData2
+	
+}AMS_DATA_LIC;
+
 
 typedef struct
 {
@@ -633,7 +655,7 @@ typedef struct
 
 	//AMS_RCAS_DATA amsRcasData;
 
-	//AMS_DATA_LIC amsLicData;
+	AMS_DATA_LIC amsLicData;
 	
 	AMS_DATA_SYSCFG amsCfgData;
 
@@ -650,6 +672,8 @@ typedef struct
 }AMS_PRI_AREA_t;
 
 #define AmsCfgData         (SystemData.AmsPriData.amsCfgData)
+#define AmsLicData         (SystemData.AmsPriData.amsLicData)
+
 
 #define AmsCfgTellerHashTbl	(SystemData.AmsPriData.amsCfgData.tellerInfoHashTbl)
 #define AmsCfgVtmHashTbl	(SystemData.AmsPriData.amsCfgData.vtmInfoHashTbl)

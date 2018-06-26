@@ -55,7 +55,7 @@ int VtaRegReqProc(int iThreadId, MESSAGE_t *pMsg)
 	
 	//unpack Vpart TermNetInfo
 	memset(&tellerNetInfo,0,sizeof(TERM_NET_INFO));
-	iret = AmsUnpackVtaRegReqOpartPara(p, pMsg->iMessageLength - tellerIdLen-1, &tellerNetInfo);
+	//iret = AmsUnpackVtaRegReqOpartPara(p, pMsg->iMessageLength - tellerIdLen-1, &tellerNetInfo);´ý¿ª·¢
     if(AMS_OK != iret)
 	{
 		dbgprint("VtaRegReqProc[%d][%d][%d] Teller[%s] UnpackVtaRegReqPara Err", 

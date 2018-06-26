@@ -520,12 +520,12 @@ int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 		//判断业务类型是不是业务类型列表中
 		//不是 返回错误
 		//是 将业务类型添加到业务组数组中
-		if(AMS_ERROR == amsCheckServiceName(stringword))
+/*待开发		if(AMS_ERROR == amsCheckServiceName(stringword))
 		{
 			Display("ServiceGroup[%s]Senten amsCheckServiceName[%s]Err!\r\n",
 				serviceId);
 			return FAILURE;
-		}
+		}邋*/
 
 		for(i = 0; i < AMS_MAX_SERVICE_NUM;i++)
 		{		//判断业务类型是否已经安装过

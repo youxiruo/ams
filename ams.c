@@ -82,10 +82,10 @@ int ProcessAmsMessage(int iThreadId,MESSAGE_t *pMsg)
 		iret = AmsProcAMsg(iThreadId,pMsg);
 		break;	
 	case B:
-		iret = AmsProcBMsg(iThreadId,pMsg);	
+		//iret = AmsProcBMsg(iThreadId,pMsg);	
 		break;
 	case C:
-		iret = AmsProcCMsg(iThreadId,pMsg);		
+		//iret = AmsProcCMsg(iThreadId,pMsg);		
 		break;	
 
 	default:
