@@ -31,6 +31,12 @@ int AmsSrvVtmSenten(WORD_t *word,int wordcount,unsigned char pCurrId[]);
 int AmsSrvQueueSenten(WORD_t *word,int wordcount,unsigned char pCurrId[]);
 
 
+//func defined int amspack.c
+int AmsUnpackStateOperateReqOpartPara(unsigned char body[], int bodyLen, STATE_OP_INFO *pStateOpInfo);
+int AmsPackVtaLoginBase(unsigned char tellerIdLen,unsigned char tellerId[],int iret,unsigned char p[],LP_AMS_DATA_t	*lpAmsData);
+
+
+
 //func defined in amssrvmng.c
 int AmsCfgDataInit();
 int VtaListInit();
@@ -92,7 +98,7 @@ int AmsSendCmsAuthinfoRsp(TELLER_INFO *tellcfginfo, MESSAGE_t *pMsg,int iret);
 //func defined in amsvta.c
 int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg);
 int VtaStateOperateReqProc(int iThreadId,MESSAGE_t *pMsg);
-int AmsSendVtaLoginRsp(LP_AMS_DATA_t *lpAmsData,MESSAGE_t *pMsg,int iret);
+int AmsSendVtaLoginRsp(MESSAGE_t *pMsg,int iret,MESSAGE_t *d_Msg,int num);
 int AmsSendVtaStateOperateRsp(LP_AMS_DATA_t *lpAmsData,MESSAGE_t *pMsg,int iret);
 int AmsSendTellerEventInd(LP_AMS_DATA_t *lpAmsData,unsigned int tellerEventInd, unsigned char vtmid[],unsigned char vtmidlen,unsigned int vtmtype,int iret);
 

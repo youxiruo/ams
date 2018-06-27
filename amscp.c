@@ -309,7 +309,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 
 	//tellerid in regnode or not
 	regtellinfonode=AmsSearchRegTellerInfoHash(tellerId,telleridlen);
-	if(NULL == regtellinfonode && AmsCfgSrvGroup(i).isAutoFlag == AMS_SRVGRP_HUMAN)
+	if(NULL == regtellinfonode && AmsCfgSrvGroup(i).isAutoFlag == AMS_SRVGRP_TYPE_HUMAN)
 	{
 			dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
 			iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
@@ -451,7 +451,7 @@ int VtaAuthinfoReqProc(int iThreadId, MESSAGE_t *pMsg)
 	//tellerid in regnode or not
 	srvGrpIdPos = AmsCfgTeller(tellinfonode->tellerInfopos).srvGrpIdPos;
 	regtellinfonode=AmsSearchRegTellerInfoHash(tellerId,tellerIdLen);
-	if(NULL == regtellinfonode && AmsCfgSrvGroup(srvGrpIdPos).isAutoFlag == AMS_SRVGRP_HUMAN)
+	if(NULL == regtellinfonode && AmsCfgSrvGroup(srvGrpIdPos).isAutoFlag == AMS_SRVGRP_TYPE_HUMAN)
 	{
 		//dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callid);
 		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;

@@ -356,6 +356,7 @@ int AmsSrvServiceSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 	}
 	
 	memset(stringword, 0, sizeof(stringword));
+	memcpy(stringword, word[0].Body, word[0].Len);
 
 	if(0 == strcmp(stringword,"servicename"))
 	{
@@ -435,6 +436,9 @@ int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 	char                 serviceName[AMS_MAX_SERVICE_NAME_LEN];
 	unsigned char        isAutoFlag = 0;	
 
+	memset(stringword, 0, sizeof(stringword));
+	memcpy(stringword, word[0].Body, word[0].Len);
+
 	if(0 == strcmp(stringword,"servicegroupname"))
 	{
 		memset(stringword,0,sizeof(stringword));
@@ -475,6 +479,9 @@ int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 					AmsCfgSrvGroup(i).flag = AMS_SERVICE_GROUP_INSTALL;
 					strcpy(pCurrId,stringword);
 					pCurrId[srvGroupNameLen] = '\0';
+					AmsSrvData(i).serviceState = AMS_SERVICE_ACTIVE;
+					Display("ServiceGroup[%s]Installed!\r\n",AmsCfgSrvGroup(i).srvGrpId);
+					break;
 				}
 			}
         }
@@ -543,11 +550,11 @@ int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 		AmsCfgSrvGroup(i).srvInfo[j].serviceNameLen = srvNameLen;
 		AmsCfgSrvGroup(serviceIdpos).srvlogpos++ ;
 	}
-	if(0 == strcmp(stringword,"isAutoFlag"))
+	if(0 == strcmp(stringword,"isautoflag"))
 	{
 		isAutoFlag = atoi((const char *)word[2].Body);
 
-		if(isAutoFlag > 1)
+		if(isAutoFlag > AMS_SRVGRP_TYPE_MAX)
 		{
 			Display("ServiceGroup[%s] Senten isAutoFlag[%d] Err!\r\n",*pCurrId, isAutoFlag);
 			return FAILURE;
@@ -576,6 +583,8 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 	int                  vtaNum = 0;
 	int                  result = FAILURE;
 	TELLER_INFO_NODE	*pTellerInfoNode = NULL;
+	unsigned char        tellerPwdLen = 0;
+	unsigned char		tellertype=0;
 
 	if(NULL == pCurrId)
 	{
@@ -645,6 +654,7 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 							pTellerInfoNode->tellerInfopos=i;
 
 							AmsInsertTellerInfoHash(pTellerInfoNode);
+							break;
 						}
 					}
 				}
@@ -686,7 +696,7 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 	//其他teller涉及到的参数配置
 
 	
-	if(0 == strcmp(stringword,"srvgrpid"))
+	if(0 == strcmp(stringword,"servicegroupname"))
 	{
 		//获取id的值
 		memset(stringword,0,sizeof(stringword));
@@ -727,9 +737,49 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 			}
 		}
 	}
+	else if(0 == strcmp(stringword,"password"))
+	{
+		memset(stringword,0,sizeof(stringword));
+		if(word[2].Len <= AMS_MAX_STRING_WORD_LEN)
+		{
+			memcpy(stringword, word[2].Body, word[2].Len);
+		}
+		else
+		{
+			Display("Teller[%s]Senten password[%s] len[%d]Err!\r\n",
+				pCurrId, stringword, word[2].Len);
+			return FAILURE;
+		}
 
+		tellerPwdLen = strlen(stringword);
+        if(tellerPwdLen >= 0 && tellerPwdLen <= AMS_MAX_PWD_LEN)
+        {
+			strcpy((char *)AmsCfgTeller(i).tellerPwd, stringword); 	
+			AmsCfgTeller(i).tellerPwd[tellerPwdLen] = '\0';
+			AmsCfgTeller(i).tellerPwdLen = tellerPwdLen;
+        }
+		else
+		{
+			Display("Teller[%s]Senten Pwd[%s] len[%d]Err!\r\n",
+				pCurrId, stringword, tellerPwdLen);
+			return FAILURE;
+		}
+	}
+	else if(0 == strcmp(stringword,"type"))
+	{
+		tellertype= atoi((const char *)word[2].Body);
 
-
+		if(tellertype > AMS_TELLER_MAX)
+		{
+			Display("Teller[%s]Type[%s] Err!\r\n",pCurrId, tellertype);
+						return FAILURE; 	
+		}	
+		AmsCfgTeller(i).tellerType = tellertype;
+	}
+	else
+	{
+		return FAILURE;
+	}
 	return SUCCESS;
 }
 

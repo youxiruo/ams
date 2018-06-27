@@ -15,6 +15,7 @@ enum amsOParaId_t
 {
 	
 	AMS_STATE_OP_INFO_ID = 0x03,
+	AMS_VTA_LOGIN_ERR_ID = 0x16,
 };
 
 enum amsTimerType_t
@@ -51,11 +52,24 @@ enum amsTimerStatType_t
 	AMS_TIMER_TIMEOUT,
 };
 
+enum amsTellerType_t
+{
+	AMS_TELLER_RSVD								= 0,
+	AMS_TELLER_ROBOT							= 1,
+	AMS_TELLER_TELLER							= 2,
+	AMS_TELLER_MANAGER							= 3,
+	AMS_TELLER_INSPECTOR						= 4,
+	AMS_TELLER_MAX,
+};
 
 enum amsSrvGrpAutoFlag
 {
-	AMS_SRVGRP_AUTO								=1,
-	AMS_SRVGRP_HUMAN							=2,
+	AMS_SRVGRP_RSVD								= 0,
+		
+	AMS_SRVGRP_TYPE_AUTO						= 1,
+	AMS_SRVGRP_TYPE_HUMAN						= 2,
+	
+	AMS_SRVGRP_TYPE_MAX,
 };
 
 enum amsParaId
@@ -449,7 +463,8 @@ enum amsVtaQueueMngResult
 {
 	AMS_VTA_QUEUE_MNG_SUCCESS = 0,
 
-	AMS_VTA_LOGIN_PARA_ERR = AMS_VTA_QUEUE_MNG_REASON_BASE,
+	AMS_VTA_LOGIN_PID_ERR = AMS_VTA_QUEUE_MNG_REASON_BASE,
+	AMS_VTA_LOGIN_PARA_ERR,
 	AMS_VTA_LOGIN_STATE_ERR,
 	AMS_VTA_LOGIN_LEN_ERR,
 	AMS_VTA_LOGIN_LP_RESOURCE_LIMITED,

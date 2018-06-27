@@ -148,6 +148,19 @@ typedef struct stateOperateInfo_t
 
 }STATE_OP_INFO;
 
+typedef struct termInfo_t
+{
+	DWORD		ip;
+	unsigned char ipv6[16];
+	WORD		port;
+}TERM_INFO;
+
+typedef struct tellerPersonalInfo_t
+{
+	unsigned char tellerUserName[AMS_MAX_NAME_LEN + 1];
+	unsigned char tellerNickName[AMS_MAX_NAME_LEN + 1];
+	unsigned char tellertype;
+}TELLER_PERSONAL_INFO;
 
 typedef struct tellerInfo_t
 {
@@ -158,14 +171,14 @@ typedef struct tellerInfo_t
 	DWORD           tellerIdLen;                      //柜员标识
 	unsigned char	tellerId[AMS_MAX_TELLER_ID_LEN + 1];
 
-	DWORD           tellerType;                    //柜员类型
+	DWORD           tellerType;                    	//坐席类型
 
 	DWORD           srvGrpIdLen;                      //业务组编号
 	unsigned char   srvGrpId[AMS_MAX_SERVICE_GROUP_NAME_LEN +1];
 	DWORD			srvGrpIdPos;
 
-	DWORD           tellerSrvAuthRsvd;             //Service Authority 业务处理权限预留
-	DWORD           tellerSrvAuth;                 //Service Authority 业务处理权限
+//	DWORD           tellerSrvAuthRsvd;             //Service Authority 业务处理权限预留
+//	DWORD           tellerSrvAuth;                 //Service Authority 业务处理权限
 
 	//unsigned char   tellerNoLen;                     //柜员工号长度 zhuyn added 20160621 
 	//unsigned char   tellerNo[AMS_MAX_TELLER_NO_LEN + 1]; 
@@ -198,6 +211,9 @@ typedef struct tellerInfo_t
 	WORD            vtaScreenRecPort; 	
 	WORD            vtaRemoteCoopPort;             //vta pack          
 	WORD            vtaRemoteCoopType;             //vta pack  
+
+	TERM_INFO		termInfo;                     //终端网络信息
+	TELLER_PERSONAL_INFO tellerPersionalInfo;     //坐席个人信息
 	
 }TELLER_INFO;
 

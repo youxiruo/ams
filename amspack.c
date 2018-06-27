@@ -109,3 +109,42 @@ int AmsUnpackStateOperateReqOpartPara(unsigned char body[], int bodyLen, STATE_O
 	return AMS_OK;
 }
 
+int AmsPackVtaLoginBase(unsigned char tellerIdLen,unsigned char tellerId[],int iret,unsigned char p[],LP_AMS_DATA_t	*lpAmsData)
+{
+	int len=0;
+	
+	if(tellerId == NULL || p == NULL)
+	{
+		dbgprint("AmsPackVtaLoginBase Error");
+		return 0;
+	}
+
+	if(NULL == lpAmsData)
+	{
+		BEPUTLONG(0,p);
+	}
+	else
+	{
+		BEPUTLONG(lpAmsData->amsPid,p);
+	}
+	p+=4;
+	*p++=tellerIdLen;
+	memcpy(p,tellerId,tellerIdLen);	
+	p+=tellerIdLen;
+
+	if(iret != AMS_VTA_QUEUE_MNG_SUCCESS)
+	{
+		*p++=AMS_VTA_LOGIN_ERR_ID;
+		BEPUTSHORT(4,p);
+		p+=2;
+
+		BEPUTLONG(iret,p);
+		p+=4;
+
+		return tellerIdLen+12;	
+	}
+	else
+	{
+		return tellerIdLen+5;
+	}
+}
