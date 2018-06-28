@@ -101,6 +101,7 @@ int VtaStateOperateReqProc(int iThreadId,MESSAGE_t *pMsg);
 int AmsSendVtaLoginRsp(MESSAGE_t *pMsg,int iret,MESSAGE_t *d_Msg,int num);
 int AmsSendVtaStateOperateRsp(LP_AMS_DATA_t *lpAmsData,MESSAGE_t *pMsg,int iret);
 int AmsSendTellerEventInd(LP_AMS_DATA_t *lpAmsData,unsigned int tellerEventInd, unsigned char vtmid[],unsigned char vtmidlen,unsigned int vtmtype,int iret);
+int AmsSendVtaStateOperateInd(LP_AMS_DATA_t *lpAmsData, MESSAGE_t *pMsg, unsigned short stateOpInd,unsigned short statesubOpInde);
 
 
 

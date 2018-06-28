@@ -91,7 +91,7 @@ int VtaRegReqProc(int iThreadId, MESSAGE_t *pMsg)
 	{
 		dbgprint("VtaLoginReqProc[%d] TellerId[%s][%d]not Find", pid, tellerId, tellerIdLen);
 		iret = AMS_VTA_LOGIN_TELLER_NO_ERR;
-		AmsSendVtaLoginRsp(NULL,pMsg,iret);
+		//AmsSendVtaLoginRsp(NULL,pMsg,iret);
 		return AMS_ERROR;
 	}
 
@@ -213,13 +213,13 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	unsigned int        i = 0;
 	unsigned char       *p;	
 	unsigned char 		telleridlen=0,srvgrpidlen=0,srvtypelen=0;
-	unsigned char		tellerId[AMS_MAX_TELLER_ID_LEN+1];
-	unsigned char		srvgrpid[AMS_MAX_SERVICE_GROUP_NAME_LEN+1];
-	unsigned char		srvtype[AMS_MAX_SERVICE_NAME_LEN+1];
+	unsigned char		tellerId[AMS_MAX_TELLER_ID_LEN+1] = { 0 };
+	unsigned char		srvgrpid[AMS_MAX_SERVICE_GROUP_NAME_LEN+1] = { 0 };
+	unsigned char		srvtype[AMS_MAX_SERVICE_NAME_LEN+1] = { 0};
 	TELLER_INFO_NODE	*tellinfonode=NULL;
 	TELLER_REGISTER_INFO_NODE *regtellinfonode=NULL;
 	DWORD				CallOutType=0;
-
+	
 	//get remote pid
 	pid = pMsg->s_SenderPid.iProcessId;
 
@@ -281,7 +281,8 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	memcpy(srvtype,p,srvtypelen);
 	p+=srvtypelen;
 
-	BEPUTLONG(CallOutType,p);
+	BEGETSHORT(CallOutType,p);
+	p+=2;
 
 	for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
 	{
@@ -309,7 +310,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 
 	//tellerid in regnode or not
 	regtellinfonode=AmsSearchRegTellerInfoHash(tellerId,telleridlen);
-	if(NULL == regtellinfonode && AmsCfgSrvGroup(i).isAutoFlag == AMS_SRVGRP_TYPE_HUMAN)
+	if(NULL == regtellinfonode && AmsCfgSrvGroup(srvGrpId).isAutoFlag == AMS_SRVGRP_TYPE_HUMAN)
 	{
 			dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
 			iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
@@ -390,6 +391,19 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	AmsSendCmsVtaCalloutRsp(lpAmsData,pMsg,iret,CallOutType);	
 
 	//send vta busy
+	if(CallOutType == 1)
+	{
+		AmsSendVtaStateOperateInd(lpAmsData,pMsg,VTA_STATE_OPERATE_IND_BUSY,VTA_STATE_OPERATE_IND_BUSY_CALLOUTSOLO);
+	}
+	//send vta busy
+	else if(CallOutType == 2)
+	{
+		AmsSendVtaStateOperateInd(lpAmsData,pMsg,VTA_STATE_OPERATE_IND_BUSY,VTA_STATE_OPERATE_IND_BUSY_CALLOUTDB);
+	}
+	else
+	{
+		AmsSendVtaStateOperateInd(lpAmsData,pMsg,VTA_STATE_OPERATE_IND_BUSY,VTA_STATE_OPERATE_IND_BUSY_IND);
+	}
 	
 	return iret;
 }
@@ -615,9 +629,9 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 			/*dbgprint("CallEventNoticeProc[%d] Event[%d] OriginTeller[%s][%d] ServiceState[%d]Err", 
 				pid, callEventNotice, originVtaNo, originTellerId, 
 				AmsSrvData(lpOriginAmsData->srvGrpIdPos).serviceState);*/
-			iret = AMS_CMS_EVENT_NOTICE_ORIGIN_TELLER_SERVICE_STATE_ERR;
-			AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret); 
-			return AMS_ERROR;			
+			//iret = AMS_CMS_EVENT_NOTICE_ORIGIN_TELLER_SERVICE_STATE_ERR;
+			//AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret); 
+			//return AMS_ERROR;			
 		/*}
 
 		//×øÏ¯×´Ì¬¼ì²é
@@ -812,6 +826,9 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 			//reset sessStat
 			//memset(&lpAmsData->sessStat, 0, sizeof(AMS_SESSION_STAT));	
 
+			//send vta ind
+			AmsSendVtaStateOperateInd(lpAmsData,pMsg,VTA_STATE_OPERATE_IND_IDLE,VTA_STATE_OPERATE_IND_IDLE_REL);
+
 		}
 		AmsSetVtaCallState(lpAmsData, pVtaNode, newState);
 	}
@@ -947,13 +964,13 @@ int AmsSendCmsVtaCalloutRsp(LP_AMS_DATA_t *lpAmsData,MESSAGE_t *pMsg,int iret,DW
 		
 	s_Msg.iMessageLength += 1;
 
-	BEPUTLONG(callouttype, p);	
-	p += 4;
+	BEPUTSHORT(callouttype, p);	
+	p += 2;
 
 	BEPUTLONG(iret, p);
 	p += 4;
 
-	s_Msg.iMessageLength += 8;
+	s_Msg.iMessageLength += 6;
 
 	SendMsgBuff(&s_Msg,0);
 

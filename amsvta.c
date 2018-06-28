@@ -16,7 +16,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 	unsigned int         tellerLoginNum = 0;
 	unsigned int		 tellerNum = 0;
 	int                  pid = 0;	
-	int                  i = 0;
+	int                  i = 0,j = 0;
 	unsigned char        *p;	
 	int					 telleridhash=0;
 	TELLER_INFO_NODE	*pTellerInfoNode = NULL;
@@ -69,7 +69,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 			dbgprint("VtaLoginReqProc[%d] TellerIdLen[%d] Err", pid, tellerIdLen);
 			iret = AMS_VTA_LOGIN_TELLER_PWD_ERR;
 			ret = AMS_VTA_LOGIN_PARA_ERR;
-			packlen+=AmsPackVtaLoginBase(tellerIdLen,p,iret,&s_Msg.cMessageBody[5+packlen],NULL);			
+			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],NULL);			
 			continue;			
 		}
 		memcpy(tellerPwd,p,tellerPwdLen);
@@ -94,7 +94,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 			dbgprint("VtaLoginReqProc[%d] TellerId[%s][%d]not Find", pid, tellerId, tellerIdLen);
 			iret = AMS_VTA_LOGIN_TELLER_NO_ERR;
 			ret = AMS_VTA_LOGIN_PARA_ERR;
-			packlen+=AmsPackVtaLoginBase(tellerIdLen,p,iret,&s_Msg.cMessageBody[5+packlen],NULL);
+			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],NULL);
 			continue;
 		}
 
@@ -107,14 +107,14 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 			dbgprint("VtaLoginReqProc[%d] Pwd[%s]Err", pid, tellerPwd);
 			iret = AMS_VTA_LOGIN_TELLER_PWD_ERR;
 			ret = AMS_VTA_LOGIN_PARA_ERR;
-			packlen+=AmsPackVtaLoginBase(tellerIdLen,p,iret,&s_Msg.cMessageBody[5+packlen],NULL);
+			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],NULL);
 			continue;	
 		}
 
 		//检查已登陆柜员数量
-		for(i = 0; i< AMS_MAX_SERVICE_GROUP_NUM;i++)
+		for(j = 0; j< AMS_MAX_SERVICE_GROUP_NUM;j++)
 		{
-			tellerNum += lstCount(&AmsSrvData(i).vtaList);
+			tellerNum += lstCount(&AmsSrvData(j).vtaList);
 		}
 
 
@@ -125,7 +125,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 				pid, tellerId, tellerNum, SystemData.AmsPriData.amsCfgData.maxVtaNum, AMS_MAX_VTA_NODES);
 			iret = AMS_VTA_LOGIN_TELLER_NUM_ERR;
 			ret = AMS_VTA_LOGIN_PARA_ERR;
-			packlen+=AmsPackVtaLoginBase(tellerIdLen,p,iret,&s_Msg.cMessageBody[5+packlen],NULL);
+			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],NULL);
 			continue;
 		}
 
@@ -141,7 +141,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 					pid, tellerId, tellerCfgPos);		
 				iret = AMS_VTA_LOGIN_TELLER_LOGIN_REPEATEDLY;
 				ret = AMS_VTA_LOGIN_PARA_ERR;
-				packlen+=AmsPackVtaLoginBase(tellerIdLen,p,iret,&s_Msg.cMessageBody[5+packlen],NULL);
+				packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],NULL);
 				continue;
 			}	
 		}
@@ -154,7 +154,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 			dbgprint("VtaLoginReqProc[%d] Teller[%s] AmsAllocPid: SysBusy", pid, tellerId);
 			iret = AMS_VTA_LOGIN_LP_RESOURCE_LIMITED;
 			ret = AMS_VTA_LOGIN_PARA_ERR;
-			packlen+=AmsPackVtaLoginBase(tellerIdLen,p,iret,&s_Msg.cMessageBody[5+packlen],NULL);
+			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],NULL);
 			continue;
 		}
 
@@ -165,7 +165,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 	 		dbgprint("VtaLoginReqProc[%d] Teller[%s] VtaNodeGet Failed", pid, tellerId);
 			iret = AMS_VTA_LOGIN_NODE_RESOURCE_LIMITED;
 			ret = AMS_VTA_LOGIN_PARA_ERR;
-			packlen+=AmsPackVtaLoginBase(tellerIdLen,p,iret,&s_Msg.cMessageBody[5+packlen],NULL);
+			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],NULL);
 			AmsReleassPid(Pid, FAILURE);
 			continue;
 		}
@@ -279,7 +279,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 		lstAdd(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).vtaList, (NODE *)pVtaNode);
 		Sem_post(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).vtaCtrl);
 
-		packlen+=AmsPackVtaLoginBase(tellerIdLen,p,iret,&s_Msg.cMessageBody[5+packlen],NULL);
+		packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],lpAmsData);
 		if(packlen == 0)
 		{
 			return AMS_ERROR;
@@ -705,5 +705,79 @@ int AmsSendTellerEventInd(LP_AMS_DATA_t *lpAmsData,unsigned int tellerEventInd, 
 	SendMsgBuff(&s_Msg,0);
 
 	return AMS_OK;
+}
+
+
+
+int AmsSendVtaStateOperateInd(LP_AMS_DATA_t *lpAmsData, MESSAGE_t *pMsg, unsigned short stateOpInd,unsigned short statesubOpInde)
+{
+	MESSAGE_t           s_Msg;
+	unsigned char       *p;
+
+	memset(&s_Msg,0,sizeof(MESSAGE_t));
+
+	if(NULL == pMsg)
+	{
+		return AMS_ERROR;
+	}
+	
+	s_Msg.eMessageAreaId = A;
+	memcpy(&s_Msg.s_ReceiverPid,&lpAmsData->rPid,sizeof(PID_t));
+	s_Msg.s_SenderPid.cModuleId = SystemData.cMid;
+	s_Msg.s_SenderPid.cFunctionId = FID_AMS;
+	if(NULL != lpAmsData)
+	{
+		s_Msg.s_SenderPid.iProcessId = lpAmsData->myPid.iProcessId;
+		
+	}
+	else
+	{
+		s_Msg.s_SenderPid.iProcessId = pMsg->s_ReceiverPid.iProcessId;
+	}
+	s_Msg.iMessageType = A_VTA_STATE_OPERATE_IND;
+	s_Msg.iMessageLength = 0;
+	
+	p = &s_Msg.cMessageBody[0];
+	if(lpAmsData != NULL)
+	{
+		BEPUTLONG(lpAmsData->amsPid, p);
+		p += 4;
+		
+		//BEPUTLONG(lpAmsData->tellerId, p);
+		//p += 4;
+		*p++=lpAmsData->tellerIdLen;
+		memcpy(p,lpAmsData->tellerId,lpAmsData->tellerIdLen);
+		p+=lpAmsData->tellerIdLen;
+		s_Msg.iMessageLength += 5+lpAmsData->tellerIdLen;
+	}
+	else
+	{
+		memcpy(p, pMsg->cMessageBody, 8);
+		p += 8;
+		//待改
+	}
+	
+	BEPUTSHORT(stateOpInd, p);
+	p += 2;
+	s_Msg.iMessageLength += 2;
+
+	if(stateOpInd == VTA_STATE_OPERATE_IND_IDLE || stateOpInd == VTA_STATE_OPERATE_IND_BUSY)
+	{
+		*p++ = AMS_STATE_OP_INFO_ID;
+
+		BEPUTSHORT(4,p);
+		p += 4;
+
+		BEPUTSHORT(statesubOpInde,p);
+		p +=2;
+
+		BEPUTSHORT(0,p);
+		p +=2;
+		s_Msg.iMessageLength += 9;
+	}
+	
+	SendMsgBuff(&s_Msg,0);
+
+	return SUCCESS;
 }
 
