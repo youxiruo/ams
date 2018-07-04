@@ -82,7 +82,7 @@ int ProcessAmsMessage(int iThreadId,MESSAGE_t *pMsg)
 		iret = AmsProcAMsg(iThreadId,pMsg);
 		break;	
 	case B:
-		//iret = AmsProcBMsg(iThreadId,pMsg);	
+		iret = AmsProcBMsg(iThreadId,pMsg);	
 		break;
 	case C:
 		//iret = AmsProcCMsg(iThreadId,pMsg);		
@@ -186,6 +186,9 @@ int AmsProcVtaMsg(int iThreadId, MESSAGE_t *pMsg)
 		case A_VTA_STATE_OPERATE_REQ:
 			iret = VtaStateOperateReqProc(iThreadId,pMsg); 
 			break;
+		case A_VTA_STATE_OPERATE_CNF:
+			iret = VtaStateOperateCnfProc(iThreadId,pMsg);
+			break;
 		default:
 			//消息统计
 			//AmsMsgStatProc()
@@ -239,6 +242,58 @@ int AmsProcCmsMsg(int iThreadId, MESSAGE_t *pMsg)
 			//消息统计
 			//AmsMsgStatProc()
 			dbgprint("AMS Proc Cms Msg Error: MsgCode: iMessageType=0x%x.\n\t", pMsg->iMessageType);
+			return AMS_ERROR;
+	}
+
+	return iret;
+}
+
+//------------------------------------
+//功能:	B区消息处理函数	
+//入口:	iThreadId:线程号 pMsg:B区消息
+//返回:	0:成功,其他:失败	
+//说明:	Ams B区消息处理函数调用
+//修改:
+//------------------------------------
+int AmsProcBMsg(int iThreadId,MESSAGE_t *pMsg)
+{
+	int		            iret = 0;
+	TIMEMESSAGE_t	    *pTmMsg;
+
+	pTmMsg = (TIMEMESSAGE_t *)pMsg;
+	
+	//入参检查
+	if((pTmMsg->iMessageLength < 0) || (pTmMsg->iMessageLength >= MSG_BODY_LEN))
+	{
+		//统计
+		//AmsMsgStat.amsErrBMsg++;
+		
+		return AMS_ERROR;
+	}
+
+    //接收进程号检查
+	if((pTmMsg->s_ReceiverPid.cModuleId != SystemData.cMid)||(pTmMsg->s_ReceiverPid.cFunctionId != FID_AMS))
+	{
+		//统计
+		//AmsMsgStat.amsErrBMsg++;	
+		
+		return AMS_ERROR;
+	}
+	
+	//MSG STAT
+	//AmsMsgStatProc(AMS_B_MSG, pMsg->iMessageType);
+
+    switch(pTmMsg->iMessageType)
+	{
+		case B_AMS_VTA_STATE_OP_IND_TIMEOUT:
+			AmsTimerStatProc(T_AMS_VTA_STATE_OPERATE_IND_TIMER, AMS_TIMER_TIMEOUT);
+			iret = VtaStateOperateIndTimeoutProc(iThreadId,pTmMsg); 
+			break;
+						
+		default:
+			//消息统计，默认未知定时器统计
+			AmsTimerStatProc(T_AMS_TIMER_MAX, AMS_TIMER_TIMEOUT);
+			dbgprint("AMS B Area Msg Error: MsgCode: iMessageType=0x%x.\n\t", pTmMsg->iMessageType);
 			return AMS_ERROR;
 	}
 

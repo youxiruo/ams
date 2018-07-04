@@ -25,6 +25,16 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 
 	memset(&s_Msg,0,sizeof(MESSAGE_t));
 
+	if(AmsMsgTrace)
+	{
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"recv A_VTA_LOGIN_REQ msg \n");	
+		AmsTraceToFile(pMsg->s_ReceiverPid,pMsg->s_SenderPid,"A_VTA_LOGIN_REQ",description,
+						descrlen,pMsg->cMessageBody,pMsg->iMessageLength,"ams");		
+	}
+
 	pid = pMsg->s_SenderPid.iProcessId;
 
 	//检查接受进程号
@@ -44,6 +54,13 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 	p = pMsg->cMessageBody;
 	BEGETSHORT(tellerLoginNum, p);
 	p+=2;
+
+	
+	//检查已登陆柜员数量
+	for(j = 0; j< AMS_MAX_SERVICE_GROUP_NUM;j++)
+	{
+			tellerNum += lstCount(&AmsSrvData(j).vtaList);
+	}
 	
 	for(i=0;i<tellerLoginNum;i++)
 	{
@@ -56,7 +73,8 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 			dbgprint("VtaLoginReqProc[%d] TellerIdLen[%d] Err", pid, tellerIdLen);
 			iret = AMS_VTA_LOGIN_TELLER_LEN_ERR;
 			ret = AMS_VTA_LOGIN_PARA_ERR;
-			packlen+=AmsPackVtaLoginBase(tellerIdLen,p,iret,&s_Msg.cMessageBody[5+packlen],NULL);			
+			p+=tellerIdLen;
+			packlen+=AmsPackVtaLoginBase(tellerIdLen,p,iret,&s_Msg.cMessageBody[6+packlen],NULL);			
 			continue;
 		}
 		memcpy(tellerId,p,tellerIdLen);
@@ -69,10 +87,12 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 			dbgprint("VtaLoginReqProc[%d] TellerIdLen[%d] Err", pid, tellerIdLen);
 			iret = AMS_VTA_LOGIN_TELLER_PWD_ERR;
 			ret = AMS_VTA_LOGIN_PARA_ERR;
-			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],NULL);			
+			p+=tellerPwdLen;
+			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[6+packlen],NULL);			
 			continue;			
 		}
 		memcpy(tellerPwd,p,tellerPwdLen);
+		p+=tellerPwdLen;
 		
 		//check len
 
@@ -94,7 +114,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 			dbgprint("VtaLoginReqProc[%d] TellerId[%s][%d]not Find", pid, tellerId, tellerIdLen);
 			iret = AMS_VTA_LOGIN_TELLER_NO_ERR;
 			ret = AMS_VTA_LOGIN_PARA_ERR;
-			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],NULL);
+			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[6+packlen],NULL);
 			continue;
 		}
 
@@ -107,16 +127,9 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 			dbgprint("VtaLoginReqProc[%d] Pwd[%s]Err", pid, tellerPwd);
 			iret = AMS_VTA_LOGIN_TELLER_PWD_ERR;
 			ret = AMS_VTA_LOGIN_PARA_ERR;
-			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],NULL);
+			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[6+packlen],NULL);
 			continue;	
 		}
-
-		//检查已登陆柜员数量
-		for(j = 0; j< AMS_MAX_SERVICE_GROUP_NUM;j++)
-		{
-			tellerNum += lstCount(&AmsSrvData(j).vtaList);
-		}
-
 
 		//检查cfg and sys vtanum
 		if(tellerNum >= SystemData.AmsPriData.amsCfgData.maxVtaNum || tellerNum >= AMS_MAX_VTA_NODES)
@@ -125,7 +138,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 				pid, tellerId, tellerNum, SystemData.AmsPriData.amsCfgData.maxVtaNum, AMS_MAX_VTA_NODES);
 			iret = AMS_VTA_LOGIN_TELLER_NUM_ERR;
 			ret = AMS_VTA_LOGIN_PARA_ERR;
-			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],NULL);
+			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[6+packlen],NULL);
 			continue;
 		}
 
@@ -141,7 +154,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 					pid, tellerId, tellerCfgPos);		
 				iret = AMS_VTA_LOGIN_TELLER_LOGIN_REPEATEDLY;
 				ret = AMS_VTA_LOGIN_PARA_ERR;
-				packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],NULL);
+				packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[6+packlen],NULL);
 				continue;
 			}	
 		}
@@ -154,7 +167,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 			dbgprint("VtaLoginReqProc[%d] Teller[%s] AmsAllocPid: SysBusy", pid, tellerId);
 			iret = AMS_VTA_LOGIN_LP_RESOURCE_LIMITED;
 			ret = AMS_VTA_LOGIN_PARA_ERR;
-			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],NULL);
+			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[6+packlen],NULL);
 			continue;
 		}
 
@@ -165,7 +178,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 	 		dbgprint("VtaLoginReqProc[%d] Teller[%s] VtaNodeGet Failed", pid, tellerId);
 			iret = AMS_VTA_LOGIN_NODE_RESOURCE_LIMITED;
 			ret = AMS_VTA_LOGIN_PARA_ERR;
-			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],NULL);
+			packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[6+packlen],NULL);
 			AmsReleassPid(Pid, FAILURE);
 			continue;
 		}
@@ -230,6 +243,15 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 		lpAmsData->cmsPid.cFunctionId = FID_CMS;
 		lpAmsData->cmsPid.iProcessId  = 0;
 
+		//消息跟踪开关配置
+		lpAmsData->debugTrace  = (unsigned char)AmsDebugTrace;	
+		lpAmsData->commonTrace = (unsigned char)AmsCommonTrace;
+		lpAmsData->msgTrace    = (unsigned char)AmsMsgTrace;
+		lpAmsData->stateTrace  = (unsigned char)AmsStateTrace;
+		lpAmsData->timerTrace  = (unsigned char)AmsTimerTrace;
+		lpAmsData->errorTrace  = (unsigned char)AmsErrorTrace;
+		lpAmsData->alarmTrace  = (unsigned char)AmsAlarmTrace;	
+
 		/* VTA结点数据初始化 */
 	    //record amsPid
 		pVtaNode->amsPid = lpAmsData->amsPid;
@@ -279,17 +301,18 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 		lstAdd(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).vtaList, (NODE *)pVtaNode);
 		Sem_post(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).vtaCtrl);
 
-		packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[5+packlen],lpAmsData);
+		packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[6+packlen],lpAmsData);
 		if(packlen == 0)
 		{
 			return AMS_ERROR;
 		}
 
+		tellerNum+=1;
 	}
 
 	//pack 人工参数
 
-	s_Msg.iMessageLength = packlen + 5;
+	s_Msg.iMessageLength = packlen + 6;
 	//send Login Rsp to Vta
 	AmsSendVtaLoginRsp(pMsg,ret,&s_Msg,i);		
 	
@@ -313,6 +336,17 @@ int VtaStateOperateReqProc(int iThreadId, MESSAGE_t *pMsg)
 	unsigned char       timerPara[AMS_MAX_TIMER_PARA_LEN];
 	unsigned char       stateOpInfoSet = 0;
 	unsigned char       *p;
+
+
+	if(AmsMsgTrace)
+	{
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"recv A_VTA_STATE_OPERATE_REQ msg \n");	
+		AmsTraceToFile(pMsg->s_ReceiverPid,pMsg->s_SenderPid,"A_VTA_STATE_OPERATE_REQ",description,
+						descrlen,pMsg->cMessageBody,pMsg->iMessageLength,"ams");		
+	}	
 
 	//进程号有效检查
 	pid = pMsg->s_ReceiverPid.iProcessId;
@@ -547,7 +581,144 @@ int VtaStateOperateReqProc(int iThreadId, MESSAGE_t *pMsg)
 	return iret;
 }
 
+int VtaStateOperateCnfProc(int iThreadId, MESSAGE_t *pMsg)
+{
+	int					iret = AMS_VTA_QUEUE_MNG_SUCCESS;
+	LP_AMS_DATA_t		*lpAmsData = NULL;          //进程数据区指针
+	LP_AMS_DATA_t		*lpAmsManagerData = NULL;   //进程数据区指针	
+	VTA_NODE            *pVtaNode = NULL;		
+	VTA_NODE            *pManagerNode = NULL;			
+	int                 pid = 0;
+	int                 managerPid = 0;	
+	unsigned int        amsPid = 0;
+	unsigned char       tellerIdLen = 0;
+	unsigned char       tellerId[AMS_MAX_TELLER_ID_LEN + 1] = { 0 };	
+//	unsigned int        managerTellerId = 0;	
+//	unsigned char       managerNo[AMS_MAX_TELLER_NO_LEN + 1] = { 0 };		
+	unsigned int      stateOpInd = 0;
+	unsigned int        stateSet = VTA_STATE_OPERATE_IND_RSVD;
+	time_t              currentTime;	
+	unsigned int        i = 0;
+	unsigned char       *p;
+	unsigned short      stateOperate = 0;
 
+	if(AmsMsgTrace)
+	{
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"recv A_VTA_STATE_OPERATE_CNF msg \n");	
+		AmsTraceToFile(pMsg->s_ReceiverPid,pMsg->s_SenderPid,"A_VTA_STATE_OPERATE_CNF",description,
+						descrlen,pMsg->cMessageBody,pMsg->iMessageLength,"ams");		
+	}
+
+	//进程号有效性检查
+	pid = pMsg->s_ReceiverPid.iProcessId;
+	if((0 == pid) || (pid >= LOGIC_PROCESS_SIZE))
+	{
+		dbgprint("VtaStateOperateCnfProc Pid:%d Err", pid);
+		iret = AMS_VTA_STATE_OPERATE_IND_CNF_PARA_ERR;
+		AmsResultStatProc(AMS_MANAGER_SET_VTA_STATE_RESULT, iret);
+		return AMS_ERROR;
+	}
+
+	lpAmsData=(LP_AMS_DATA_t *)ProcessData[pid];
+	
+	//amsPid检查
+	p = pMsg->cMessageBody;
+	BEGETLONG(amsPid,p);
+	if(lpAmsData->amsPid != amsPid)
+	{
+		dbgprint("VtaStateOperateCnfProc[%d] AmsPid[0x%x][0x%x] Err",pid,amsPid,lpAmsData->amsPid);
+		iret = AMS_VTA_STATE_OPERATE_AMS_PID_ERR;
+		AmsSendVtaStateOperateRsp(NULL,pMsg,iret);
+		return AMS_ERROR;
+	}
+
+	p += 4;
+
+	//进程号匹配性检查
+	if(lpAmsData->myPid.iProcessId != pid)
+	{
+		dbgprint("VtaStateOperateCnfProc PID[%d][%d] Not Equal", lpAmsData->myPid.iProcessId, pid);
+		iret = AMS_VTA_STATE_OPERATE_PARA_ERR;
+		AmsSendVtaStateOperateRsp(NULL,pMsg,iret);
+		return AMS_ERROR;
+	}
+
+	//坐席检查
+	tellerIdLen = *p++;
+	if(tellerIdLen > AMS_MAX_TELLER_ID_LEN && tellerIdLen != lpAmsData->tellerIdLen)
+	{
+		dbgprint("VtaStateOperateCnfProc[%d] TellerId[%u][%u]Err", 
+			pid, lpAmsData->tellerId, tellerId);
+		iret = AMS_VTA_STATE_OPERATE_TELLER_ID_ERR;
+		AmsSendVtaStateOperateRsp(NULL,pMsg,iret);
+		return AMS_ERROR;	
+	}
+
+	memcpy(tellerId,p,tellerIdLen);
+	if(0 != (strcmp(tellerId,lpAmsData->tellerId)))
+	{
+		dbgprint("VtaStateOperateCnfProc[%d] TellerId[%u][%u]Err", 
+			pid, lpAmsData->tellerId, tellerId);
+		iret = AMS_VTA_STATE_OPERATE_TELLER_ID_ERR;
+		AmsSendVtaStateOperateRsp(NULL,pMsg,iret);
+		return AMS_ERROR;			
+	}
+	p+=tellerIdLen;
+
+	//操作码检查
+	BEGETSHORT(stateOperate,p);
+	if(stateOperate < VTA_STATE_OPERATE_IDLE || stateOperate >= VTA_STATE_OPERATE_MAX)
+	{
+		dbgprint("VtaStateOperateReqProc[%d] Teller[%s]StateOperateCode[%d]Err", 
+			pid, tellerId, stateOperate);
+		iret = AMS_VTA_STATE_OPERATE_CODE_ERR;
+		AmsSendVtaStateOperateRsp(NULL,pMsg,iret);
+		return AMS_ERROR;					
+	}
+	p+=2;
+
+	if(lpAmsData->iTimerId >= 0)
+	{
+	    AmsKillTimer(pid, &lpAmsData->iTimerId);
+		AmsTimerStatProc(T_AMS_VTA_STATE_OPERATE_IND_TIMER, AMS_KILL_TIMER);
+	}
+	
+	//iret
+	BEGETLONG(iret, p);//原因值统一编码待定
+	
+	if(AMS_VTA_QUEUE_MNG_SUCCESS == iret)
+	{
+		if(stateOperate == VTA_STATE_OPERATE_IDLE)
+		{
+			//AmsKillVtaAllTimer(lpAmsData, pid);
+	
+			//仅杀掉呼叫相关定时器，包括消息、文件收发
+			AmsKillVtaAllCallTimer(lpAmsData, pid);
+			
+			//update time
+			memset(&pVtaNode->callStateStartLocalTime, 0, sizeof(TIME_INFO)); 
+			memset(&pVtaNode->callStateStartTime, 0, sizeof(time_t)); 
+	
+			//reset callTransferNum
+			//			pVtaNode->callTransferNum = 0;
+	
+#ifdef AMS_TEST_LT
+			//calc vta workInfo
+			time(&currentTime);  
+			AmsUpdateSingleVtaWorkInfo(pVtaNode, currentTime);
+	
+			//set Vta State and State Start Time
+			AmsSetVtaState(iThreadId, lpAmsData, pVtaNode, AMS_VTA_STATE_IDLE, 0);
+#endif			
+
+		}
+	}
+
+	return AMS_OK;
+}
 
 int AmsSendVtaLoginRsp(MESSAGE_t *pMsg,int iret,MESSAGE_t *s_Msg,int num)
 {
@@ -573,6 +744,18 @@ int AmsSendVtaLoginRsp(MESSAGE_t *pMsg,int iret,MESSAGE_t *s_Msg,int num)
 	BEPUTSHORT(num,p);
 	
 	SendMsgBuff(s_Msg,0);
+
+	if(AmsMsgTrace)
+	{	
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"send A_VTA_LOGIN_RSP msg \n");	
+		{
+			AmsTraceToFile(s_Msg->s_ReceiverPid,s_Msg->s_SenderPid,"A_VTA_LOGIN_RSP",description,
+				descrlen,s_Msg->cMessageBody,s_Msg->iMessageLength,"ams");	
+		}
+	}
 	
 	return AMS_OK;
 }
@@ -655,6 +838,18 @@ int AmsSendVtaStateOperateRsp(LP_AMS_DATA_t *lpAmsData,MESSAGE_t *pMsg,int iret)
 
 	//AmsMsgStatProc(AMS_VTA_MSG, s_Msg.iMessageType);
     //AmsResultStatProc(AMS_VTA_STATE_OPERATE_RESULT, iret);
+
+	if(AmsMsgTrace)
+	{	
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"send A_VTA_STATE_OPERATE_RSP msg \n");	
+		{
+			AmsTraceToFile(s_Msg.s_ReceiverPid,s_Msg.s_SenderPid,"A_VTA_STATE_OPERATE_RSP",description,
+				descrlen,s_Msg.cMessageBody,s_Msg.iMessageLength,"ams");	
+		}
+	}
 	
 	return SUCCESS;
 }
@@ -704,6 +899,18 @@ int AmsSendTellerEventInd(LP_AMS_DATA_t *lpAmsData,unsigned int tellerEventInd, 
 
 	SendMsgBuff(&s_Msg,0);
 
+	if(AmsMsgTrace)
+	{	
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"send A_VTA_EVENT_IND msg \n");	
+		{
+			AmsTraceToFile(s_Msg.s_ReceiverPid,s_Msg.s_SenderPid,"A_VTA_EVENT_IND",description,
+				descrlen,s_Msg.cMessageBody,s_Msg.iMessageLength,"ams");	
+		}
+	}
+
 	return AMS_OK;
 }
 
@@ -713,6 +920,7 @@ int AmsSendVtaStateOperateInd(LP_AMS_DATA_t *lpAmsData, MESSAGE_t *pMsg, unsigne
 {
 	MESSAGE_t           s_Msg;
 	unsigned char       *p;
+	unsigned char       timerPara[AMS_MAX_TIMER_PARA_LEN];
 
 	memset(&s_Msg,0,sizeof(MESSAGE_t));
 
@@ -778,6 +986,114 @@ int AmsSendVtaStateOperateInd(LP_AMS_DATA_t *lpAmsData, MESSAGE_t *pMsg, unsigne
 	
 	SendMsgBuff(&s_Msg,0);
 
+	 if(    AmsCfgData.vtaStateOperateIndTimeLength > 0 
+	    && AmsCfgData.vtaStateOperateIndTimeLength <= T_VTA_OPERATE_IND_TIMER_LENGTH_MAX)
+    {
+    	memset(timerPara, 0, PARA_LEN);
+		p = timerPara;
+		
+		BEPUTLONG(lpAmsData->amsPid, p);
+
+        if(AMS_OK != AmsCreateTimerPara(lpAmsData->myPid.iProcessId,
+			                        &lpAmsData->iTimerId, 
+									B_AMS_VTA_STATE_OP_IND_TIMEOUT, 
+									AmsCfgData.vtaStateOperateIndTimeLength,
+									timerPara))
+        {
+			dbgprint("VtaStateOperateReqProc Teller[%s]CreateTimer Err",
+						lpAmsData->tellerId);
+        }
+
+		AmsTimerStatProc(T_AMS_VTA_STATE_OPERATE_IND_TIMER, AMS_CREATE_TIMER);
+
+        if(lpAmsData->commonTrace)
+        {
+            dbgprint("Ams Create T_AMS_VTA_STATE_OPERATE_IND_TIMER Timer:timerId=%d.",
+				 lpAmsData->iTimerId);
+        }
+    }
+	
+
+	if(AmsMsgTrace)
+	{	
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"send A_VTA_STATE_OPERATE_IND msg \n");	
+		{
+			AmsTraceToFile(s_Msg.s_ReceiverPid,s_Msg.s_SenderPid,"A_VTA_STATE_OPERATE_IND",description,
+				descrlen,s_Msg.cMessageBody,s_Msg.iMessageLength,"ams");	
+		}
+	}
+
 	return SUCCESS;
+}
+
+//坐席示闲指示，超时，不改变当前坐席状态	
+//坐席示忙指示，超时，坐席置忙
+int VtaStateOperateIndTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
+{
+	int					iret = AMS_MANAGER_SET_VTA_STATE_VTA_TIMEOUT;
+	LP_AMS_DATA_t		*lpAmsData = NULL;   //进程数据区指针
+	VTA_NODE            *pVtaNode = NULL;		
+	int                 pid = 0;
+	MESSAGE_t           msg;
+	unsigned char       *p;
+	unsigned int        amsPid = 0;
+
+	
+#ifdef AMS_TEST_LT
+		time_t				currentTime;
+#endif
+
+
+	if(AmsMsgTrace)
+	{
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"recv B_AMS_VTA_STATE_OP_IND_TIMEOUT msg[%d] \n",pTmMsg->iTimerId);	
+		AmsTraceToFile(pTmMsg->s_ReceiverPid,pTmMsg->s_SenderPid,"B_AMS_VTA_STATE_OP_IND_TIMEOUT",description,
+						descrlen,pTmMsg->cTimerParameter,PARA_LEN,"ams");
+	}
+	
+	//进程号有效性检查
+	pid = pTmMsg->s_ReceiverPid.iProcessId;
+	if((0 == pid) || (pid >= LOGIC_PROCESS_SIZE))
+	{
+		dbgprint("VtaStateOperateIndTimeoutProc Pid:%d Err", pid);
+		iret = AMS_MANAGER_SET_VTA_STATE_TIMEOUT_PARA_ERR;
+		AmsResultStatProc(AMS_MANAGER_SET_VTA_STATE_RESULT, iret);   		
+		return AMS_ERROR;
+	}
+	lpAmsData = (LP_AMS_DATA_t *)ProcessData[pid];
+
+	//amsPid检查
+	p = pTmMsg->cTimerParameter;
+	BEGETLONG(amsPid,p);
+	if(lpAmsData->amsPid != amsPid)
+	{
+		dbgprint("VtaStateOperateIndTimeoutProc[%d] AmsPid[0x%x][0x%x] Err",pid,amsPid,lpAmsData->amsPid);
+		return AMS_ERROR;
+	}
+
+	/* 杀掉定时器 */
+	if(lpAmsData->iTimerId >= 0)
+	{
+	    AmsKillTimer(pid, &lpAmsData->iTimerId);
+		AmsTimerStatProc(T_AMS_VTA_STATE_OPERATE_IND_TIMER, AMS_KILL_TIMER);
+		pTmMsg->iTimerId = -1;
+	} 
+
+	
+	pVtaNode = AmsSearchVtaNode(lpAmsData->srvGrpIdPos, lpAmsData->tellerId,lpAmsData->tellerIdLen);
+	if(NULL == pVtaNode)
+	{
+		dbgprint("VtaStateOperateIndTimeoutProc[%d] Teller[%s]Err", 
+			pid,lpAmsData->tellerId);		
+		return AMS_ERROR;		
+	}
+	
+	return iret;
 }
 

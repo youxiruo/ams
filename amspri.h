@@ -10,6 +10,13 @@
 
 #define AmsTellerStat(i)                (SystemData.AmsPriData.amsStat.tellerStat[i])
 #define AmsTimerStat                    (SystemData.AmsPriData.amsStat.timerStat)
+#define AmsDebugTrace                   (SystemData.AmsPriData.amsDebug.debug)
+#define AmsCommonTrace                  (SystemData.AmsPriData.amsDebug.common)
+#define AmsMsgTrace                     (SystemData.AmsPriData.amsDebug.msg)
+#define AmsStateTrace                   (SystemData.AmsPriData.amsDebug.state)
+#define AmsTimerTrace                   (SystemData.AmsPriData.amsDebug.timer)
+#define AmsErrorTrace                   (SystemData.AmsPriData.amsDebug.error)
+#define AmsAlarmTrace                   (SystemData.AmsPriData.amsDebug.alarm)
 
 
 

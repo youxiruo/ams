@@ -12,70 +12,14 @@ int AmsTimerStatProc(int code, int action)
 	{
 	case T_AMS_VTA_STATE_OPERATE_IND_TIMER: 
 		AmsTimerStat.WaitVtaOperateIndRsp[action]++;
-		break;
-		
-	case T_AMS_CALL_EVENT_IND_TIMER: 
-		AmsTimerStat.WaitCallEventIndRsp[action]++;
-		break;		      
+		break;  
 
 	case T_AMS_CUSTOMER_IN_QUEUE_TIMER: 
 		AmsTimerStat.WaitCustomerGetTeller[action]++;
 		break;	
-		
-	case T_AMS_VOLUME_CTRL_TIMER: 
-		AmsTimerStat.WaitVolumeCtrlRsp[action]++;
-		break;
-		
-	case T_AMS_RCAS_REMOTE_COOP_TIMER: 
-		AmsTimerStat.WaitRcasRemoteCoopRsp[action]++;
-		break;	
-		
-	case T_AMS_VTM_REMOTE_COOP_TIMER: 
-		AmsTimerStat.WaitVtmRemoteCoopRsp[action]++;
-		break;	
-		
-	case T_AMS_SNAP_TIMER: 
-		AmsTimerStat.WaitSnapRsp[action]++;
-		break;	
 
 	case T_AMS_REST_TIMER: 
 		AmsTimerStat.WaitRestRsp[action]++;
-		break;
-
-	case T_AMS_VTA_RECV_MSG_TIMER: 
-		AmsTimerStat.WaitVtaRecvMsgRsp[action]++;
-		break;
-
-	case T_AMS_VTM_RECV_MSG_TIMER: 
-		AmsTimerStat.WaitVtmRecvMsgRsp[action]++;
-		break;
-		
-	case T_AMS_VTA_RECV_FILE_TIMER: 
-		AmsTimerStat.WaitVtaRecvFileRsp[action]++;
-		break;
-
-	case T_AMS_VTM_RECV_FILE_TIMER: 
-		AmsTimerStat.WaitVtmRecvFileRsp[action]++;
-		break;
-		
-	case T_AMS_MULTI_SESS_TIMER: 
-		AmsTimerStat.WaitMultiSessRsp[action]++;
-		break;
-
-	case T_AMS_MONITOR_TIMER: 
-		AmsTimerStat.WaitMonitorRsp[action]++;
-		break;
-
-	case T_AMS_VTA_PARA_CFG_TIMER: 
-		AmsTimerStat.WaitVtaParaCfgRsp[action]++;
-		break;
-
-	case T_AMS_VTM_PARA_CFG_TIMER: 
-		AmsTimerStat.WaitVtmParaCfgRsp[action]++;
-		break;
-
-	case T_AMS_PARA_CFG_TIMER: 
-		AmsTimerStat.WaitParaCfgRsp[action]++;
 		break;
 
 	default:

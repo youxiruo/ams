@@ -1,6 +1,9 @@
 #ifndef AMSPUB_H
 #define	AMSPUB_H
 
+
+#define AMS_TEST_LT
+
 #define AMS_MAX_VTA_NUM				(10000)
 #define AMS_MAX_VTM_NUM				(5000)
 
@@ -33,6 +36,8 @@
 
 
 #define T_AMS_REST_TIMER_LENGTH_MAX                    (10000)       //AMS休息最大定时10000s
+#define T_VTA_OPERATE_IND_TIMER_LENGTH_MAX             (1000)        //柜员操作指示最大定时1000s
+
 #define AMS_VTA_ID_HASH_SIZE                           (AMS_MAX_VTA_NUM)
 #define AMS_VTM_ID_HASH_SIZE                           (AMS_MAX_VTM_NUM)
 
@@ -336,6 +341,7 @@ typedef struct vtaNode_t
 
 	DWORD           amsPid;
 	DWORD           state;  
+	DWORD			setstate;
 	DWORD           callState;    	
 	TIME_INFO       stateStartLocalTime; 
 	TIME_INFO       callStateStartLocalTime; 	
@@ -662,6 +668,19 @@ typedef struct amsDataLic_t
 	
 }AMS_DATA_LIC;
 
+/* struct of debug */
+typedef struct amsDebug_t	     //调试开关
+{
+	unsigned char debug;         //调试信息
+	unsigned char common;        //一般信息
+	unsigned char msg;			 //消息
+	unsigned char state;         //状态信息
+	unsigned char timer;         //定时器信息
+	unsigned char error;         //错误信息
+	unsigned char alarm;         //告警信息
+	
+}AMS_DEBUG;
+
 
 typedef struct
 {
@@ -679,7 +698,7 @@ typedef struct
 		
 	//AMS_ALARM  amsAlarm;
 	
-	//AMS_DEBUG  amsDebug;
+	AMS_DEBUG  amsDebug;
 	
 	AMS_STAT   amsStat;
 	

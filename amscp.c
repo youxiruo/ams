@@ -23,6 +23,16 @@ int VtaRegReqProc(int iThreadId, MESSAGE_t *pMsg)
 	TELLER_INFO_NODE	*pTellerInfoNode = NULL;
 	TELLER_REGISTER_INFO_NODE  *pRegTellerInfoNode = NULL;
 
+	if(AmsMsgTrace)
+	{
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"recv A_VTA_REG_REQ msg \n");	
+		AmsTraceToFile(pMsg->s_ReceiverPid,pMsg->s_SenderPid,"A_VTA_REG_REQ",description,
+						descrlen,pMsg->cMessageBody,pMsg->iMessageLength,"ams");		
+	}
+
 
 	//get remote pid
 	pid = pMsg->s_SenderPid.iProcessId;
@@ -178,7 +188,15 @@ int VtaGetReqProc(int iThreadId, MESSAGE_t *pMsg)
 	unsigned int        i = 0;
 	unsigned char       *p;	
 
-	
+	if(AmsMsgTrace)
+	{
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"recv A_VTA_GET_REQ msg \n");	
+		AmsTraceToFile(pMsg->s_ReceiverPid,pMsg->s_SenderPid,"A_VTA_GET_REQ",description,
+						descrlen,pMsg->cMessageBody,pMsg->iMessageLength,"ams");		
+	}	
 
 	return iret;
 }
@@ -219,6 +237,21 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	TELLER_INFO_NODE	*tellinfonode=NULL;
 	TELLER_REGISTER_INFO_NODE *regtellinfonode=NULL;
 	DWORD				CallOutType=0;
+
+
+#ifdef AMS_TEST_LT
+		time_t				currentTime;
+#endif
+
+	if(AmsMsgTrace)
+	{
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"recv A_VTA_CALLOUT_REQ msg \n");	
+		AmsTraceToFile(pMsg->s_ReceiverPid,pMsg->s_SenderPid,"A_VTA_CALLOUT_REQ",description,
+						descrlen,pMsg->cMessageBody,pMsg->iMessageLength,"ams");		
+	}	
 	
 	//get remote pid
 	pid = pMsg->s_SenderPid.iProcessId;
@@ -421,6 +454,18 @@ int VtaAuthinfoReqProc(int iThreadId, MESSAGE_t *pMsg)
 	VTA_NODE			*vtanode=NULL;
 	unsigned int		iret = 0;
 	unsigned int		srvGrpIdPos=0;
+
+
+	
+	if(AmsMsgTrace)
+	{
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"recv A_AUTHINFO_QUERY_REQ msg \n");	
+		AmsTraceToFile(pMsg->s_ReceiverPid,pMsg->s_SenderPid,"A_AUTHINFO_QUERY_REQ",description,
+						descrlen,pMsg->cMessageBody,pMsg->iMessageLength,"ams");		
+	}	
 	
 	//get remote pid
 	pid = pMsg->s_SenderPid.iProcessId;
@@ -507,6 +552,16 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 #ifdef AMS_TEST_LT
 		time_t				currentTime;
 #endif
+
+	if(AmsMsgTrace)
+	{
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"recv A_AMS_CALL_EVENT_NOTICE msg \n");	
+		AmsTraceToFile(pMsg->s_ReceiverPid,pMsg->s_SenderPid,"A_AMS_CALL_EVENT_NOTICE",description,
+						descrlen,pMsg->cMessageBody,pMsg->iMessageLength,"ams");		
+	}
 
 	//检查接收进程号
 	pid = pMsg->s_ReceiverPid.iProcessId;
@@ -680,7 +735,7 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 	p += callIdLen;
 
 	//事件通知码检查
-	if(    callEventNotice < CMS_CALL_EVENT_NOTICE_VTA_ANSWER 
+	if(    callEventNotice < CMS_CALL_EVENT_NOTICE_VTA_RING 
 		|| callEventNotice >= CMS_CALL_EVENT_NOTICE_MAX)
 	{
 		dbgprint("CallEventNoticeProc[%d] Teller[%s] Vtm[%s]EventCode[%d]Err", 
@@ -708,7 +763,7 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 	}
 
 	//用户信息检查
-	if(		CMS_CALL_EVENT_NOTICE_VTM_RING == callEventNotice
+	/*if(		CMS_CALL_EVENT_NOTICE_VTM_RING == callEventNotice
 		||	CMS_CALL_EVENT_NOTICE_VTM_ANSWER == callEventNotice
 		||	CMS_CALL_EVENT_NOTICE_VTM_RELEASE == callEventNotice)
 	{
@@ -722,7 +777,7 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 		    AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, iret);  	
 			return AMS_ERROR;			
 		}
-	}
+	}*/
 
 	//业务组编号检查
 	if(lpAmsData->srvGrpIdPos > AMS_MAX_SERVICE_GROUP_NUM)
@@ -797,32 +852,33 @@ int CallEventNoticeProc(int iThreadId, MESSAGE_t *pMsg)
 		
 		if(CMS_CALL_EVENT_NOTICE_VTA_RELEASE == callEventNotice)
 		{
+			//坐席示闲操作在收到示闲指示证实后才正式置闲
 			//reset vta call state
 			newState = AMS_CALL_STATE_NULL;
+			pVtaNode->setstate = AMS_VTA_STATE_IDLE;
 
 			//杀掉定时器
 			//			AmsKillVtaAllTimer(lpAmsData, pid);
 
 			//仅杀掉呼叫相关定时器，包括消息、文件收发
-			AmsKillVtaAllCallTimer(lpAmsData, pid);
+			//AmsKillVtaAllCallTimer(lpAmsData, pid);
 			
 			//update time
-			memset(&pVtaNode->callStateStartLocalTime, 0, sizeof(TIME_INFO)); 
-			memset(&pVtaNode->callStateStartTime, 0, sizeof(time_t));	
+			//memset(&pVtaNode->callStateStartLocalTime, 0, sizeof(TIME_INFO)); 
+			//memset(&pVtaNode->callStateStartTime, 0, sizeof(time_t));	
 
 			//reset callTransferNum
 			//			pVtaNode->callTransferNum = 0;
 
 #ifdef AMS_TEST_LT
 			//calc vta workInfo
-			time(&currentTime);    
-			AmsUpdateSingleVtaWorkInfo(pVtaNode, currentTime);
+			//time(&currentTime);    
+			//AmsUpdateSingleVtaWorkInfo(pVtaNode, currentTime);
 	
 			//set Vta State and State Start Time
-			AmsSetVtaState(iThreadId, lpAmsData, pVtaNode, AMS_VTA_STATE_IDLE, 0);
+			//AmsSetVtaState(iThreadId, lpAmsData, pVtaNode, AMS_VTA_STATE_IDLE, 0);
 #endif			
 			//AmsInsertDbServiceSDR(iThreadId, AMS_SDR_ITEM_BASE, lpAmsData, NULL, 0, 0, NULL);
-
 			//reset sessStat
 			//memset(&lpAmsData->sessStat, 0, sizeof(AMS_SESSION_STAT));	
 
@@ -890,6 +946,18 @@ int AmsSendCmsVtaRegRsp(TELLER_REGISTER_INFO_NODE *tellerRegisterInfo,MESSAGE_t 
 
 	//AmsMsgStatProc(AMS_CMS_MSG, s_Msg.iMessageType);
 	//AmsResultStatProc(AMS_CMS_VTA_REG_RESULT, iret);	
+	
+	if(AmsMsgTrace)
+	{	
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"send A_VTA_REG_RSP msg \n");	
+		{
+			AmsTraceToFile(s_Msg.s_ReceiverPid,s_Msg.s_SenderPid,"A_VTA_REG_RSP",description,
+				descrlen,s_Msg.cMessageBody,s_Msg.iMessageLength,"ams");	
+		}
+	}
 	return SUCCESS;
 }
 
@@ -897,6 +965,7 @@ int AmsSendCmsVtaCalloutRsp(LP_AMS_DATA_t *lpAmsData,MESSAGE_t *pMsg,int iret,DW
 {
 	MESSAGE_t           s_Msg;
 	unsigned char       *p;
+	unsigned char		tellidlen=0,callidlen=0;
 	
 	memset(&s_Msg,0,sizeof(MESSAGE_t));
 
@@ -934,35 +1003,22 @@ int AmsSendCmsVtaCalloutRsp(LP_AMS_DATA_t *lpAmsData,MESSAGE_t *pMsg,int iret,DW
 		p += lpAmsData->callIdLen;
 
 		s_Msg.iMessageLength += (1 + lpAmsData->callIdLen);
+		*p++=lpAmsData->tellerIdLen;
+		if(lpAmsData->tellerIdLen<= AMS_MAX_TELLER_ID_LEN)
+		{
+			memcpy(p,lpAmsData->tellerId,lpAmsData->tellerIdLen);
+		}
+		p+= lpAmsData->tellerIdLen;
+		s_Msg.iMessageLength +=  lpAmsData->tellerIdLen+1;			
 	}
 	else
 	{
-		//pack callId
-		*p++ = pMsg->cMessageBody[0];
-		if(pMsg->cMessageBody[0] <= AMS_MAX_CALLID_LEN)
-		{
-			memcpy(p, &pMsg->cMessageBody[1], pMsg->cMessageBody[0]);	
-		}
-		p += pMsg->cMessageBody[0];
-		
-		s_Msg.iMessageLength += (1 + pMsg->cMessageBody[0]);				
+		callidlen = pMsg->cMessageBody[0];
+		tellidlen = pMsg->cMessageBody[1+callidlen];
+		memcpy(p,pMsg->cMessageBody,2+callidlen+tellidlen);
+		p+=2+callidlen+tellidlen;
+		s_Msg.iMessageLength = 2+callidlen+tellidlen;
 	}
-
-	if(AMS_VTA_QUEUE_MNG_SUCCESS == iret)
-	{
-		if(NULL != lpAmsData)
-		{
-			*p++=lpAmsData->tellerIdLen;
-			if(lpAmsData->tellerIdLen<= AMS_MAX_TELLER_ID_LEN)
-			{
-				memcpy(p,lpAmsData->tellerId,lpAmsData->tellerIdLen);
-			}
-			p+= lpAmsData->tellerIdLen;
-			s_Msg.iMessageLength +=  lpAmsData->tellerIdLen;			
-		}
-	}
-		
-	s_Msg.iMessageLength += 1;
 
 	BEPUTSHORT(callouttype, p);	
 	p += 2;
@@ -974,6 +1030,17 @@ int AmsSendCmsVtaCalloutRsp(LP_AMS_DATA_t *lpAmsData,MESSAGE_t *pMsg,int iret,DW
 
 	SendMsgBuff(&s_Msg,0);
 
+	if(AmsMsgTrace)
+	{	
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"send A_VTA_CALLOUT_RSP msg \n");	
+		{
+			AmsTraceToFile(s_Msg.s_ReceiverPid,s_Msg.s_SenderPid,"A_VTA_CALLOUT_RSP",description,
+				descrlen,s_Msg.cMessageBody,s_Msg.iMessageLength,"ams");	
+		}
+	}
 	return SUCCESS;
 
 }
@@ -1025,6 +1092,18 @@ int AmsSendCmsAuthinfoRsp(TELLER_INFO *tellcfginfo, MESSAGE_t *pMsg,int iret)
 	s_Msg.iMessageLength +=8;
 
 	SendMsgBuff(&s_Msg,0);
+	
+	if(AmsMsgTrace)
+	{	
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"send A_AUTHINFO_QUERY_RSP msg \n");	
+		{
+			AmsTraceToFile(s_Msg.s_ReceiverPid,s_Msg.s_SenderPid,"A_AUTHINFO_QUERY_RSP",description,
+				descrlen,s_Msg.cMessageBody,s_Msg.iMessageLength,"ams");	
+		}
+	}
 
 	return AMS_SUCCESS;
 }

@@ -380,65 +380,7 @@ int AmsKillVtaAllCallTimer(LP_AMS_DATA_t *lpAmsData, int pid)
 		return AMS_ERROR;
 	}
 	
-	if(lpAmsData->callTimerId >= 0)
-	{
-	    AmsKillTimer(pid, &lpAmsData->callTimerId);
-		AmsTimerStatProc(T_AMS_CALL_EVENT_IND_TIMER, AMS_KILL_TIMER);
-	} 
 
-	if(lpAmsData->rcasRemoteCoopTimerId >= 0)
-	{
-	    AmsKillTimer(pid, &lpAmsData->rcasRemoteCoopTimerId);
-		AmsTimerStatProc(T_AMS_RCAS_REMOTE_COOP_TIMER, AMS_KILL_TIMER);
-	} 
-
-	if(lpAmsData->vtmRemoteCoopTimerId >= 0)
-	{
-	    AmsKillTimer(pid, &lpAmsData->vtmRemoteCoopTimerId);
-		AmsTimerStatProc(T_AMS_VTM_REMOTE_COOP_TIMER, AMS_KILL_TIMER);
-	} 
-	
-	if(lpAmsData->snapTimerId >= 0)
-	{
-	    AmsKillTimer(pid, &lpAmsData->snapTimerId);
-		AmsTimerStatProc(T_AMS_SNAP_TIMER, AMS_KILL_TIMER);
-	}
-
-	if(lpAmsData->sendMsgToVtaTimerId >= 0)
-	{
-	    AmsKillTimer(pid, &lpAmsData->sendMsgToVtaTimerId);
-		AmsTimerStatProc(T_AMS_VTA_RECV_MSG_TIMER, AMS_KILL_TIMER);
-	} 
-
-	if(lpAmsData->sendMsgToVtmTimerId >= 0)
-	{
-	    AmsKillTimer(pid, &lpAmsData->sendMsgToVtmTimerId);
-		AmsTimerStatProc(T_AMS_VTM_RECV_MSG_TIMER, AMS_KILL_TIMER);
-	}
-
-	if(lpAmsData->sendFileToVtaTimerId >= 0)
-	{
-	    AmsKillTimer(pid, &lpAmsData->sendFileToVtaTimerId);
-		AmsTimerStatProc(T_AMS_VTA_RECV_FILE_TIMER, AMS_KILL_TIMER);
-	} 
-
-	if(lpAmsData->sendFileToVtmTimerId >= 0)
-	{
-	    AmsKillTimer(pid, &lpAmsData->sendFileToVtmTimerId);
-		AmsTimerStatProc(T_AMS_VTM_RECV_FILE_TIMER, AMS_KILL_TIMER);
-	} 
-
-	if(lpAmsData->multiSessTimerId >= 0)
-	{
-	    AmsKillTimer(pid, &lpAmsData->multiSessTimerId);
-		AmsTimerStatProc(T_AMS_MULTI_SESS_TIMER, AMS_KILL_TIMER);
-	}
-
-	if(lpAmsData->monitorTimerId >= 0)
-	{
-	    AmsKillTimer(pid, &lpAmsData->monitorTimerId);
-		AmsTimerStatProc(T_AMS_MONITOR_TIMER, AMS_KILL_TIMER);
-	}
 
 	return AMS_OK;	
 }
