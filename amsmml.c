@@ -382,6 +382,701 @@ int DisplayAmsTrace(MMLCMD_t r[],int SocketId,int Source)
 }
 
 
+int DisplayAmsMsgStat(int SocketId,int Source)
+{
+	char             s[8192];//careful of len!! 
+	int              i = 0;
+	unsigned char    j = 0;
+	int              len = 0;	
+	
+    memset(s,0,sizeof(s));
+
+    len = snprintf(s,sizeof(s),"\r\nAms Msg Proc Stat:\r\n");
+    len += snprintf(s+len,sizeof(s)-len,
+"\
+recvVtaLoginReq                     =%20ld,\t sendVtaLoginRsp                     =%20ld\r\n\
+recvVtaLogoutReq                    =%20ld,\t sendVtaLogoutRsp                    =%20ld\r\n\
+recvVtaStateOperateReq              =%20ld,\t sendVtaStateOperateRsp              =%20ld\r\n\
+recvVtaStateOperateCnf              =%20ld,\t sendVtaStateOperateInd              =%20ld\r\n\
+recvVtaModifyPasswordReq            =%20ld,\t sendVtaModifyPasswordRsp            =%20ld\r\n\
+recvVtaForceLoginReq                =%20ld,\t sendVtaForceLoginRsp                =%20ld\r\n\
+recvVtaQueryInfoReq                 =%20ld,\t sendVtaQueryInfoRsp                 =%20ld\r\n\r\n\
+recvVtaEventNotice                  =%20ld\r\n\
+sendVtaEventInd                     =%20ld\r\n\r\n",
+
+	//ams <-> vta msg	
+	AmsMsgStat.recvVtaLoginReq,               AmsMsgStat.sendVtaLoginRsp,
+	AmsMsgStat.recvVtaLogoutReq,              AmsMsgStat.sendVtaLogoutRsp,
+	AmsMsgStat.recvVtaStateOperateReq,        AmsMsgStat.sendVtaStateOperateRsp, 
+	AmsMsgStat.recvVtaStateOperateCnf,        AmsMsgStat.sendVtaStateOperateInd, 
+	AmsMsgStat.recvVtaModifyPasswordReq,      AmsMsgStat.sendVtaModifyPasswordRsp,
+	AmsMsgStat.recvVtaForceLoginReq,          AmsMsgStat.sendVtaForceLoginRsp,
+	AmsMsgStat.recvVtaQueryInfoReq,           AmsMsgStat.sendVtaQueryInfoRsp,	
+	AmsMsgStat.recvVtaEventNotice,
+	AmsMsgStat.sendVtaEventInd);
+
+    if(Source == OMP_COMM)
+    {
+        OMSResultPrint(s,len,SocketId,Source);
+        SendPrompt(SocketId);
+    }
+    else
+    {
+        MMLPrint(s,strlen(s),SocketId,Source);
+    }
+
+	 memset(s,0,sizeof(s));
+	len = snprintf(s,sizeof(s),
+	"\
+	recvVtaRegReq                  =%20ld,\t sendVtaRegRsp                        =%20ld\r\n\
+	recvVtaGetReq                  =%20ld,\t sendVtaGetRsp                        =%20ld\r\n\
+	recvVtaCalloutReq              =%20ld,\t sendVtaCalloutRsp                    =%20ld\r\n\
+	recvVtaAuthinfoReq             =%20ld,\t sendVtaAuthinfoRsp                   =%20ld\r\n\
+	recvAmsCallEventNoticeReq      =%20ld,\t sendAmsCallEventInd                  =%20ld\r\n\r\n",
+	
+		//ams <-> cms msg
+		AmsMsgStat.recvVtaRegReq,				   AmsMsgStat.sendVtaRegRsp,
+		AmsMsgStat.recvVtaGetReq,				   AmsMsgStat.sendVtaGetRsp,
+		AmsMsgStat.recvVtaCalloutReq,			   AmsMsgStat.sendVtaCalloutRsp,
+		AmsMsgStat.recvVtaAuthinfoReq,			   AmsMsgStat.sendVtaAuthinfoRsp,
+		AmsMsgStat.recvAmsCallEventNoticeReq,	   AmsMsgStat.sendAmsCallEventInd);
+	
+		if(Source == OMP_COMM)
+		{
+			OMSResultPrint(s,len,SocketId,Source);
+			SendPrompt(SocketId);
+		}
+		else
+		{
+			MMLPrint(s,strlen(s),SocketId,Source);
+		}
+
+
+    memset(s,0,sizeof(s));
+    len = snprintf(s,sizeof(s),"\r\nAms B Msg Proc Stat:\r\n");
+    len += snprintf(s+len,sizeof(s)-len,
+"\
+vtaStateOperateIndTimeout           =%20ld,\t RestTimeout                 =%20ld\r\n\
+customerInQueueTimeout              =%20ld\r\n\r\n",
+
+	//ams B msg
+	AmsMsgStat.vtaStateOperateIndTimeout,   AmsMsgStat.restTimeout,
+	AmsMsgStat.customerInQueueTimeout);  
+
+    if(Source == OMP_COMM)
+    {
+        OMSResultPrint(s,len,SocketId,Source);
+        SendPrompt(SocketId);
+    }
+    else
+    {
+        MMLPrint(s,strlen(s),SocketId,Source);
+    }
+
+
+    memset(s,0,sizeof(s));
+
+    len += snprintf(s+len,sizeof(s)-len,"\r\nAms Other Msg Proc Stat:\r\n");
+    len += snprintf(s+len,sizeof(s)-len,
+"\
+amsErrMsg                           =%20ld,\t amsUnknownMsgType                   =%20ld\r\n\
+amsUnknownMsg                       =%20ld,\t amsErrBMsg                          =%20ld\r\n\
+amsUnknownBMsg                      =%20ld\r\n\r\n", 
+	//ams unknown msg
+	AmsMsgStat.amsErrMsg,                      AmsMsgStat.amsUnknownMsgType,
+	AmsMsgStat.amsUnknownMsg,                  AmsMsgStat.amsErrBMsg,
+	AmsMsgStat.amsUnknownBMsg);
+	
+    if(Source == OMP_COMM)
+    {
+        OMSResultPrint(s,len,SocketId,Source);
+        SendPrompt(SocketId);
+    }
+    else
+    {
+        MMLPrint(s,strlen(s),SocketId,Source);
+    }
+
+	return SUCCESS;
+}
+
+int DisplayAmsTimerStat(int SocketId,int Source)
+{
+	char             s[8192];//careful of len!! 
+	int              i = 0;
+	unsigned char    j = 0;
+	int              len = 0;	
+
+    memset(s,0,sizeof(s));
+
+    len = snprintf(s,sizeof(s),"\r\nAms Timer Stat:\r\n");                                  
+    len += snprintf(s+len,sizeof(s)-len,"%-36s:\r\n\
+CreateTimer=%26ld,     KillTimer=%26ld,      TimerOut=%26ld\r\n",
+                    strAmsTimerName[T_AMS_VTA_STATE_OPERATE_IND_TIMER],
+                    AmsTimerStat.WaitVtaOperateIndRsp[0],
+                    AmsTimerStat.WaitVtaOperateIndRsp[1],
+                    AmsTimerStat.WaitVtaOperateIndRsp[2]);       
+    len += snprintf(s+len,sizeof(s)-len,"%-36s:\r\n\
+CreateTimer=%26ld,     KillTimer=%26ld,      TimerOut=%26ld\r\n",
+                    strAmsTimerName[T_AMS_CUSTOMER_IN_QUEUE_TIMER],
+                    AmsTimerStat.WaitCustomerGetTeller[0],
+                    AmsTimerStat.WaitCustomerGetTeller[1],
+                    AmsTimerStat.WaitCustomerGetTeller[2]);
+    len += snprintf(s+len,sizeof(s)-len,"%-36s:\r\n\
+CreateTimer=%26ld,     KillTimer=%26ld,      TimerOut=%26ld\r\n",
+                    strAmsTimerName[T_AMS_REST_TIMER],
+                    AmsTimerStat.WaitRestRsp[0],
+                    AmsTimerStat.WaitRestRsp[1],
+                    AmsTimerStat.WaitRestRsp[2]);
+   if(Source == OMP_COMM)
+    {
+        OMSResultPrint(s,len,SocketId,Source);
+        SendPrompt(SocketId);
+    }
+    else
+    {
+        MMLPrint(s,strlen(s),SocketId,Source);
+    }
+
+	return SUCCESS;
+}
+
+int DisplayAmsCommonResultStat(int SocketId,int Source)
+{
+	char             s[2048];//careful of len!! 
+	int              i = 0;
+	unsigned char    j = 0;
+	int              len = 0;
+		
+    memset(s,0,sizeof(s));
+
+    len = snprintf(s,sizeof(s),"\r\nAms Common Result Stat:\r\n");
+    len += snprintf(s + len, sizeof(s) - len,
+"\
+amsSuccess                          =%20lu,\t amsParaErr                          =%20lu\r\n\
+amsStateErr                         =%20lu,\t amsAllocMemFailed                   =%20lu\r\n\
+amsAllocLpFailed                    =%20lu,\t amsAllocLtFailed                    =%20lu\r\n\r\n",
+   
+	AmsResultStat.amsSuccess,               AmsResultStat.amsParaErr,
+	AmsResultStat.amsStateErr,              AmsResultStat.amsAllocMemFailed,
+	AmsResultStat.amsAllocLpFailed,         AmsResultStat.amsAllocLtFailed);
+	
+    if(Source == OMP_COMM)
+    {
+        OMSResultPrint(s,len,SocketId,Source);
+        SendPrompt(SocketId);
+    }
+    else
+    {
+        MMLPrint(s,strlen(s),SocketId,Source);
+    }
+	
+	return SUCCESS;	
+}
+
+int DisplayAmsVtaLoginResultStat(int SocketId,int Source)
+{
+	char             s[2048];//careful of len!! 
+	int              i = 0;
+	unsigned char    j = 0;
+	int              len = 0;
+		
+    memset(s,0,sizeof(s));
+
+    len = snprintf(s,sizeof(s),"\r\nAms Vta Login Result Stat:\r\n");
+    len += snprintf(s + len, sizeof(s) - len,
+"\
+vtaLoginSuccess                     =%20lu,\t vtaLoginParaErr                     =%20lu\r\n\
+vtaLoginStateErr                    =%20lu,\t vtaLoginLenErr                      =%20lu\r\n\
+vtaLoginLpResourceLimited           =%20lu,\t vtaLoginNodeResourceLimited         =%20lu\r\n\
+vtaLoginTellerLenErr                =%20lu,\t vtaLoginTellerNoErr                 =%20lu\r\n\
+vtaLoginTellerPwdErr                =%20lu,\t vtaLoginTellerVncAuthPwdErr         =%20lu\r\n\
+vtaLoginTellerLoginRepeatedly       =%20lu,\t vtaLoginTellerTypeErr               =%20lu\r\n\
+vtaLoginTellerNumErr                =%20lu,\t vtaLoginFileServerUsrNameErr        =%20lu\r\n\
+vtaLoginFileServerUsrPwdErr         =%20lu,\t vtaLoginOrgIdErr                    =%20lu\r\n\
+vtaLoginOrgStateErr                 =%20lu,\t vtaLoginLicenseTimeout              =%20lu\r\n\
+vtaLoginTellerNumBeyondLic          =%20lu\r\n\r\n",
+
+	AmsResultStat.vtaLoginSuccess,               AmsResultStat.vtaLoginParaErr,
+	AmsResultStat.vtaLoginStateErr,              AmsResultStat.vtaLoginLenErr,
+	AmsResultStat.vtaLoginLpResourceLimited,     AmsResultStat.vtaLoginNodeResourceLimited,
+	AmsResultStat.vtaLoginTellerLenErr,          AmsResultStat.vtaLoginTellerNoErr, 
+	AmsResultStat.vtaLoginTellerPwdErr,          AmsResultStat.vtaLoginTellerVncAuthPwdErr, 
+	AmsResultStat.vtaLoginTellerLoginRepeatedly, AmsResultStat.vtaLoginTellerTypeErr,
+	AmsResultStat.vtaLoginTellerNumErr,          AmsResultStat.vtaLoginFileServerUsrNameErr, 
+	AmsResultStat.vtaLoginFileServerUsrPwdErr,   AmsResultStat.vtaLoginOrgIdErr,
+	AmsResultStat.vtaLoginOrgStateErr,           AmsResultStat.vtaLoginLicenseTimeout,
+	AmsResultStat.vtaLoginTellerNumBeyondLic);
+
+    if(Source == OMP_COMM)
+    {
+        OMSResultPrint(s,len,SocketId,Source);
+        SendPrompt(SocketId);
+    }
+    else
+    {
+        MMLPrint(s,strlen(s),SocketId,Source);
+    }
+	
+	return SUCCESS;	
+}
+
+int DisplayAmsVtaStateOperateResultStat(int SocketId,int Source)
+{
+	char             s[4096];//careful of len!! 	                         
+	int              i = 0;
+	unsigned char    j = 0;
+	int              len = 0;
+		
+    memset(s,0,sizeof(s));
+
+    len = snprintf(s,sizeof(s),"\r\nAms Vta State Operate Result Stat:\r\n");
+    len += snprintf(s + len, sizeof(s) - len,
+"\
+vtaStateOperateSuccess              =%20lu,\t vtaStateOperateParaErr              =%20lu\r\n\
+vtaStateOperateStateErr             =%20lu,\t vtaStateOperateLenErr               =%20lu\r\n\
+vtaStateOperateAmsPidErr            =%20lu,\t vtaStateOperateTellerIdErr          =%20lu\r\n\
+vtaStateOperateSrvGrpIdErr          =%20lu,\t vtaStateOperateServiceStateErr      =%20lu\r\n\
+vtaStateOperateCodeErr              =%20lu,\t vtaStateOperateOpReasonErr          =%20lu\r\n\
+vtaStateOperateOpTimeLenErr         =%20lu,\t vtaStateOperateUpdateStateErr       =%20lu\r\n\
+vtaStateOperateStartTimerErr        =%20lu,\t vtaStateOperateRestTimeout          =%20lu\r\n\r\n",
+
+	AmsResultStat.vtaStateOperateSuccess,                AmsResultStat.vtaStateOperateParaErr,
+	AmsResultStat.vtaStateOperateStateErr,               AmsResultStat.vtaStateOperateLenErr,
+	AmsResultStat.vtaStateOperateAmsPidErr,              AmsResultStat.vtaStateOperateTellerIdErr,
+	AmsResultStat.vtaStateOperateSrvGrpIdErr,            AmsResultStat.vtaStateOperateServiceStateErr, 
+	AmsResultStat.vtaStateOperateCodeErr,                AmsResultStat.vtaStateOperateOpReasonErr, 
+	AmsResultStat.vtaStateOperateOpTimeLenErr,           AmsResultStat.vtaStateOperateUpdateStateErr,
+	AmsResultStat.vtaStateOperateStartTimerErr,          AmsResultStat.vtaStateOperateRestTimeout);
+
+    len += snprintf(s + len, sizeof(s) - len,
+"\
+vtaStateOpRestTimeoutParaErr        =%20lu,\t vtaStateOpRestTimeoutStateErr       =%20lu\r\n\
+vtaStateOpRestTimeoutLenErr         =%20lu,\t vtaStateOpRestTimeoutAmsPidErr      =%20lu\r\n\
+vtaStateOpRestTimeoutTellerIdErr    =%20lu,\t vtaStateOpRestTimeoutSrvGrpIdErr    =%20lu\r\n\
+vtaStateOpRestTimeoutSrvGrpIdErr    =%20lu\r\n\r\n",
+
+	AmsResultStat.vtaStateOpRestTimeoutParaErr,          AmsResultStat.vtaStateOpRestTimeoutStateErr,
+	AmsResultStat.vtaStateOpRestTimeoutLenErr,           AmsResultStat.vtaStateOpRestTimeoutAmsPidErr,
+	AmsResultStat.vtaStateOpRestTimeoutTellerIdErr,      AmsResultStat.vtaStateOpRestTimeoutSrvGrpIdErr,
+	AmsResultStat.vtaStateOpRestTimeoutSrvGrpIdErr);
+
+    if(Source == OMP_COMM)
+    {
+        OMSResultPrint(s,len,SocketId,Source);
+        SendPrompt(SocketId);
+    }
+    else
+    {
+        MMLPrint(s,strlen(s),SocketId,Source);
+    }
+	
+	return SUCCESS;	
+}
+
+int DisplayAmsCmsEventNoticeResultStat(int SocketId,int Source)
+{
+	char             s[2048];//careful of len!! 
+	int              i = 0;
+	unsigned char    j = 0;
+	int              len = 0;
+		
+    memset(s,0,sizeof(s));
+
+    len = snprintf(s,sizeof(s),"\r\nAms Cms Event Notice Result Stat:\r\n");
+    len += snprintf(s + len, sizeof(s) - len,
+"\
+cmsEventNoticeSuccess               =%20lu,\t cmsEventNoticeParaErr               =%20lu\r\n\
+cmsEventNoticeStateErr              =%20lu,\t cmsEventNoticeSrvGrpIdErr           =%20lu\r\n\
+cmsEventNoticeServiceStateErr       =%20lu,\t cmsEventNoticeLenErr                =%20lu\r\n\
+cmsEventNoticeAmsPidErr             =%20lu,\t cmsEventNoticeCallIdErr             =%20lu\r\n\
+cmsEventNoticeTellerIdErr           =%20lu,\t cmsEventNoticeVtmIdErr              =%20lu\r\n\
+cmsEventNoticeCodeErr               =%20lu,\t cmsEventNoticeVtaStateErr           =%20lu\r\n\
+cmsEventNoticeVtmStateErr           =%20lu,\t cmsEventNoticeOrgnTellerIdErr       =%20lu\r\n\
+cmsEventNoticeOrgnTellerStateErr    =%20lu,\t cmsEventNoticeOrgnTellerAmsPidErr   =%20lu\r\n\
+cmsEventNoticeOrgnTellerSrvGrpIdErr =%20lu,\t cmsEventNoticeOrgnTellerSrvStateErr =%20lu\r\n\
+cmsHandshakeClearInactiveCall       =%20lu\r\n\r\n",
+
+	AmsResultStat.cmsEventNoticeSuccess,               AmsResultStat.cmsEventNoticeParaErr,
+	AmsResultStat.cmsEventNoticeStateErr,              AmsResultStat.cmsEventNoticeSrvGrpIdErr,
+	AmsResultStat.cmsEventNoticeServiceStateErr,       AmsResultStat.cmsEventNoticeLenErr, 
+	AmsResultStat.cmsEventNoticeAmsPidErr,             AmsResultStat.cmsEventNoticeCallIdErr, 
+	AmsResultStat.cmsEventNoticeTellerIdErr,           AmsResultStat.cmsEventNoticeVtmIdErr,
+	AmsResultStat.cmsEventNoticeCodeErr,               AmsResultStat.cmsEventNoticeVtaStateErr,     
+	AmsResultStat.cmsEventNoticeVtmStateErr,           AmsResultStat.cmsEventNoticeOrgnTellerIdErr,
+	AmsResultStat.cmsEventNoticeOrgnTellerStateErr,    AmsResultStat.cmsEventNoticeOrgnTellerAmsPidErr,
+	AmsResultStat.cmsEventNoticeOrgnTellerSrvGrpIdErr, AmsResultStat.cmsEventNoticeOrgnTellerSrvStateErr,
+	AmsResultStat.cmsHandshakeClearInactiveCall);
+
+    if(Source == OMP_COMM)
+    {
+        OMSResultPrint(s,len,SocketId,Source);
+        SendPrompt(SocketId);
+    }
+    else
+    {
+        MMLPrint(s,strlen(s),SocketId,Source);
+    }
+	
+	return SUCCESS;	
+}
+
+int DisplayAmsCmsVtaCalloutResultStat(int SocketId,int Source)
+{
+	char             s[2048];//careful of len!! 
+	int              i = 0;
+	unsigned char    j = 0;
+	int              len = 0;
+		
+    memset(s,0,sizeof(s));
+
+    len = snprintf(s,sizeof(s),"\r\nAms Cms Event Notice Result Stat:\r\n");
+    len += snprintf(s + len, sizeof(s) - len,
+"\
+cmsvtaCalloutSuccess                =%20lu,\t cmsCalloutAmspidErr                 =%20lu\r\n\
+cmsCalloutParaErr                   =%20lu,\t cmsCalloutStateErr                  =%20lu\r\n\
+cmsCalloutvtaCallidErr              =%20lu,\t cmsCalloutvtaTelleridErr            =%20lu\r\n\
+cmsCalloutvtaSrvgrpidErr            =%20lu,\t cmsCalloutvtaSrvtypeErr             =%20lu\r\n\
+cmsCalloutvtaTelleridNotcfgErr      =%20lu,\t cmsCalloutvtaTelleridNotregErr      =%20lu\r\n\
+cmsCalloutvtaTelleridNotloginErr    =%20lu,\t cmsCalloutvtaRepeatErr              =%20lu\r\n\r\n",	
+
+	AmsResultStat.cmsvtaCalloutSuccess,				AmsResultStat.cmsCalloutAmspidErr,
+	AmsResultStat.cmsCalloutParaErr,				AmsResultStat.cmsCalloutStateErr,
+	AmsResultStat.cmsCalloutvtaCallidErr,			AmsResultStat.cmsCalloutvtaTelleridErr,
+	AmsResultStat.cmsCalloutvtaSrvgrpidErr,			AmsResultStat.cmsCalloutvtaSrvtypeErr,
+	AmsResultStat.cmsCalloutvtaTelleridNotcfgErr,	AmsResultStat.cmsCalloutvtaTelleridNotregErr,
+	AmsResultStat.cmsCalloutvtaTelleridNotloginErr,	AmsResultStat.cmsCalloutvtaRepeatErr);
+
+	if(Source == OMP_COMM)
+    {
+        OMSResultPrint(s,len,SocketId,Source);
+        SendPrompt(SocketId);
+    }
+    else
+    {
+        MMLPrint(s,strlen(s),SocketId,Source);
+    }
+	
+	return SUCCESS;	
+}
+
+int DisplayAmsResultStat(int SocketId,int Source)
+{
+	char             s[2048];//careful of len!! 
+	int              i = 0;
+	unsigned char    j = 0;
+	int              len = 0;
+
+    memset(s,0,sizeof(s));
+	
+    len = snprintf(s,sizeof(s),"\r\nAms Result Stat:\r\n");
+	
+    if(Source == OMP_COMM)
+    {
+        OMSResultPrint(s,len,SocketId,Source);
+        SendPrompt(SocketId);
+    }
+    else
+    {
+        MMLPrint(s,strlen(s),SocketId,Source);
+    }
+	
+	DisplayAmsCommonResultStat(SocketId, Source);
+
+	//disp ams <-> vta stat
+	DisplayAmsVtaLoginResultStat(SocketId, Source);
+	
+//	DisplayAmsVtaLogoutResultStat(SocketId, Source);
+	
+	DisplayAmsVtaStateOperateResultStat(SocketId, Source);
+	
+//	DisplayAmsVtaModifyPasswordResultStat(SocketId, Source);
+	
+//	DisplayAmsVtaForceLoginResultStat(SocketId, Source);
+	
+//	DisplayAmsVtaQueryInfoResultStat(SocketId, Source);	
+
+	//disp ams <-> cms stat
+//	DisplayAmsCmsVtaRegResultStat(SocketId, Source);
+		
+//	DisplayAmsCmsGetVtaResultStat(SocketId, Source);
+
+	DisplayAmsCmsVtaCalloutResultStat(SocketId,Source);
+	
+	DisplayAmsCmsEventNoticeResultStat(SocketId, Source);
+	
+//	DisplayAmsCmsEventIndResultStat(SocketId, Source); 
+
+    memset(s,0,sizeof(s));
+		
+    len = snprintf(s,sizeof(s),
+"\r\n\
+amsUnknownResultType                =%20lu,\t amsUnknownResult                    =%20lu\r\n\r\n",      
+
+	AmsResultStat.amsUnknownResultType,       AmsResultStat.amsUnknownResult );
+
+    if(Source == OMP_COMM)
+    {
+        OMSResultPrint(s,len,SocketId,Source);
+        SendPrompt(SocketId);
+    }
+    else
+    {
+        MMLPrint(s,strlen(s),SocketId,Source);
+    }
+	
+	return SUCCESS;	
+}
+
+
+int DisplayAmsStat(MMLCMD_t r[],int SocketId,int Source)
+{
+	char             s[2048];//careful of len!! 
+	int              i = 0;
+	unsigned char    j = 0;
+	int              len = 0;
+	int              type = AMS_STAT_TYPE_NULL;
+	unsigned int     tellerId = 0;
+	unsigned int     vtmId = 0;
+	unsigned int     rcasId = 0;
+	
+	memset(s,0,sizeof(s));
+
+	if(Source == OMP_COMM)
+	{
+		for(i = 0; i < r[0].CountOfCell; i++)
+		{
+			if (!CompTwoString(r[0].CmdCell[i][0],"TYPE"))
+			{
+				type = atoi(r[0].CmdCell[i][1]);
+				continue;
+			}
+			
+			if (!CompTwoString(r[0].CmdCell[i][0],"TELLERID"))
+			{
+				tellerId = atoi(r[0].CmdCell[i][1]);
+				continue;
+			}	
+		}
+	}
+	else if(Source == TELNET_COMM)
+		{
+			for(i = 0; i < r[0].CountOfCell; i++)			
+			{
+				if (!CompTwoString(r[0].CmdCell[i][0],"TYPE")) 
+				{
+					for(j = 0; j < strlen(r[0].CmdCell[i][1]); j++)
+					{
+						if(isdigit(r[0].CmdCell[i][1][j]))
+						{
+							continue;
+						}
+						else
+						{
+							sprintf(s,":RESULT:ERRORMSG=\x22TypeErr\x22;");
+							MMLPrint(s,strlen(s),SocketId,Source);
+							return -1;
+						}
+					}
+					
+					type = atoi(r[0].CmdCell[i][1]);
+				}
+	
+				if (!CompTwoString(r[0].CmdCell[i][0],"TELLERID")) 
+				{
+					for(j = 0; j < strlen(r[0].CmdCell[i][1]); j++)
+					{
+						if(isdigit(r[0].CmdCell[i][1][j]))
+						{
+							continue;
+						}
+						else
+						{
+							sprintf(s,":RESULT:ERRORMSG=\x22TellerIdErr\x22;");
+							MMLPrint(s,strlen(s),SocketId,Source);
+							return -1;
+						}
+					}
+					
+					tellerId = atoi(r[0].CmdCell[i][1]);
+				}
+			}
+		}
+		switch(type)
+		{
+		case AMS_STAT_TYPE_NULL:
+		case AMS_MSG_STAT_TYPE:
+			DisplayAmsMsgStat(SocketId, Source);
+				
+			if (AMS_MSG_STAT_TYPE == type)
+			{
+				break;
+			}
+			
+		case AMS_TIMER_STAT_TYPE:
+			DisplayAmsTimerStat(SocketId, Source);	
+			
+			if (AMS_TIMER_STAT_TYPE == type)
+			{		
+				break;
+			}
+		case AMS_RESULT_STAT_TYPE:
+			DisplayAmsResultStat(SocketId, Source);	 
+			break;
+		default:
+			if (AMS_STAT_TYPE_NULL != type)
+			{
+				memset(s,0,sizeof(s));
+				
+				len = snprintf(s,sizeof(s),":RESULT:Type=%d,ERRORMSG=\x22StatTypeErr\x22;",type);
+				
+				if(Source == OMP_COMM)
+				{
+					OMSResultPrint(s,len,SocketId,Source);
+					SendPrompt(SocketId);
+				}
+				else
+				{
+					MMLPrint(s,strlen(s),SocketId,Source);
+				}
+				
+				return 0;	
+			}
+		}
+		
+		return SUCCESS;
+}
+
+int ResetAmsStat(MMLCMD_t r[],int SocketId,int Source)
+{
+	char             s[2048];
+	int              i = 0;
+	unsigned char    j = 0;
+	int              len = 0;
+	int              type = AMS_STAT_TYPE_NULL;
+	TELLER_STATE_INFO tellerStateInfo[AMS_MAX_VTA_NUM]; // init later
+	
+	memset(s,0,sizeof(s));
+
+	if(Source == OMP_COMM)
+	{
+		for(i = 0; i < r[0].CountOfCell; i++)
+		{
+			if (!CompTwoString(r[0].CmdCell[i][0],"TYPE"))
+			{
+				type = atoi(r[0].CmdCell[i][1]);
+				continue;
+			}
+			
+		}
+	}
+	else if(Source == TELNET_COMM)
+	{
+		if(r[0].CountOfCell > 0) 
+        {
+    		if (!CompTwoString(r[0].CmdCell[0][0],"TYPE")) 
+    		{
+    			for(j = 0; j < strlen(r[0].CmdCell[0][1]); j++)
+    			{
+    				if(isdigit(r[0].CmdCell[0][1][j]))
+    				{
+    					continue;
+    				}
+    				else
+    				{
+    					sprintf(s,":RESULT:ERRORMSG=\x22TypeErr\x22;");
+    					MMLPrint(s,strlen(s),SocketId,Source);
+    					return -1;
+    				}
+    			}
+    		}
+            type = atoi(r[0].CmdCell[0][1]);
+        }
+	}
+	
+	switch(type)
+	{
+	case AMS_STAT_TYPE_NULL:
+	case AMS_MSG_STAT_TYPE:
+		memset(&AmsMsgStat, 0, sizeof(AMS_MSG_STAT));
+		
+		if (AMS_MSG_STAT_TYPE == type)
+		{
+			break;
+		}
+	case AMS_TIMER_STAT_TYPE:
+		memset(&AmsTimerStat, 0, sizeof(AMS_TIMER_STAT));
+		
+		if (AMS_TIMER_STAT_TYPE == type)
+		{		
+			break;
+		}
+		
+/* 	case AMS_TELLER_STAT_TYPE:	
+		memset(tellerStateInfo, 0, sizeof(TELLER_STATE_INFO) * AMS_MAX_VTA_NUM);
+		
+		for(i = 0; i < Min(SystemData.AmsPriData.amsCfgData.maxVtaNum, AMS_MAX_VTA_NUM); i++)
+		{
+			memcpy(&tellerStateInfo[i], &AmsTellerStat(i).vtaStateInfo, sizeof(TELLER_STATE_INFO)); //ÔÝ´ævtaStateInfo
+		}
+
+		memset(&AmsTellerStat(0), 0, sizeof(AMS_TELLER_STAT) * AMS_MAX_VTA_NUM);
+		for(i = 0; i < Min(SystemData.AmsPriData.amsCfgData.maxVtaNum, AMS_MAX_VTA_NUM); i++)
+		{
+			AmsTellerStat(i).tellerId = AmsCfgTeller(i).tellerId; //»Ö¸´tellerId
+			memcpy(&AmsTellerStat(i).vtaStateInfo, &tellerStateInfo[i], sizeof(TELLER_STATE_INFO)); //»Ö¸´vtaStateInfo
+		}
+		
+		if (AMS_TELLER_STAT_TYPE == type)
+		{		
+			break;
+		}  	
+*/		
+ 	case AMS_RESULT_STAT_TYPE:
+		memset(&AmsResultStat, 0, sizeof(AMS_RESULT_STAT));
+		
+		if (AMS_RESULT_STAT_TYPE == type)
+		{
+			break;
+		}  
+		
+	default:
+        if (AMS_STAT_TYPE_NULL != type)
+        {
+    		memset(s,0,sizeof(s));
+			
+    		len = snprintf(s,sizeof(s),":RESULT:Type=%d,ERRORMSG=\x22StatTypeErr\x22;",type);
+			
+            if(Source == OMP_COMM)
+            {
+                OMSResultPrint(s,len,SocketId,Source);
+                SendPrompt(SocketId);
+            }
+            else
+            {
+                MMLPrint(s,strlen(s),SocketId,Source);
+            }
+			
+    		return 0;	
+        }
+    }
+
+    if (OMP_COMM == Source)
+	{
+		len = snprintf(s,sizeof(s),"Reset Success");
+		MMLSuccessPrint(s,len,SocketId,Source);
+	}
+	else
+	{
+		sprintf(s,":RESULT:RETURNMSG=\"Reset Success\"");
+		MMLPrint(s,strlen(s),SocketId,Source);
+	}
+    
+	return SUCCESS;
+}
+
+
+
 int InstallAmsMMLCommand()
 {
 	MMLInstallCommand("SET","AMS","TRACE",&SetAmsTrace,
@@ -391,6 +1086,15 @@ int InstallAmsMMLCommand()
 	MMLInstallCommand("DISPLAY","AMS","TRACE",&DisplayAmsTrace,
 		":DISPLAY-AMS-TRACE;",
 		":DISPLAY-AMS-TRACE:;");
+
+	MMLInstallCommand("DISPLAY","AMS","STAT",&DisplayAmsStat,
+		":DISPLAY-AMS-STAT;",
+		":DISPLAY-AMS-STAT:TYPE=,TELLERID=;");
+
+    MMLInstallCommand("RESET","AMS","STAT",&ResetAmsStat,
+    	":RESET-AMS-STAT;",
+    	":RESET-AMS-STAT;");
+
 		
 	return AMS_SUCCESS;
 }

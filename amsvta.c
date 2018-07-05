@@ -41,7 +41,7 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 	if(pMsg->s_ReceiverPid.iProcessId != 0)
 	{
 		dbgprint("VtaLoginReqProc[%d] Pid:%d Err", pid, pMsg->s_ReceiverPid.iProcessId);
-		ret = AMS_VTA_LOGIN_PARA_ERR;
+		ret = AMS_VTA_LOGIN_PID_ERR;
 		s_Msg.iMessageLength = 5;
 		AmsSendVtaLoginRsp(pMsg,ret,&s_Msg,0);
 		return AMS_ERROR;
@@ -302,10 +302,6 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 		Sem_post(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).vtaCtrl);
 
 		packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[6+packlen],lpAmsData);
-		if(packlen == 0)
-		{
-			return AMS_ERROR;
-		}
 
 		tellerNum+=1;
 	}
@@ -535,7 +531,7 @@ int VtaStateOperateReqProc(int iThreadId, MESSAGE_t *pMsg)
 		if(lpAmsData->restTimerId >= 0)
 		{
 			AmsKillTimer(lpAmsData->myPid.iProcessId, &lpAmsData->restTimerId);
-			//AmsTimerStatProc(T_AMS_REST_TIMER, AMS_KILL_TIMER); 
+			AmsTimerStatProc(T_AMS_REST_TIMER, AMS_KILL_TIMER); 
 		}		
 	}
 
@@ -566,7 +562,7 @@ int VtaStateOperateReqProc(int iThreadId, MESSAGE_t *pMsg)
 					return AMS_ERROR;
 			    }
 
-				//AmsTimerStatProc(T_AMS_REST_TIMER, AMS_CREATE_TIMER);
+				AmsTimerStatProc(T_AMS_REST_TIMER, AMS_CREATE_TIMER);
 
 			    if(lpAmsData->commonTrace)
 			    {
@@ -618,7 +614,7 @@ int VtaStateOperateCnfProc(int iThreadId, MESSAGE_t *pMsg)
 	{
 		dbgprint("VtaStateOperateCnfProc Pid:%d Err", pid);
 		iret = AMS_VTA_STATE_OPERATE_IND_CNF_PARA_ERR;
-		AmsResultStatProc(AMS_MANAGER_SET_VTA_STATE_RESULT, iret);
+		//AmsResultStatProc(AMS_MANAGER_SET_VTA_STATE_RESULT, iret);
 		return AMS_ERROR;
 	}
 
@@ -630,7 +626,7 @@ int VtaStateOperateCnfProc(int iThreadId, MESSAGE_t *pMsg)
 	if(lpAmsData->amsPid != amsPid)
 	{
 		dbgprint("VtaStateOperateCnfProc[%d] AmsPid[0x%x][0x%x] Err",pid,amsPid,lpAmsData->amsPid);
-		iret = AMS_VTA_STATE_OPERATE_AMS_PID_ERR;
+		iret = AMS_VTA_STATE_OPERATE_IND_CNF_AMS_PID_ERR;
 		AmsSendVtaStateOperateRsp(NULL,pMsg,iret);
 		return AMS_ERROR;
 	}
@@ -652,7 +648,7 @@ int VtaStateOperateCnfProc(int iThreadId, MESSAGE_t *pMsg)
 	{
 		dbgprint("VtaStateOperateCnfProc[%d] TellerId[%u][%u]Err", 
 			pid, lpAmsData->tellerId, tellerId);
-		iret = AMS_VTA_STATE_OPERATE_TELLER_ID_ERR;
+		iret = AMS_VTA_STATE_OPERATE_IND_CNF_TELLER_ID_ERR;
 		AmsSendVtaStateOperateRsp(NULL,pMsg,iret);
 		return AMS_ERROR;	
 	}
@@ -662,7 +658,7 @@ int VtaStateOperateCnfProc(int iThreadId, MESSAGE_t *pMsg)
 	{
 		dbgprint("VtaStateOperateCnfProc[%d] TellerId[%u][%u]Err", 
 			pid, lpAmsData->tellerId, tellerId);
-		iret = AMS_VTA_STATE_OPERATE_TELLER_ID_ERR;
+		iret = AMS_VTA_STATE_OPERATE_IND_CNF_TELLER_ID_ERR;
 		AmsSendVtaStateOperateRsp(NULL,pMsg,iret);
 		return AMS_ERROR;			
 	}
@@ -674,7 +670,7 @@ int VtaStateOperateCnfProc(int iThreadId, MESSAGE_t *pMsg)
 	{
 		dbgprint("VtaStateOperateReqProc[%d] Teller[%s]StateOperateCode[%d]Err", 
 			pid, tellerId, stateOperate);
-		iret = AMS_VTA_STATE_OPERATE_CODE_ERR;
+		iret = AMS_VTA_STATE_OPERATE_IND_CNF_CODE_ERR;
 		AmsSendVtaStateOperateRsp(NULL,pMsg,iret);
 		return AMS_ERROR;					
 	}
@@ -756,7 +752,8 @@ int AmsSendVtaLoginRsp(MESSAGE_t *pMsg,int iret,MESSAGE_t *s_Msg,int num)
 				descrlen,s_Msg->cMessageBody,s_Msg->iMessageLength,"ams");	
 		}
 	}
-	
+	AmsMsgStatProc(AMS_VTA_MSG, s_Msg->iMessageType); 
+	AmsResultStatProc(AMS_VTA_LOGIN_RESULT, iret);
 	return AMS_OK;
 }
 
@@ -836,8 +833,8 @@ int AmsSendVtaStateOperateRsp(LP_AMS_DATA_t *lpAmsData,MESSAGE_t *pMsg,int iret)
 		}*/
 	}
 
-	//AmsMsgStatProc(AMS_VTA_MSG, s_Msg.iMessageType);
-    //AmsResultStatProc(AMS_VTA_STATE_OPERATE_RESULT, iret);
+	AmsMsgStatProc(AMS_VTA_MSG, s_Msg.iMessageType);
+    AmsResultStatProc(AMS_VTA_STATE_OPERATE_RESULT, iret);
 
 	if(AmsMsgTrace)
 	{	
@@ -910,6 +907,7 @@ int AmsSendTellerEventInd(LP_AMS_DATA_t *lpAmsData,unsigned int tellerEventInd, 
 				descrlen,s_Msg.cMessageBody,s_Msg.iMessageLength,"ams");	
 		}
 	}
+	AmsMsgStatProc(AMS_VTA_MSG, s_Msg.iMessageType); 
 
 	return AMS_OK;
 }
@@ -1025,6 +1023,7 @@ int AmsSendVtaStateOperateInd(LP_AMS_DATA_t *lpAmsData, MESSAGE_t *pMsg, unsigne
 				descrlen,s_Msg.cMessageBody,s_Msg.iMessageLength,"ams");	
 		}
 	}
+	AmsMsgStatProc(AMS_VTA_MSG, s_Msg.iMessageType); 
 
 	return SUCCESS;
 }
@@ -1033,7 +1032,7 @@ int AmsSendVtaStateOperateInd(LP_AMS_DATA_t *lpAmsData, MESSAGE_t *pMsg, unsigne
 //坐席示忙指示，超时，坐席置忙
 int VtaStateOperateIndTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
 {
-	int					iret = AMS_MANAGER_SET_VTA_STATE_VTA_TIMEOUT;
+	//int					iret = AMS_MANAGER_SET_VTA_STATE_VTA_TIMEOUT;
 	LP_AMS_DATA_t		*lpAmsData = NULL;   //进程数据区指针
 	VTA_NODE            *pVtaNode = NULL;		
 	int                 pid = 0;
@@ -1062,8 +1061,8 @@ int VtaStateOperateIndTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
 	if((0 == pid) || (pid >= LOGIC_PROCESS_SIZE))
 	{
 		dbgprint("VtaStateOperateIndTimeoutProc Pid:%d Err", pid);
-		iret = AMS_MANAGER_SET_VTA_STATE_TIMEOUT_PARA_ERR;
-		AmsResultStatProc(AMS_MANAGER_SET_VTA_STATE_RESULT, iret);   		
+		//iret = AMS_MANAGER_SET_VTA_STATE_TIMEOUT_PARA_ERR;
+		//AmsResultStatProc(AMS_MANAGER_SET_VTA_STATE_RESULT, iret);   		
 		return AMS_ERROR;
 	}
 	lpAmsData = (LP_AMS_DATA_t *)ProcessData[pid];
@@ -1094,6 +1093,6 @@ int VtaStateOperateIndTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
 		return AMS_ERROR;		
 	}
 	
-	return iret;
+	return AMS_OK;
 }
 

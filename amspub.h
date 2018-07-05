@@ -87,7 +87,7 @@ typedef struct tellerRegisterInfo_t
 typedef struct tellerRegisterInfoNode_t
 {
 	NODE	node;
-	struct tellLoginInfoNode_t *hashNext;
+	struct tellerRegisterInfoNode_t *hashNext;
 
 	TELLER_REGISTER_INFO tellerRegInfo;
 }TELLER_REGISTER_INFO_NODE;
@@ -564,30 +564,15 @@ typedef struct amsTellerStat_t
 	
 	unsigned long  loginNum;
 	unsigned long  logoutNum;
-	unsigned long  handshakeNum;
 	
 	unsigned long  setIdleNum;
 	unsigned long  setBusyNum;	
 	unsigned long  setRestNum;	
-	unsigned long  setCancelRestlNum;	
-	unsigned long  setPreparaNum;	
-	unsigned long  setPreparaCompletelyNum;
-	
-	unsigned long  connectTotalNum;	
-	unsigned long  transferCallNum;	
-	
-	unsigned long  volumeCtrlNum;	
-	unsigned long  audioRecordNum;	
-	unsigned long  screenRecordNum;	
-	unsigned long  remoteCoopNum;	
-	unsigned long  snapNum;	
+	unsigned long  setPreparaNum;
 
 	//the stat below are updated after teller logined
 	TELLER_WORK_INFO  vtaWorkInfo;                        //柜员工作信息             
 	TELLER_STATE_INFO  vtaStateInfo;                      //柜员状态信息
-	
-	unsigned long  totalScore;                            //柜员客户评分总得分
-	unsigned long  averageScore;                          //柜员客户评分均分
 	
 	unsigned long  unknownStat;	
 	
@@ -596,34 +581,382 @@ typedef struct amsTellerStat_t
 /* struct of timer stat */
 typedef struct amsTimerStat_t
 {
-	unsigned long  WaitVtaOperateIndRsp[3]; 
-	unsigned long  WaitCallEventIndRsp[3];
 	unsigned long  WaitCustomerGetTeller[3];
-	unsigned long  WaitVolumeCtrlRsp[3];	
-	unsigned long  WaitRcasRemoteCoopRsp[3];	
-	unsigned long  WaitVtmRemoteCoopRsp[3];		
-	unsigned long  WaitSnapRsp[3];
+	unsigned long  WaitVtaOperateIndRsp[3]; 
 	unsigned long  WaitRestRsp[3];
-	unsigned long  WaitVtaRecvMsgRsp[3];
-	unsigned long  WaitVtmRecvMsgRsp[3];
-	unsigned long  WaitVtaRecvFileRsp[3];
-	unsigned long  WaitVtmRecvFileRsp[3];	
-	unsigned long  WaitMultiSessRsp[3];
-	unsigned long  WaitMonitorRsp[3];	
-	unsigned long  WaitVtaParaCfgRsp[3];	
-	unsigned long  WaitVtmParaCfgRsp[3];		
-	unsigned long  WaitParaCfgRsp[3];	
 			
 	unsigned long  UnknownTimer[3];
 
 }AMS_TIMER_STAT;
+
+/* struct of msg stat */
+typedef struct amsMsgStat_t
+{
+	// ams <-> crm msg
+	unsigned long  recvVtaLoginReq;
+	unsigned long  sendVtaLoginRsp;
+	unsigned long  recvVtaLogoutReq;
+	unsigned long  sendVtaLogoutRsp;
+
+	unsigned long  recvVtaStateOperateReq;
+	unsigned long  sendVtaStateOperateRsp; 
+
+	unsigned long  sendVtaStateOperateInd; 
+	unsigned long  recvVtaStateOperateCnf;
+
+	unsigned long  recvVtaModifyPasswordReq;
+	unsigned long  sendVtaModifyPasswordRsp;
+
+	unsigned long  recvVtaForceLoginReq;
+	unsigned long  sendVtaForceLoginRsp;
+
+	unsigned long  recvVtaQueryInfoReq;
+	unsigned long  sendVtaQueryInfoRsp;
+
+	unsigned long  recvVtaEventNotice;
+	unsigned long  sendVtaEventInd;
+
+	// ams <-> cms msg
+	unsigned long  recvVtaRegReq;
+	unsigned long  sendVtaRegRsp;
+	unsigned long  recvVtaGetReq;
+	unsigned long  sendVtaGetRsp;
+
+	unsigned long  recvVtaCalloutReq;
+	unsigned long  sendVtaCalloutRsp;
+
+	unsigned long  recvVtaAuthinfoReq;
+	unsigned long  sendVtaAuthinfoRsp;
+
+	
+	unsigned long  recvAmsCallEventNoticeReq;
+	unsigned long  sendAmsCallEventInd;
+
+	// ams B msg
+	unsigned long  customerInQueueTimeout;
+	unsigned long  vtaStateOperateIndTimeout;
+	unsigned long  restTimeout;
+	unsigned long  amsUnknownBMsg;
+
+	
+	//ams unknow msg
+	unsigned long  amsErrMsg;
+	unsigned long  amsUnknownMsgType;
+	unsigned long  amsUnknownMsg;
+
+	unsigned long  amsErrBMsg;
+	
+}AMS_MSG_STAT;
+
+
+/* struct of msg stat */
+typedef struct amsResultStat_t
+{
+	//Common Result	
+	unsigned long  amsSuccess;
+
+	unsigned long  amsParaErr;
+	unsigned long  amsStateErr;
+	unsigned long  amsAllocMemFailed;
+	unsigned long  amsAllocLpFailed;
+	unsigned long  amsAllocLtFailed;
+
+	//Vta Login Result
+	unsigned long  vtaLoginSuccess;
+	unsigned long  vtaLoginParaErr;
+	unsigned long  vtaLoginStateErr;
+	unsigned long  vtaLoginLenErr;
+	unsigned long  vtaLoginLpResourceLimited;
+	unsigned long  vtaLoginNodeResourceLimited;
+	unsigned long  vtaLoginTellerLenErr;
+	unsigned long  vtaLoginTellerNoErr;
+	unsigned long  vtaLoginTellerPwdErr;
+	unsigned long  vtaLoginTellerVncAuthPwdErr;
+	unsigned long  vtaLoginTellerLoginRepeatedly;
+	unsigned long  vtaLoginTellerTypeErr;
+	unsigned long  vtaLoginTellerNumErr;
+	unsigned long  vtaLoginFileServerUsrNameErr;
+	unsigned long  vtaLoginFileServerUsrPwdErr;
+	unsigned long  vtaLoginOrgIdErr;
+	unsigned long  vtaLoginOrgStateErr;	
+	unsigned long  vtaLoginLicenseTimeout;
+	unsigned long  vtaLoginTellerNumBeyondLic;
+
+	//Vta Logout Result
+	unsigned long  vtaLogoutSuccess;
+	unsigned long  vtaLogoutParaErr;          
+	unsigned long  vtaLogoutStateErr;         
+	unsigned long  vtaLogoutLenErr;           
+	unsigned long  vtaLogoutAmsPidErr;        
+	unsigned long  vtaLogoutTellerIdErr;      
+	unsigned long  vtaLogoutSrvGrpIdErr;  
+	unsigned long  vtaLogoutServiceStateErr;   
+	
+	//Vta State Operate Result
+	unsigned long  vtaStateOperateSuccess;
+	unsigned long  vtaStateOperateParaErr;
+	unsigned long  vtaStateOperateStateErr;
+	unsigned long  vtaStateOperateLenErr;
+	unsigned long  vtaStateOperateAmsPidErr;
+	unsigned long  vtaStateOperateTellerIdErr;
+	unsigned long  vtaStateOperateSrvGrpIdErr;
+	unsigned long  vtaStateOperateServiceStateErr;
+	unsigned long  vtaStateOperateCodeErr;
+	unsigned long  vtaStateOperateOpReasonErr;
+	unsigned long  vtaStateOperateOpTimeLenErr;
+	unsigned long  vtaStateOperateUpdateStateErr;
+	unsigned long  vtaStateOperateStartTimerErr;
+	unsigned long  vtaStateOperateRestTimeout;	
+	
+	unsigned long  vtaStateOpRestTimeoutParaErr;
+	unsigned long  vtaStateOpRestTimeoutStateErr;
+	unsigned long  vtaStateOpRestTimeoutLenErr;
+	unsigned long  vtaStateOpRestTimeoutAmsPidErr;
+	unsigned long  vtaStateOpRestTimeoutTellerIdErr;
+	unsigned long  vtaStateOpRestTimeoutSrvGrpIdErr;
+	unsigned long  vtaStateOpRestTimeoutSrvStErr;
+
+	//Vta Modify Password Result
+	unsigned long  vtaModifyPasswordSuccess;
+	unsigned long  vtaModifyPasswordParaErr;
+	unsigned long  vtaModifyPasswordStateErr;
+	unsigned long  vtaModifyPasswordLenErr;
+	unsigned long  vtaModifyPasswordAmsPidErr;
+	unsigned long  vtaModifyPasswordTellerIdErr;
+	unsigned long  vtaModifyPasswordOldPasswordErr;
+	unsigned long  vtaModifyPasswordNewPasswordErr;
+	unsigned long  vtaModifyPasswordSrvGrpIdErr;
+	unsigned long  vtaModifyPasswordServiceStateErr;
+	unsigned long  vtaModifyPasswordTellerPosErr; 
+
+	//Vta Force Login Result
+	unsigned long  vtaForceLoginSuccess;
+	unsigned long  vtaForceLoginParaErr;
+	unsigned long  vtaForceLoginStateErr;
+	unsigned long  vtaForceLoginLenErr;
+	unsigned long  vtaForceLoginLpResourceLimited;
+	unsigned long  vtaForceLoginNodeResourceLimited;
+	unsigned long  vtaForceLoginTellerLenErr;
+	unsigned long  vtaForceLoginTellerNoErr;
+	unsigned long  vtaForceLoginTellerPwdErr;
+	unsigned long  vtaForceLoginTermNetInfoErr;
+	unsigned long  vtaForceLoginTellerVncAuthPwdErr;
+	unsigned long  vtaForceLoginTellerLoginRepeatedly;
+	unsigned long  vtaForceLoginTellerTypeErr;
+	unsigned long  vtaForceLoginTellerNumErr;
+	unsigned long  vtaForceLoginFileServerUsrNameErr;
+	unsigned long  vtaForceLoginFileServerUsrPwdErr;
+	unsigned long  vtaForceLoginLicenseTimeout;
+	unsigned long  vtaForceLoginTellerNumBeyondLic;
+
+	//Vta Query Info Result	
+	unsigned long  vtaQueryInfoSuccess;
+	unsigned long  vtaQueryInfoParaErr;
+	unsigned long  vtaQueryInfoStateErr;
+	unsigned long  vtaQueryInfoLenErr;
+	unsigned long  vtaQueryInfoAmsPidErr;
+	unsigned long  vtaQueryInfoTellerIdErr;
+	unsigned long  vtaQueryInfoSrvGrpIdErr;
+	unsigned long  vtaQueryInfoServiceStateErr;
+	unsigned long  vtaQueryInfoCodeErr;
+	unsigned long  vtaQueryInfoTargetSrvIdErr;
+	unsigned long  vtaQueryInfoTargetSrvNameLenErr;
+	unsigned long  vtaQueryInfoTargetSrvGrpIdErr;
+	unsigned long  vtaQueryInfoTargetTellerNoLenErr;
+	unsigned long  vtaQueryInfoTargetTellerNoErr;
+	unsigned long  vtaQueryInfoTellerNoKeyLenErr;
+	unsigned long  vtaQueryInfoTellerNameKeyLenErr; 
+ 
+	//--Vta State Op Ind Cnf Result--
+	unsigned long  vtaStateOperateIndCnfParaErr;
+	unsigned long  vtaStateOperateIndCnfStateErr;
+	unsigned long  vtaStateOperateIndCnfLenErr;
+	unsigned long  vtaStateOperateIndCnfAmsPidErr;
+	unsigned long  vtaStateOperateIndCnfTellerIdErr;
+	unsigned long  vtaStateOperateIndCnfSrvGrpIdErr; 
+	unsigned long  vtaStateOperateIndCnfServiceStateErr;
+	unsigned long  vtaStateOperateIndCnfManagerAmsPidErr;
+	unsigned long  vtaStateOperateIndCnfManagerTellerIdErr;
+	unsigned long  vtaStateOperateIndCnfManagerSrvGrpIdErr;
+	unsigned long  vtaStateOperateIndCnfManagerSrvStErr;	
+	unsigned long  vtaStateOperateIndCnfCodeErr;
+	
+	unsigned long  managerSetVtaStateTimeoutParaErr;
+	unsigned long  managerSetVtaStateTimeoutStateErr;
+	unsigned long  managerSetVtaStateTimeoutLenErr;
+	unsigned long  managerSetVtaStateTimeoutAmsPidErr;	
+	unsigned long  managerSetVtaStateTimeoutTellerIdErr;
+	unsigned long  managerSetVtaStateTimeoutSrvGrpIdErr;
+	unsigned long  managerSetVtaStateTimeoutServiceStateErr;
+	unsigned long  managerSetVtaStateTimeoutStSetStateErr;
+ 
+	//Vta Event Notice Result
+	unsigned long  vtaEventNoticeSuccess;
+	unsigned long  vtaEventNoticeParaErr;
+	unsigned long  vtaEventNoticeStateErr;
+	unsigned long  vtaEventNoticeLenErr;
+	unsigned long  vtaEventNoticeSrvGrpIdErr;
+	unsigned long  vtaEventNoticeServiceStateErr;
+	unsigned long  vtaEventNoticeCallIdErr;
+	unsigned long  vtaEventNoticeCallStateErr;
+	unsigned long  vtaEventNoticeAmsPidErr;
+	unsigned long  vtaEventNoticeTellerIdErr;
+	unsigned long  vtaEventNoticeVtmIdErr;
+	unsigned long  vtaEventNoticeTypeErr;
+	unsigned long  vtaEventNoticeLackFileInfo;
+	unsigned long  vtaEventNoticeFilePathLenErr;
+	unsigned long  vtaEventNoticeFileNameLenErr;
+
+	unsigned long  vtaEvntNtceSendFileTrgtTypeErr;
+	unsigned long  vtaEvntNtceSendFileTrgtTlrIdErr;
+	unsigned long  vtaEvntNtceSendFileTrgtTlrStErr;
+	unsigned long  vtaEvntNtceSendFileTrgtTlrAmsPidErr;
+	unsigned long  vtaEvntNtceSendFileTrgtVtmIdErr;
+	unsigned long  vtaEvntNtceSendFileTrgtVtmStErr;
+	unsigned long  vtaEvntNtceSendFileSendStErr;
+	unsigned long  vtaEvntNtceSendFileStartTimerErr;
+	
+	unsigned long  vtaEvntNtceRecvFileParaErr;
+	unsigned long  vtaEvntNtceRecvFileOrgnTypeErr;
+	unsigned long  vtaEvntNtceRecvFileOrgnTlrIdErr;
+	unsigned long  vtaEvntNtceRecvFileOrgnTlrAmsPidErr;
+	unsigned long  vtaEvntNtceRecvFileOrgnTlrSrvGrpIdErr;
+	unsigned long  vtaEvntNtceRecvFileOrgnTlrSrvStErr;
+	unsigned long  vtaEvntNtceRecvFileOrgnTlrStErr;
+	unsigned long  vtaEvntNtceRecvFileOrgnVtmIdErr; 
+	unsigned long  vtaEvntNtceRecvFileOrgnVtmStErr;
+	unsigned long  vtaEvntNtceRecvFileRecvStErr;
+
+	unsigned long  vtaEvntCancRecvFileParaErr;
+	unsigned long  vtaEvntCancRecvFileOrgnTypeErr;
+	unsigned long  vtaEvntCancRecvFileOrgnTlrIdErr;
+	unsigned long  vtaEvntCancRecvFileOrgnTlrAmsPidErr;
+	unsigned long  vtaEvntCancRecvFileOrgnTlrSrvGrpIdErr;
+	unsigned long  vtaEvntCancRecvFileOrgnTlrSrvStErr;
+	unsigned long  vtaEvntCancRecvFileOrgnTlrStErr;
+	unsigned long  vtaEvntCancRecvFileOrgnVtmIdErr; 
+	unsigned long  vtaEvntCancRecvFileOrgnVtmStErr;
+	unsigned long  vtaEvntCancRecvFileRecvStErr;
+	
+	unsigned long  vtaEvntNtceAudioRecVtaRepFail;
+	unsigned long  vtaEvntNtceUpldAudioFileVtaRepFail;
+	unsigned long  vtaEvntNtceScrRecVtaRepFail;
+	unsigned long  vtaEvntNtceUpldScrRecFileVtaRepFail;
+	unsigned long  vtaEvntNtceSnapVtaRepFail;
+	unsigned long  vtaEvntNtceDownldSnapFileVtaRepFail;
+	unsigned long  vtaEvntNtceUpldFileVtaRepFail;
+	unsigned long  vtaEvntNtceDownldFileVtaRepFail;
+	unsigned long  vtaEvntNtceVtaCancRecvFileRepFail;
+	unsigned long  vtaEvntNtceRemCoopVtaRepFail;  
+	
+	//Cms Vta Reg Result
+	unsigned long  cmsVtaRegSuccess;
+	unsigned long  cmsVtaRegParaErr;
+	unsigned long  cmsVtaRegStateErr;
+	unsigned long  cmsVtaRegLenErr;
+	unsigned long  cmsVtaRegTellerIdErr;
+	unsigned long  cmsVtaRegResourceLimited;
+ 
+	//Cms Get Vta Result
+	unsigned long  cmsGetVtaSuccess;
+	unsigned long  cmsGetVtaParaErr;
+	unsigned long  cmsGetVtaLenErr;
+	unsigned long  cmsGetVtaAmsPidErr;
+	unsigned long  cmsGetVtaCallIdErr;
+	unsigned long  cmsGetVtaTerminalTypeErr;
+	unsigned long  cmsGetVtaSrvGrpIdErr;
+	unsigned long  cmsGetVtaServiceTypeErr;
+	unsigned long  cmsGetVtaNoValidSrvGrpOrType;
+	unsigned long  cmsGetVtaCallTypeErr;
+	unsigned long  cmsGetVtaOriginTellerIdErr;
+	unsigned long  cmsGetVtaOriginTellerStateErr;
+	unsigned long  cmsGetVtaOriginTellerAmsPidErr;
+	unsigned long  cmsGetVtaOriginTellerSrvGrpIdErr;
+	unsigned long  cmsGetVtaOriginTellerSrvStateErr;	
+	unsigned long  cmsGetVtaTargetTypeErr;
+	unsigned long  cmsGetVtaTargetGroupErr; 
+	unsigned long  cmsGetVtaTargetTellerIdErr;
+	unsigned long  cmsGetVtaTargetTellerStateErr;	
+	unsigned long  cmsGetVtaVtmIdErr;
+	unsigned long  cmsGetVtaAssocCallIdErr;
+	unsigned long  cmsGetVtaLicenseTimeout;
+	unsigned long  cmsGetVtaTpsBeyondLic;
+
+	unsigned long  cmsGetVtaServiceInQueue;
+	unsigned long  cmsGetVtaSIRErr;
+	unsigned long  cmsGetVtaSIRVtmNoErr;
+	unsigned long  cmsGetVtaSIRSrvGrpIdErr;
+	unsigned long  cmsGetVtaSIRCallTypeErr;
+	unsigned long  cmsGetVtaSIRVtaEmpty;
+	unsigned long  cmsGetVtaSIRCalcQueueInfoErr;
+	unsigned long  cmsGetVtaSIRTooManyCustInQueue;
+	unsigned long  cmsGetVtaSIRTargetTellerNotLogin;
+	unsigned long  cmsGetVtaSIRTargetTellerNotReg;
+	unsigned long  cmsGetVtaSIRTargetTellerStateErr;
+	unsigned long  cmsGetVtaSIRCallTransTooManyTimes;
+
+	unsigned long  cmsGetVtaOrgIdErr;
+	unsigned long  cmsGetVtaOrgPosErr;
+	unsigned long  cmsGetVtaParentOrgIdErr;
+	unsigned long  cmsGetVtaSelectSrvGrpIdErr;
+	unsigned long  cmsGetVtaLpResourceLimited;
+	unsigned long  cmsGetVtaCreateTimerErr;
+	
+	unsigned long  cmsGetVtaTimeout;
+	unsigned long  cmsGetVtaTimeoutParaErr;
+	unsigned long  cmsGetVtaTimeoutStateErr;
+	unsigned long  cmsGetVtaTimeoutLenErr;
+	unsigned long  cmsGetVtaTimeoutVtmIdErr;
+	unsigned long  cmsGetVtaTimeoutServiceStateErr;	 
+
+	//Cms Callout Result
+	unsigned long cmsvtaCalloutSuccess;
+	unsigned long cmsCalloutAmspidErr;
+	unsigned long cmsCalloutParaErr;
+	unsigned long cmsCalloutStateErr;
+	unsigned long cmsCalloutvtaCallidErr;
+	unsigned long cmsCalloutvtaTelleridErr;
+	unsigned long cmsCalloutvtaSrvgrpidErr;
+	unsigned long cmsCalloutvtaSrvtypeErr;
+	unsigned long cmsCalloutvtaTelleridNotcfgErr;
+	unsigned long cmsCalloutvtaTelleridNotregErr;
+	unsigned long cmsCalloutvtaTelleridNotloginErr;
+	unsigned long cmsCalloutvtaRepeatErr;
+
+	//Cms Event Notice Result
+	unsigned long  cmsEventNoticeSuccess;
+	unsigned long  cmsEventNoticeParaErr;
+	unsigned long  cmsEventNoticeStateErr;
+	unsigned long  cmsEventNoticeSrvGrpIdErr;
+	unsigned long  cmsEventNoticeServiceStateErr;
+	unsigned long  cmsEventNoticeLenErr;
+	unsigned long  cmsEventNoticeAmsPidErr;
+	unsigned long  cmsEventNoticeCallIdErr;
+	unsigned long  cmsEventNoticeTellerIdErr;
+	unsigned long  cmsEventNoticeVtmIdErr;
+	unsigned long  cmsEventNoticeCodeErr;
+	unsigned long  cmsEventNoticeVtaStateErr;
+	unsigned long  cmsEventNoticeVtmStateErr;
+	unsigned long  cmsEventNoticeOrgnTellerIdErr;
+	unsigned long  cmsEventNoticeOrgnTellerStateErr;
+	unsigned long  cmsEventNoticeOrgnTellerAmsPidErr;
+	unsigned long  cmsEventNoticeOrgnTellerSrvGrpIdErr;
+	unsigned long  cmsEventNoticeOrgnTellerSrvStateErr;
+	
+	unsigned long  cmsHandshakeClearInactiveCall;
+	//ams unknown msg
+	unsigned long  amsUnknownResultType;
+	unsigned long  amsUnknownResult;
+	
+}AMS_RESULT_STAT;
+
 
 
 /* struct of stat */
 typedef struct amsStat_t
 {
 	//MsgStat
-	//AMS_MSG_STAT msgStat;
+	AMS_MSG_STAT msgStat;
 
 	//TimerStat
 	AMS_TIMER_STAT timerStat;
@@ -641,7 +974,7 @@ typedef struct amsStat_t
 	//AMS_VTM_STAT vtmStat[AMS_MAX_VTM_NUM];
 
 	//ResultStat
-	//AMS_RESULT_STAT resultStat;
+	AMS_RESULT_STAT resultStat;
 
 }AMS_STAT;
 

@@ -124,6 +124,28 @@ int AmsKillTimer(int iPid, int *timerId)
 	return AMS_OK;
 }
 
+char *strAmsTimerName[]=
+{
+	"T_AMS_TIMER_NULL",
+
+	"T_AMS_CUSTOMER_IN_QUEUE_TIMER",
+	"T_AMS_VTA_STATE_OPERATE_IND_TIMER",
+	"T_AMS_REST_TIMER",
+
+	
+	"T_AMS_TIMER_MAX",
+};
+
+
+char *AmsGetTimerName(int code)
+{
+	if(code < T_AMS_TIMER_NULL || code > T_AMS_TIMER_MAX)
+	{
+		return strAmsTimerName[T_AMS_TIMER_MAX];
+	}
+
+	return strAmsTimerName[code];
+}
 
 
 void AmsSetVtaState(int iThreadId,LP_AMS_DATA_t *lpAmsData,VTA_NODE *pVtaNode,int state,int stateReason)
@@ -397,7 +419,7 @@ VTM_INFO_NODE		*freeAmsVtmInfoListBufPtr = NULL;
 
 static int			freeAmsRegTellerInfoListInitialled = 0;
 LIST				freeAmsRegTellerInfoList;
-TELLER_INFO_NODE	*freeAmsRegTellerInfoListBufPtr = NULL;
+TELLER_REGISTER_INFO_NODE	*freeAmsRegTellerInfoListBufPtr = NULL;
 
 
 int TellerInfoListInit()

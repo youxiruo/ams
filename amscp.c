@@ -260,7 +260,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	if(pMsg->s_ReceiverPid.iProcessId != 0)
 	{
 		dbgprint("VtaGetReqProc[%d] Pid:%d Err", pid, pMsg->s_ReceiverPid.iProcessId);
-		iret = AMS_CMS_GET_VTA_PARA_ERR;
+		iret = AMS_CMS_CALLOUT_PARA_ERR;
 		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL);
 		return AMS_ERROR;
 	}
@@ -295,7 +295,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	if(srvgrpidlen>AMS_MAX_SERVICE_GROUP_NAME_LEN)
 	{
 		dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
-		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
+		iret = AMS_CMS_CALLOUT_VTA_SRVGRP_ID_ERR;
 		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL);	
 		return AMS_ERROR;
 	}
@@ -307,7 +307,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	if(srvtypelen > AMS_MAX_SERVICE_NAME_LEN)
 	{
 		dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
-		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
+		iret = AMS_CMS_CALLOUT_VTA_SRVTYPE_ERR;
 		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,NULL);	
 		return AMS_ERROR;		
 	}
@@ -336,7 +336,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	if(NULL == tellinfonode || (AmsCfgTeller(tellinfonode->tellerInfopos).flag == AMS_TELLER_UNINSTALL))
 	{
 		dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
-		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
+		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_NOTCFG_ERR;
 		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,CallOutType);	
 		return AMS_ERROR;
 	}
@@ -346,7 +346,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	if(NULL == regtellinfonode && AmsCfgSrvGroup(srvGrpId).isAutoFlag == AMS_SRVGRP_TYPE_HUMAN)
 	{
 			dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
-			iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
+			iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_NOT_REG_ERR;
 			AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,CallOutType);	
 			return AMS_ERROR;		
 	} 
@@ -355,7 +355,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	if(NULL == pVtaNode)
 	{
 		//dbgprint("VtaGetReqProc[%d] CallIdLen[%d]Err", pid, callIdLen);
-		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR;
+		iret = AMS_CMS_CALLOUT_VTA_TELLER_ID_NOTLOGIN_ERR;
 		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,CallOutType);	
 		return AMS_ERROR;
 	}
@@ -367,7 +367,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 		//dbgprint("VtaGetReqProc Teller[%s]CallType[%d] Pid:%d Err", 
 		//	pVtaNode->tellerId,  
 		//	callType, pid);
-		iret = AMS_CMS_GET_VTA_AMS_PID_ERR;
+		iret = AMS_CMS_CALLOUT_AMS_PID_ERR;
 		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,CallOutType);
 		return AMS_ERROR;
 	}
@@ -380,7 +380,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 					originVtaNo, originTellerId, 
 					lpOriginAmsData->vtmNo, lpOriginAmsData->vtmId, 
 					callType, targetVtaNo, callTarget.targetTellerId, pid);*/
-		iret = AMS_CMS_GET_VTA_AMS_PID_ERR;
+		iret = AMS_CMS_CALLOUT_VTAREPEAT_ERR;
 		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,CallOutType);
 		return AMS_ERROR;
 	}
@@ -391,7 +391,7 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 					originVtaNo, originTellerId, 
 					lpOriginAmsData->vtmNo, lpOriginAmsData->vtmId, 
 					callType, targetVtaNo, callTarget.targetTellerId, pid);*/
-		iret = AMS_CMS_GET_VTA_AMS_PID_ERR;
+		iret = AMS_CMS_CALLOUT_STATE_ERR;
 		AmsSendCmsVtaCalloutRsp(NULL,pMsg,iret,CallOutType);
 		return AMS_ERROR;
 	}
@@ -944,7 +944,7 @@ int AmsSendCmsVtaRegRsp(TELLER_REGISTER_INFO_NODE *tellerRegisterInfo,MESSAGE_t 
 	
 	SendMsgBuff(&s_Msg,0);
 
-	//AmsMsgStatProc(AMS_CMS_MSG, s_Msg.iMessageType);
+	AmsMsgStatProc(AMS_CMS_MSG, s_Msg.iMessageType);
 	//AmsResultStatProc(AMS_CMS_VTA_REG_RESULT, iret);	
 	
 	if(AmsMsgTrace)
@@ -1041,6 +1041,9 @@ int AmsSendCmsVtaCalloutRsp(LP_AMS_DATA_t *lpAmsData,MESSAGE_t *pMsg,int iret,DW
 				descrlen,s_Msg.cMessageBody,s_Msg.iMessageLength,"ams");	
 		}
 	}
+
+	AmsMsgStatProc(AMS_CMS_MSG, s_Msg.iMessageType);
+	AmsResultStatProc(AMS_CMS_VTA_CALLOUT_RESULT, iret);
 	return SUCCESS;
 
 }
@@ -1104,6 +1107,8 @@ int AmsSendCmsAuthinfoRsp(TELLER_INFO *tellcfginfo, MESSAGE_t *pMsg,int iret)
 				descrlen,s_Msg.cMessageBody,s_Msg.iMessageLength,"ams");	
 		}
 	}
+
+	AmsMsgStatProc(AMS_CMS_MSG, s_Msg.iMessageType);
 
 	return AMS_SUCCESS;
 }

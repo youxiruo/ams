@@ -120,7 +120,7 @@ int AmsProcAMsg(int iThreadId,MESSAGE_t *pMsg)
 	if((pMsg->iMessageLength < 0) || (pMsg->iMessageLength >= MSG_BODY_LEN))
 	{
 		//统计
-		//AmsMsgStat.amsErrMsg++;
+		AmsMsgStat.amsErrMsg++;
 		
 		return AMS_ERROR;
 	}
@@ -129,7 +129,7 @@ int AmsProcAMsg(int iThreadId,MESSAGE_t *pMsg)
 	if((pMsg->s_ReceiverPid.cModuleId != SystemData.cMid)||(pMsg->s_ReceiverPid.cFunctionId != FID_AMS))
 	{
 		//统计
-		//AmsMsgStat.amsErrMsg++;
+		AmsMsgStat.amsErrMsg++;
 		
 		return AMS_ERROR;
 	}
@@ -137,7 +137,7 @@ int AmsProcAMsg(int iThreadId,MESSAGE_t *pMsg)
 	switch(pMsg->s_SenderPid.cFunctionId)
 	{					
 		case FID_VTA:
-			//AmsMsgStatProc(AMS_VTA_MSG, pMsg->iMessageType);
+			AmsMsgStatProc(AMS_VTA_MSG, pMsg->iMessageType);
 			iret = AmsProcVtaMsg(iThreadId,pMsg); 
 			break;
 		
@@ -147,7 +147,7 @@ int AmsProcAMsg(int iThreadId,MESSAGE_t *pMsg)
 			break;*/
 
 		case FID_CMS:
-			//AmsMsgStatProc(AMS_CMS_MSG, pMsg->iMessageType);
+			AmsMsgStatProc(AMS_CMS_MSG, pMsg->iMessageType);
 			iret = AmsProcCmsMsg(iThreadId,pMsg); 
 			break;
 		
@@ -158,7 +158,7 @@ int AmsProcAMsg(int iThreadId,MESSAGE_t *pMsg)
 		
 		default:
 			//消息统计
-			//AmsMsgStatProc(AMS_OTHER_MSG_TYPE, pMsg->iMessageType);
+			AmsMsgStatProc(AMS_OTHER_MSG_TYPE, pMsg->iMessageType);
 			dbgprint("AMS A Area Msg Error: MsgCode: iMessageType=0x%x.\n\t", pMsg->iMessageType);
 			return AMS_ERROR;
 	}
@@ -191,7 +191,7 @@ int AmsProcVtaMsg(int iThreadId, MESSAGE_t *pMsg)
 			break;
 		default:
 			//消息统计
-			//AmsMsgStatProc()
+			AmsMsgStatProc();
 			dbgprint("AMS Proc Vta Msg Error: MsgCode: iMessageType=0x%x.\n\t", pMsg->iMessageType);
 			return AMS_ERROR;
 	}
@@ -240,7 +240,7 @@ int AmsProcCmsMsg(int iThreadId, MESSAGE_t *pMsg)
 		
 		default:
 			//消息统计
-			//AmsMsgStatProc()
+			AmsMsgStatProc();
 			dbgprint("AMS Proc Cms Msg Error: MsgCode: iMessageType=0x%x.\n\t", pMsg->iMessageType);
 			return AMS_ERROR;
 	}
@@ -266,7 +266,7 @@ int AmsProcBMsg(int iThreadId,MESSAGE_t *pMsg)
 	if((pTmMsg->iMessageLength < 0) || (pTmMsg->iMessageLength >= MSG_BODY_LEN))
 	{
 		//统计
-		//AmsMsgStat.amsErrBMsg++;
+		AmsMsgStat.amsErrBMsg++;
 		
 		return AMS_ERROR;
 	}
@@ -275,13 +275,13 @@ int AmsProcBMsg(int iThreadId,MESSAGE_t *pMsg)
 	if((pTmMsg->s_ReceiverPid.cModuleId != SystemData.cMid)||(pTmMsg->s_ReceiverPid.cFunctionId != FID_AMS))
 	{
 		//统计
-		//AmsMsgStat.amsErrBMsg++;	
+		AmsMsgStat.amsErrBMsg++;	
 		
 		return AMS_ERROR;
 	}
 	
 	//MSG STAT
-	//AmsMsgStatProc(AMS_B_MSG, pMsg->iMessageType);
+	AmsMsgStatProc(AMS_B_MSG, pMsg->iMessageType);
 
     switch(pTmMsg->iMessageType)
 	{

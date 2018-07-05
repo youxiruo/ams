@@ -8,8 +8,10 @@
 #define AMS_OK                          (0)
 #define AMS_ERROR                       (-1)
 
-#define AmsTellerStat(i)                (SystemData.AmsPriData.amsStat.tellerStat[i])
+#define AmsStat                         (SystemData.AmsPriData.amsStat)
+#define AmsMsgStat                      (SystemData.AmsPriData.amsStat.msgStat)
 #define AmsTimerStat                    (SystemData.AmsPriData.amsStat.timerStat)
+#define AmsTellerStat(i)                (SystemData.AmsPriData.amsStat.tellerStat[i])
 #define AmsDebugTrace                   (SystemData.AmsPriData.amsDebug.debug)
 #define AmsCommonTrace                  (SystemData.AmsPriData.amsDebug.common)
 #define AmsMsgTrace                     (SystemData.AmsPriData.amsDebug.msg)
@@ -17,6 +19,8 @@
 #define AmsTimerTrace                   (SystemData.AmsPriData.amsDebug.timer)
 #define AmsErrorTrace                   (SystemData.AmsPriData.amsDebug.error)
 #define AmsAlarmTrace                   (SystemData.AmsPriData.amsDebug.alarm)
+#define AmsResultStat                   (SystemData.AmsPriData.amsStat.resultStat)
+
 
 
 
