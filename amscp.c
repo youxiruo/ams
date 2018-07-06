@@ -437,6 +437,11 @@ int VtaCalloutReqProc(int iThreadId, MESSAGE_t *pMsg)
 	{
 		AmsSendVtaStateOperateInd(lpAmsData,pMsg,VTA_STATE_OPERATE_IND_BUSY,VTA_STATE_OPERATE_IND_BUSY_IND);
 	}
+
+	//delete vtanode from freevatlist
+	Sem_wait(&AmsSrvData(srvGrpId).freevtaCtrl);
+	lstDelete(&AmsSrvData(srvGrpId).freevtaList, (NODE *)pVtaNode);
+	Sem_post(&AmsSrvData(srvGrpId).freevtaCtrl);
 	
 	return iret;
 }

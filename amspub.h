@@ -551,6 +551,9 @@ typedef struct amsServiecProc_t
 
 	sem_t	         vtmCtrl;
 	LIST 		     vtmList;
+
+	sem_t            freevtaCtrl;
+	LIST			 freevtaList;
 	
 }AMS_SERVICE_MANAGE;
 

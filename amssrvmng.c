@@ -86,6 +86,8 @@ int AmsDataInit()
 
 		Sem_init(&AmsSrvData(i).vtmCtrl,0,1);
 
+		Sem_init(&AmsSrvData(i).freevtaCtrl,0,1);
+
 //		AmsSrvData(i).serviceState = AMS_SERVICE_INACTIVE;
 
 //		AmsSrvData(i).preSrvTellerId = 0;

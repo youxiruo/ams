@@ -301,6 +301,11 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 		lstAdd(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).vtaList, (NODE *)pVtaNode);
 		Sem_post(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).vtaCtrl);
 
+		/* Add Vta Node to free List */
+	    Sem_wait(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).freevtaCtrl);
+		lstAdd(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).freevtaList, (NODE *)pVtaNode);
+		Sem_post(&AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).freevtaCtrl);
+
 		packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[6+packlen],lpAmsData);
 
 		tellerNum+=1;
@@ -708,7 +713,12 @@ int VtaStateOperateCnfProc(int iThreadId, MESSAGE_t *pMsg)
 	
 			//set Vta State and State Start Time
 			AmsSetVtaState(iThreadId, lpAmsData, pVtaNode, AMS_VTA_STATE_IDLE, 0);
-#endif			
+#endif		
+
+			//add vtanode to freevtanode
+			Sem_wait(&AmsSrvData(lpAmsData->srvGrpIdPos).freevtaCtrl);
+			lstAdd(&AmsSrvData(lpAmsData->srvGrpIdPos).freevtaList, (NODE *)pVtaNode);
+			Sem_post(&AmsSrvData(lpAmsData->srvGrpIdPos).freevtaCtrl);
 
 		}
 	}

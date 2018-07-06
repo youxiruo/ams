@@ -428,11 +428,11 @@ sendVtaEventInd                     =%20ld\r\n\r\n",
 	 memset(s,0,sizeof(s));
 	len = snprintf(s,sizeof(s),
 	"\
-	recvVtaRegReq                  =%20ld,\t sendVtaRegRsp                        =%20ld\r\n\
-	recvVtaGetReq                  =%20ld,\t sendVtaGetRsp                        =%20ld\r\n\
-	recvVtaCalloutReq              =%20ld,\t sendVtaCalloutRsp                    =%20ld\r\n\
-	recvVtaAuthinfoReq             =%20ld,\t sendVtaAuthinfoRsp                   =%20ld\r\n\
-	recvAmsCallEventNoticeReq      =%20ld,\t sendAmsCallEventInd                  =%20ld\r\n\r\n",
+recvVtaRegReq                       =%20ld,\t sendVtaRegRsp                       =%20ld\r\n\
+recvVtaGetReq                       =%20ld,\t sendVtaGetRsp                       =%20ld\r\n\
+recvVtaCalloutReq                   =%20ld,\t sendVtaCalloutRsp                   =%20ld\r\n\
+recvVtaAuthinfoReq                  =%20ld,\t sendVtaAuthinfoRsp                  =%20ld\r\n\
+recvAmsCallEventNoticeReq           =%20ld,\t sendAmsCallEventInd                 =%20ld\r\n\r\n",
 	
 		//ams <-> cms msg
 		AmsMsgStat.recvVtaRegReq,				   AmsMsgStat.sendVtaRegRsp,
