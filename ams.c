@@ -222,7 +222,7 @@ int AmsProcCmsMsg(int iThreadId, MESSAGE_t *pMsg)
 			iret = VtaCalloutReqProc(iThreadId,pMsg);
 			break;
 
-		case A_AUTHINFO_QUERY_REQ:
+		case A_AUTHINFO_QUERY_REQ://坐席鉴权信息查询请求
 			iret = VtaAuthinfoReqProc(iThreadId,pMsg);
 			break;
 			

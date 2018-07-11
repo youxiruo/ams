@@ -48,7 +48,8 @@ typedef struct
 
 	DWORD   amsPid;
 	//DWORD   tellerId;
-	DWORD   vtmId[AMS_MAX_VTM_ID_LEN+1];
+	unsigned char   termIdLen;
+	unsigned char   termId[AMS_MAX_TERM_ID_LEN+1];
 	DWORD   assocTellerId;
 	
 	unsigned char srvGrpIdLen;
@@ -92,7 +93,7 @@ typedef struct
 	//communication pid
 	PID_t	myPid;
 	PID_t	rPid;    //vta
-	PID_t	vtmPid;  //vtm
+	PID_t	termPid;  //vtm
 	PID_t	cmsPid;
 	PID_t	rcasPid;	
 
@@ -117,6 +118,58 @@ typedef struct
 	DWORD	CallOutType;
 	
 }LP_AMS_DATA_t;
+
+
+typedef struct callTarget_t
+{
+	WORD          	      callTargetType;
+	unsigned char         targetTellerGroupId[AMS_MAX_SERVICE_GROUP_NAME_LEN + 1];
+	unsigned char         targetTellerId[AMS_MAX_TELLER_ID_LEN + 1];
+
+}CALL_TARGET;
+
+
+//排队进程数与排队客户数一致，数量不定
+typedef struct
+{
+	DWORD   vtmId;
+	DWORD   srvGrpId;
+
+	unsigned char   serviceTypeLen;
+	unsigned char   serviceType[AMS_MAX_SERVICE_NAME_LEN + 1];	
+
+	unsigned char   termIdLen;                   //终端标识
+	unsigned char   termId[AMS_MAX_TERM_ID_LEN + 1];	
+	unsigned char   callIdLen;                 
+	unsigned char   callId[AMS_MAX_CALLID_LEN + 1];	
+
+	unsigned char   srvGrpSelfAdapt;
+
+	unsigned int    callType;
+	CALL_TARGET     callTarget;		
+
+	//timer
+	int     iTimerId;            //Vta
+
+	//communication pid
+	PID_t	myPid;
+	PID_t	cmsPid;
+	PID_t	vtmPid; //vtm
+
+	//trace
+	BYTE	debugTrace;
+	BYTE	commonTrace;
+	BYTE	msgTrace;
+	BYTE	stateTrace;
+	BYTE	timerTrace;
+	BYTE	errorTrace;
+	BYTE	alarmTrace;
+
+	BYTE	sTraceName[32];
+	BYTE	lTraceNameLen;
+
+}LP_QUEUE_DATA_t;
+
 
 
 #define BEGETSHORT(s, cp) do{ \

@@ -109,6 +109,107 @@ int AmsUnpackStateOperateReqOpartPara(unsigned char body[], int bodyLen, STATE_O
 	return AMS_OK;
 }
 
+/*IP
+IPV6
+PORT
+*/
+int AmsUnpackVtaRegReqVpartPara(unsigned char body[], int bodyLen, TERM_NET_INFO *pTermNetInfo)
+{
+	unsigned char       paraID = 0;
+	int                 pos = 0;
+	int                 lenValue = 0;
+	int                 ret = AMS_ERROR;
+	unsigned char       *p;
+
+	if(NULL == body || NULL == pTermNetInfo)
+	{
+		dbgprint("AmsUnpackVtaRegReqVpartPara Err1");
+		return AMS_ERROR;
+	}
+
+	if(bodyLen < 3)
+	{
+		dbgprint("AmsUnpackVtaRegReqVpartPara Err2");
+		return AMS_ERROR;
+	}
+
+	paraID = body[pos];
+	if(paraID != AMS_TERM_NET_INFO_ID)
+	{
+		dbgprint("AmsUnpackVtaRegReqVpartPara Err3");
+		return AMS_ERROR;
+	}
+	pos+=3;
+
+	p = &body[pos];
+	BEGETLONG(pTermNetInfo->ip,p);
+	p+=4;
+
+	memcpy(pTermNetInfo->ipv6,p,16);
+	p+=16;
+
+	BEGETSHORT(pTermNetInfo->port,p);
+	p+=2;
+
+	return AMS_OK;
+	
+}
+int AmsUnpackTellerpersionalinfo(unsigned char body[], int bodyLen, TELLER_PERSONAL_INFO *pTellerPersonalInfo)
+{
+	unsigned char       paraID = 0;
+	int                 pos = 0;
+	int                 lenValue = 0;
+	int                 ret = AMS_ERROR;
+	unsigned char       *p;
+	
+
+	if(NULL == body || NULL == pTellerPersonalInfo)
+	{
+		dbgprint("AmsUnpackTellerpersionalinfo Err");
+		return AMS_ERROR;
+	}
+
+	if(bodyLen < 3)
+	{
+		dbgprint("AmsUnpackTellerpersionalinfo Err");
+		return AMS_ERROR;
+	}
+
+	paraID = body[pos];
+	if(paraID != AMS_TELLER_PERSIONALDATA_ID)
+	{
+		dbgprint("AmsUnpackTellerpersionalinfo Err");
+		return AMS_ERROR;
+	}
+
+	pos+=2;
+	pTellerPersonalInfo->tellerUserNameLen=body[pos++];
+	if(pTellerPersonalInfo->tellerUserNameLen > AMS_MAX_NAME_LEN)
+	{
+		dbgprint("AmsUnpackTellerpersionalinfo usernamelen Err");
+		return AMS_ERROR;		
+	}
+	memcpy(pTellerPersonalInfo->tellerUserName,&body[pos],pTellerPersonalInfo->tellerUserNameLen);
+	pos+=pTellerPersonalInfo->tellerUserNameLen;
+
+	pTellerPersonalInfo->tellerNickNameLen=body[pos++];
+	if(pTellerPersonalInfo->tellerNickNameLen > AMS_MAX_NAME_LEN)
+	{
+		dbgprint("AmsUnpackTellerpersionalinfo Err");
+		return AMS_ERROR;
+	}
+	memcpy(pTellerPersonalInfo->tellerNickName,&body[pos],pTellerPersonalInfo->tellerNickNameLen);
+	pos+=pTellerPersonalInfo->tellerNickNameLen;
+
+	p = &body[pos];
+	
+	BEGETSHORT(pTellerPersonalInfo->tellertype,p);
+	pos+=2;
+
+	return pos;		
+}
+
+
 int AmsPackVtaLoginBase(unsigned char tellerIdLen,unsigned char tellerId[],int iret,unsigned char p[],LP_AMS_DATA_t	*lpAmsData)
 {
 	int len=0;

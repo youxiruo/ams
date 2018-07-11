@@ -22,6 +22,8 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 	TELLER_INFO_NODE	*pTellerInfoNode = NULL;
 	MESSAGE_t           s_Msg;
 	unsigned int		packlen=0;
+	TELLER_PERSONAL_INFO tellerpesonalinfo;
+	TELLER_REGISTER_INFO_NODE  *pRegTellerInfoNode = NULL;
 
 	memset(&s_Msg,0,sizeof(MESSAGE_t));
 
@@ -46,9 +48,6 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 		AmsSendVtaLoginRsp(pMsg,ret,&s_Msg,0);
 		return AMS_ERROR;
 	}
-
-	//消息长度检查
-
 
 	//个数获取
 	p = pMsg->cMessageBody;
@@ -93,9 +92,6 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 		}
 		memcpy(tellerPwd,p,tellerPwdLen);
 		p+=tellerPwdLen;
-		
-		//check len
-
 
 		/*check teller in cfg or not*/
 		/*get teller cfg pos*/
@@ -143,7 +139,35 @@ int VtaLoginReqProc(int iThreadId, MESSAGE_t *pMsg)
 		}
 
 		//check teller type
+		if(AmsCfgSrvGroup(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).isAutoFlag == AMS_SRVGRP_TYPE_HUMAN)
+		{
+			if(	 tellerLoginNum > 1)
+			{
+				dbgprint("VtaLoginReqProc[%d] teller[] Num[] Err Only one humanteller pertime login",pid,tellerId,tellerLoginNum);
+				iret = AMS_VTA_LOGIN_TELLER_NUM_ERR;
+				ret  = AMS_VTA_LOGIN_PARA_ERR;
+				packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[6+packlen],NULL);
+				break;
+			}
+			else
+			{
+				memset(&tellerpesonalinfo,0,sizeof(TELLER_PERSONAL_INFO));
+				iret = AmsUnpackTellerpersionalinfo(p,pMsg->iMessageLength-4-tellerIdLen-tellerPwdLen,&tellerpesonalinfo);
+				break;
+			}
 
+			/* chcek teller in registnode or not*/
+			pRegTellerInfoNode=AmsSearchRegTellerInfoHash(tellerId,tellerIdLen);
+			if(NULL == pRegTellerInfoNode)
+			{
+				dbgprint("VtaLoginReqProc[%d] TellerId[%s] not registed",pid,tellerId);
+				iret = AMS_VTA_LOGIN_TELLER_LOGIN_NOTREGSITER;
+				ret = AMS_VTA_LOGIN_PARA_ERR;
+				packlen+=AmsPackVtaLoginBase(tellerIdLen,tellerId,iret,&s_Msg.cMessageBody[6+packlen],NULL);
+				break;
+			}
+		}
+		
 		/* check teller in process or not*/
 		if(AMS_SERVICE_ACTIVE == AmsSrvData(AmsCfgTeller(tellerCfgPos).srvGrpIdPos).serviceState)
 		{

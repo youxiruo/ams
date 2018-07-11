@@ -124,6 +124,90 @@ int AmsKillTimer(int iPid, int *timerId)
 	return AMS_OK;
 }
 
+
+int AmsQueueCreateTimerPara(int iPid,int *timerId,int timerType,int tmcnt,unsigned char *para)
+{
+	PID_t               sPid;
+	LP_QUEUE_DATA_t     *lpQueueData = NULL;
+	int                 iret;
+	
+	if(NULL == timerId)
+	{
+		return AMS_ERROR;
+	}
+	
+	lpQueueData = (LP_QUEUE_DATA_t *)ProcessData[iPid];	
+	sPid.cModuleId = SystemData.cMid;
+	sPid.cFunctionId = FID_AMS;
+	sPid.iProcessId = iPid;
+
+	if(*timerId >= 0)
+	{
+        dbgprint("AmsQueueCreateTimerPara killTimer[%d][0x%x] Err",*timerId, timerId);
+		KillLTimer(*timerId,sPid);
+	}
+	
+	iret = CreateLTimer(tmcnt,timerType,sPid,para);
+	if(iret < 0)
+	{
+		return AMS_ERROR;
+	}
+	
+	*timerId = iret;
+    
+	if(lpQueueData->timerTrace)
+	{
+		unsigned char description [100];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,100,"Queue create timer Para %d,timelen=%d,para[%d][%d][%d][%d];",
+			*timerId,tmcnt,para[0],para[1],para[2],para[3]);
+		
+		AmsTraceInfoToFile(iPid,tmcnt,description,descrlen,lpQueueData->sTraceName);
+	}
+
+	return AMS_OK;
+}
+
+
+int AmsQueueKillTimer(int iPid, int *timerId)
+{
+	PID_t               sPid;
+	LP_QUEUE_DATA_t     *lpQueueData = NULL;
+	int                 iret;
+
+	if(NULL == timerId)
+	{
+		return AMS_ERROR;
+	}
+	
+	lpQueueData = (LP_QUEUE_DATA_t *)ProcessData[iPid];	
+	if(lpQueueData->timerTrace)
+	{
+		unsigned char description [100];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,100,"Queue kill timer %d;",*timerId);
+		
+		AmsTraceInfoToFile(iPid,0,description,descrlen,lpQueueData->sTraceName);
+	}
+
+    sPid.cModuleId = SystemData.cMid;	
+    sPid.cFunctionId = FID_AMS;		
+   	sPid.iProcessId = iPid;
+
+    iret = KillLTimer(*timerId,sPid);
+	if(iret < 0)
+	{
+		return AMS_ERROR;
+	}
+	
+	*timerId = -1;
+	
+	return AMS_OK;
+}
+
+
 char *strAmsTimerName[]=
 {
 	"T_AMS_TIMER_NULL",
@@ -146,6 +230,91 @@ char *AmsGetTimerName(int code)
 
 	return strAmsTimerName[code];
 }
+
+
+
+//max string len is 16
+char *AmsGetStateTypeString(int type,int state)
+{
+    switch(type)
+    {
+	case AMS_VTA_STATE:
+		switch(state)
+		{
+		case AMS_VTA_STATE_IDLE:
+			return "Idle";
+		case AMS_VTA_STATE_BUSY:
+			return "Busy";
+		case AMS_VTA_STATE_REST:
+			return "Rest";
+		case AMS_VTA_STATE_PREPARE:
+			return "Prepare";
+	    case AMS_VTA_STATE_OFFLINE:
+	        return "Offline";	
+		default:
+			break;
+		}
+		break;
+    case AMS_CALL_STATE:
+        switch(state)
+		{
+		case AMS_CALL_STATE_NULL:
+			return "Call Idle";
+        case AMS_CALL_STATE_WAIT_ANSWER:
+            return "Call Wait Answer";			
+        case AMS_CALL_STATE_TRANSFER:
+			return "Call Transfer";  
+        case AMS_CALL_STATE_ANSWER:
+            return "Call Answer";
+		case AMS_CALL_STATE_HOLD:
+			return "Call Hold";			
+        case AMS_CALL_STATE_INNER_CALL:
+            return "Call In Inner Call";
+        case AMS_CALL_STATE_MONITOR_CALL:
+            return "Call In Monitor Call";			
+        case AMS_CALL_STATE_CONF:
+            return "Call In Conf";
+
+		default:
+			break;
+		}
+    case AMS_TERM_STATE:
+        switch(state)
+		{
+		case AMS_TERM_STATE_IDLE:
+			return "Idle";
+		case AMS_TERM_STATE_BUSY:
+			return "Busy";
+        case AMS_TERM_STATE_OFFLINE:
+			return "Offline";    
+
+		default:
+			break;
+		}
+		break;
+		
+    case AMS_CUSTOMER_STATE:
+        switch(state)
+		{
+		case AMS_CUSTOMER_SERVICE_NULL:
+			return "Null";
+		case AMS_CUSTOMER_IN_QUEUE:
+			return "In Queue";
+        case AMS_CUSTOMER_IN_SERVICE:
+			return "In Service";    
+
+		default:
+			break;
+		}
+		break;
+		
+	default:
+		break;
+    }
+    
+    return  "Unkown State";
+}
+
 
 
 void AmsSetVtaState(int iThreadId,LP_AMS_DATA_t *lpAmsData,VTA_NODE *pVtaNode,int state,int stateReason)
@@ -210,6 +379,134 @@ void AmsSetVtaCallState(LP_AMS_DATA_t *lpAmsData,VTA_NODE *pVtaNode,int state)
 	pVtaNode->callStateStartLocalTime.minute = tLocalTime->tm_min;
 	pVtaNode->callStateStartLocalTime.second = tLocalTime->tm_sec;
 
+}
+
+
+
+void AmsSetTermState(int iThreadId,TERM_NODE *pTermNode,int state)
+{
+	struct tm           *tLocalTime;      // 东8区
+
+	if(NULL == pTermNode)
+	{
+		return;
+	}
+	
+	pTermNode->state = state;
+
+	//record state start time
+	time(&pTermNode->stateStartTime);
+	tLocalTime = localtime(&pTermNode->stateStartTime);
+	pTermNode->stateStartLocalTime.year   = tLocalTime->tm_year + 1900; //+1900
+	pTermNode->stateStartLocalTime.month  = tLocalTime->tm_mon + 1;     //+1
+	pTermNode->stateStartLocalTime.day    = tLocalTime->tm_mday;
+	pTermNode->stateStartLocalTime.hour   = tLocalTime->tm_hour;
+	pTermNode->stateStartLocalTime.minute = tLocalTime->tm_min;
+	pTermNode->stateStartLocalTime.second = tLocalTime->tm_sec;
+
+	//AmsUpdateDbVtmState(iThreadId,pTermNode,state); 
+	
+	if(AmsStateTrace)
+	{
+		unsigned char description [256];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,256,"Term[%s] AmsPid[0x%x] CustPid[0x%x]\r\n",
+			pTermNode->termInfo.termId,
+			pTermNode->amsPid, pTermNode->customerPid);
+		descrlen +=snprintf(description+descrlen,256-descrlen,"Current[%d-%d-%d %d:%d:%d]State=%s;",
+			pTermNode->stateStartLocalTime.year,
+			pTermNode->stateStartLocalTime.month,
+			pTermNode->stateStartLocalTime.day,
+			pTermNode->stateStartLocalTime.hour,
+			pTermNode->stateStartLocalTime.minute,
+			pTermNode->stateStartLocalTime.second,
+			AmsGetStateTypeString(AMS_TERM_STATE, pTermNode->state));
+			
+		AmsTraceInfoToFile(pTermNode->amsPid,0,description,descrlen,"ams"); //pVtmNode->amsPid not used, so not add pVtmNode->customerPid para
+	}
+}
+
+void AmsSetTermCallState(TERM_NODE *pTermNode,int state)
+{
+	struct tm           *tLocalTime;      // 东8区
+
+	if(NULL == pTermNode)
+	{
+		return;
+	}
+	
+	pTermNode->callState = state;
+
+	//record state start time
+	time(&pTermNode->callStateStartTime);
+	tLocalTime = localtime(&pTermNode->callStateStartTime);
+	pTermNode->callStateStartLocalTime.year   = tLocalTime->tm_year + 1900; //+1900
+	pTermNode->callStateStartLocalTime.month  = tLocalTime->tm_mon + 1;     //+1
+	pTermNode->callStateStartLocalTime.day    = tLocalTime->tm_mday;
+	pTermNode->callStateStartLocalTime.hour   = tLocalTime->tm_hour;
+	pTermNode->callStateStartLocalTime.minute = tLocalTime->tm_min;
+	pTermNode->callStateStartLocalTime.second = tLocalTime->tm_sec;
+
+	if(AmsStateTrace)
+	{
+		unsigned char description [256];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,256,"Term[%s] AmsPid[0x%x]\r\n",
+			pTermNode->termInfo.termId, pTermNode->amsPid);
+		descrlen +=snprintf(description+descrlen,256-descrlen,"Current[%d-%d-%d %d:%d:%d]CallState=%s;",
+			pTermNode->callStateStartLocalTime.year,
+			pTermNode->callStateStartLocalTime.month,
+			pTermNode->callStateStartLocalTime.day,
+			pTermNode->callStateStartLocalTime.hour,
+			pTermNode->callStateStartLocalTime.minute,
+			pTermNode->callStateStartLocalTime.second,
+			AmsGetStateTypeString(AMS_CALL_STATE, pTermNode->callState));
+			
+		AmsTraceInfoToFile(pTermNode->amsPid,0,description,descrlen,"ams");
+	}
+}
+
+void AmsSetTermServiceState(TERM_NODE *pTermNode,int state)
+{
+	struct tm           *tLocalTime;      // 东8区
+
+	if(NULL == pTermNode)
+	{
+		return;
+	}
+	
+	pTermNode->serviceState = state;
+
+	//record state start time
+	time(&pTermNode->serviceStateStartTime);
+	tLocalTime = localtime(&pTermNode->serviceStateStartTime);
+	pTermNode->serviceStateStartLocalTime.year   = tLocalTime->tm_year + 1900; //+1900
+	pTermNode->serviceStateStartLocalTime.month  = tLocalTime->tm_mon + 1;     //+1
+	pTermNode->serviceStateStartLocalTime.day    = tLocalTime->tm_mday;
+	pTermNode->serviceStateStartLocalTime.hour   = tLocalTime->tm_hour;
+	pTermNode->serviceStateStartLocalTime.minute = tLocalTime->tm_min;
+	pTermNode->serviceStateStartLocalTime.second = tLocalTime->tm_sec;
+
+	if(AmsStateTrace)
+	{
+		unsigned char description [256];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,256,"Vtm[%s] AmsPid[0x%x] Customer[%u]\r\n",
+			pTermNode->termInfo.termId,pTermNode->amsPid, pTermNode->customerPid);
+		descrlen +=snprintf(description+descrlen,256-descrlen,"Current[%d-%d-%d %d:%d:%d]ServiceState=%s;",
+			pTermNode->serviceStateStartLocalTime.year,
+			pTermNode->serviceStateStartLocalTime.month,
+			pTermNode->serviceStateStartLocalTime.day,
+			pTermNode->serviceStateStartLocalTime.hour,
+			pTermNode->serviceStateStartLocalTime.minute,
+			pTermNode->serviceStateStartLocalTime.second,
+			AmsGetStateTypeString(AMS_CUSTOMER_STATE, pTermNode->serviceState));
+			
+		AmsTraceInfoToFile(pTermNode->amsPid,0,description,descrlen,"ams");
+	}
 }
 
 
@@ -390,6 +687,37 @@ int AmsUpdateVtaState(int iThreadId, LP_AMS_DATA_t *lpAmsData, VTA_NODE *pVtaNod
 }
 
 
+TERM_NODE *AmsSearchTermNode(unsigned int srvGrpId, unsigned char termId[],unsigned char termIdLen)
+{
+	TERM_NODE *pTermNode = NULL;	
+	int i = 0;
+	int find = 0;
+	
+	pTermNode = (TERM_NODE *)lstFirst(&AmsSrvData(srvGrpId).termList);
+	while(NULL != pTermNode && i < AMS_MAX_TERM_NODES)
+    {
+        if(0 == memcmp(pTermNode->termInfo.termId,termId,termIdLen))
+        {
+			find = 1;
+			break;			
+        }
+		
+        pTermNode = (TERM_NODE *)lstNext((NODE *)pTermNode);
+		i++;
+    }
+
+	if(0 == find)
+	{
+		pTermNode = NULL;	
+	}
+	
+    return pTermNode;
+	
+}
+
+
+
+
 int AmsKillVtaAllCallTimer(LP_AMS_DATA_t *lpAmsData, int pid)
 {
 	if(NULL == lpAmsData)
@@ -501,7 +829,7 @@ int VtmInfoListInit()
 
 	lstInit(&freeAmsVtmInfoList);
 
-	size = sizeof(VTM_INFO_NODE) * AMS_MAX_VTM_NODES;
+	size = sizeof(VTM_INFO_NODE) * AMS_MAX_TERM_NODES;
 	freeAmsVtmInfoListBufPtr = (VTM_INFO_NODE *)malloc(size);
 	pNode = (VTM_INFO_NODE *)freeAmsVtmInfoListBufPtr;
 	if(NULL == pNode)

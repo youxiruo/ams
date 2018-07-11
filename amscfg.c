@@ -785,6 +785,7 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 
 int AmsSrvVtmSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 {
+#if 0
 	char				stringword[AMS_MAX_STRING_WORD_LEN];
 	unsigned char		vtmIdLen;
 	unsigned char		vtmNameLen;
@@ -901,7 +902,7 @@ int AmsSrvVtmSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 	i = pVtmInfoNode->vtmInfopos;
 
 	//其他vtm涉及到的参数配置
-
+#endif
 	return SUCCESS;
 }
 

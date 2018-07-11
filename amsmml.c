@@ -166,6 +166,144 @@ int AmsTraceToFile(PID_t hPid,PID_t rPid,unsigned char *MsgCode,
 	return 0;	
 }
 
+
+int AmsTraceInfoToFile(int pid,int body,
+						    unsigned char *description,unsigned int descrlen,
+						    unsigned char *logName)
+{
+	
+	FILE            *fp;
+	unsigned char   buf[120];
+	time_t          stm;
+	struct tm       *ptm;
+	unsigned int    fileLen = 0;
+ 	unsigned int    fileSeq = 0;
+	
+	memset(buf,0,sizeof(buf));
+
+	time(&stm);
+    ptm = localtime(&stm);
+	
+	//fragment start, add 20161012 
+	Pthread_mutex_lock(&SystemData.amsTraceFileProcMtx);
+	
+	if(!AmsTraceFileFrgmt)	
+	{
+		snprintf(buf,sizeof(buf),"%s/%s_trace.log", SYSTRACEPATH, logName);
+	
+		if(NULL == (fp = fopen(buf,"a+")))
+		{
+			Pthread_mutex_unlock(&SystemData.amsTraceFileProcMtx);
+			return -1;
+		}
+	}
+	else	
+	{
+		if(!FileFrgmtTime)
+		{
+			FileFrgmtTime = VTC_TRACE_FILE_FRAGMENT_TIME_LEN;
+		}
+
+		if(!FileFrgmtSize)
+		{
+			FileFrgmtSize = VTC_TRACE_FILE_FRAGMENT_SIZE_LEN;
+		}	
+
+		//是否达到生成新文件的时间间隔
+		fileSeq = ((stm + 28800) % 86400)/(FileFrgmtTime*60); //28800: 东8区, 86400: 24小时
+
+		if(fileSeq != SystemData.amsTraceFileTimeSeq || 0 == SystemData.amsTraceFileSizeSeq)
+		{
+			//新创建一个文件			
+			SystemData.amsTraceFileTimeSeq = fileSeq;
+			SystemData.amsTraceFileSizeSeq = 1;
+			
+	        snprintf(SystemData.amsCurTraceFile, sizeof(SystemData.amsCurTraceFile),
+	            "%s/%s_trace_%4d%02d%02d_%03d_%03d.log", 
+	            SYSTRACEPATH, logName, 
+				ptm->tm_year+1900, ptm->tm_mon+1, ptm->tm_mday, 
+				fileSeq, SystemData.amsTraceFileSizeSeq);	
+
+			//打开文件
+			if(NULL == (fp = fopen(SystemData.amsCurTraceFile,"a+")))
+			{
+				Pthread_mutex_unlock(&SystemData.amsTraceFileProcMtx);
+				return -1;
+			}				
+		}
+		else
+		{
+			//打开文件
+			if(NULL == (fp = fopen(SystemData.amsCurTraceFile,"a+")))
+			{		
+				Pthread_mutex_unlock(&SystemData.amsTraceFileProcMtx);
+				return -1;
+			}
+			
+			//当前文件是否写满设定大小
+			fseek(fp, 0L, SEEK_END);
+			fileLen = ftell(fp);		
+
+			if(fileLen >= (FileFrgmtSize*1024*1024))
+			{
+		        //关闭已写满的文件zhuyn added 20161020
+                fclose(fp);
+                fp = NULL;
+                            
+				//新创建一个文件
+				SystemData.amsTraceFileSizeSeq++;
+				if(0 == SystemData.amsTraceFileSizeSeq)
+				{
+					SystemData.amsTraceFileSizeSeq = 1;
+				}
+
+		        snprintf(SystemData.amsCurTraceFile, sizeof(SystemData.amsCurTraceFile),
+		            "%s/%s_trace_%4d%02d%02d_%03d_%03d.log",
+					SYSTRACEPATH, logName, 
+					ptm->tm_year+1900, ptm->tm_mon+1, ptm->tm_mday, 
+					fileSeq, SystemData.amsTraceFileSizeSeq);	
+
+				//打开文件
+				if(NULL == (fp = fopen(SystemData.amsCurTraceFile,"a+")))
+				{
+					Pthread_mutex_unlock(&SystemData.amsTraceFileProcMtx);
+					return -1;
+				}					
+			}
+		}
+	}
+	Pthread_mutex_unlock(&SystemData.amsTraceFileProcMtx);
+	//fragment end, add 20161012 
+	
+	fprintf(fp,"================================================================================");
+	fprintf(fp,"\n");
+	
+#if SYSTEM != _WIN_32
+	{
+		static struct timeval  curTime;
+		static struct timezone curTz;
+		unsigned char buf[50];
+		memset(buf,0,50);
+		gettimeofday(&curTime,&curTz);
+		fprintf(fp,"[%4d-%2d-%2d %2d:%2d:%2d:%d us] ",ptm->tm_year+1900,ptm->tm_mon+1,ptm->tm_mday,
+			ptm->tm_hour,ptm->tm_min,ptm->tm_sec,curTime.tv_usec);
+	} 
+#else
+	{
+		fprintf(fp,"[%4d-%2d-%2d %2d:%2d:%2d] [AMS_TRACE]:\n",
+			ptm->tm_year+1900,ptm->tm_mon+1,ptm->tm_mday,
+			ptm->tm_hour,ptm->tm_min,ptm->tm_sec);
+	}
+#endif
+
+	fprintf(fp,"\ndescription:%s \n",description,body);
+	fprintf(fp,"================================================================================");
+	fprintf(fp,"\n");
+	fclose(fp);
+	return 0;
+}
+
+
 int SetAmsTrace(MMLCMD_t r[],int SocketId,int Source)
 {
 	char             s[2048];
@@ -595,7 +733,7 @@ vtaLoginTellerLoginRepeatedly       =%20lu,\t vtaLoginTellerTypeErr             
 vtaLoginTellerNumErr                =%20lu,\t vtaLoginFileServerUsrNameErr        =%20lu\r\n\
 vtaLoginFileServerUsrPwdErr         =%20lu,\t vtaLoginOrgIdErr                    =%20lu\r\n\
 vtaLoginOrgStateErr                 =%20lu,\t vtaLoginLicenseTimeout              =%20lu\r\n\
-vtaLoginTellerNumBeyondLic          =%20lu\r\n\r\n",
+vtalogintellerloginnotresiter       =%20lu,\r vtaLoginTellerNumBeyondLic          =%20lu\r\n\r\n",
 
 	AmsResultStat.vtaLoginSuccess,               AmsResultStat.vtaLoginParaErr,
 	AmsResultStat.vtaLoginStateErr,              AmsResultStat.vtaLoginLenErr,
@@ -606,7 +744,7 @@ vtaLoginTellerNumBeyondLic          =%20lu\r\n\r\n",
 	AmsResultStat.vtaLoginTellerNumErr,          AmsResultStat.vtaLoginFileServerUsrNameErr, 
 	AmsResultStat.vtaLoginFileServerUsrPwdErr,   AmsResultStat.vtaLoginOrgIdErr,
 	AmsResultStat.vtaLoginOrgStateErr,           AmsResultStat.vtaLoginLicenseTimeout,
-	AmsResultStat.vtaLoginTellerNumBeyondLic);
+	AmsResultStat.vtalogintellerloginnotresiter, AmsResultStat.vtaLoginTellerNumBeyondLic);
 
     if(Source == OMP_COMM)
     {

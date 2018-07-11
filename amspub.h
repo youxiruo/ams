@@ -8,7 +8,7 @@
 #define AMS_MAX_VTM_NUM				(5000)
 
 #define AMS_MAX_VTA_NODES				(10000) //最大坐席节点数
-#define AMS_MAX_VTM_NODES				(5000) //最大用户节点数
+#define AMS_MAX_TERM_NODES				(5000) //最大用户节点数
 #define AMS_MAX_SERVICE_TYPE_NUM		(128) //AMS业务类型最大配置数
 
 #define AMS_MAX_SERVICE_NUM				(64)
@@ -20,12 +20,14 @@
 #define AMS_MAX_SERVICE_GROUP_ID_MIN	(0)
 #define AMS_MAX_SERVICE_GROUP_ID_MAX	(AMS_MAX_SERVICE_GROUP_NUM - 1)
 #define AMS_MAX_SERVICE_ID_VALUE		(64)
-#define AMS_MAX_SERVICE_GROUP_NAME_LEN	(32)
+#define AMS_MAX_SERVICE_GROUP_NAME_LEN	(30)
 
 #define AMS_MAX_NAME_LEN				30
 #define AMS_MAX_TELLER_ID_LEN			30
 #define AMS_MAX_VTM_ID_LEN				30
-#define AMS_MAX_SERVICE_NAME_LEN		32
+#define AMS_MAX_TERM_ID_LEN				30
+
+#define AMS_MAX_SERVICE_NAME_LEN		30
 #define AMS_MAX_TRANS_IP_LEN			16
 
 #define AMS_MAX_PWD_LEN					32
@@ -35,8 +37,14 @@
 #define	AMS_MAX_FILENAME_LEN	                       128
 
 
+#define AMS_MAX_AVG_SERVICE_TIME                       (3600)
+#define AMS_AVG_SERVICE_TIME                           (100)
+
+
 #define T_AMS_REST_TIMER_LENGTH_MAX                    (10000)       //AMS休息最大定时10000s
 #define T_VTA_OPERATE_IND_TIMER_LENGTH_MAX             (1000)        //柜员操作指示最大定时1000s
+#define T_AMS_CUSTOMER_IN_QUEUE_TIMER_LENGTH_MAX       (30000)       //AMS客户排队最大定时30000s
+
 
 #define AMS_VTA_ID_HASH_SIZE                           (AMS_MAX_VTA_NUM)
 #define AMS_VTM_ID_HASH_SIZE                           (AMS_MAX_VTM_NUM)
@@ -68,6 +76,18 @@ typedef struct termNetInfo_t
 	BYTE			ipv6[16];
 }TERM_NET_INFO;
 
+
+typedef struct tellerPersonalInfo_t
+{
+	unsigned char tellerUserNameLen;
+	unsigned char tellerUserName[AMS_MAX_NAME_LEN + 1];
+	unsigned char tellerNickNameLen;
+	unsigned char tellerNickName[AMS_MAX_NAME_LEN + 1];
+	unsigned char tellertype;
+	
+}TELLER_PERSONAL_INFO;
+
+
 typedef struct tellerRegisterInfo_t
 {
 	unsigned char   flag;	                       //是否注册	
@@ -80,6 +100,8 @@ typedef struct tellerRegisterInfo_t
 	
 	PID_t	        myPid;
 	PID_t	        cmsPid;
+
+	TELLER_PERSONAL_INFO tellerpersionalinfo;
 	
 }TELLER_REGISTER_INFO;
 
@@ -131,6 +153,16 @@ typedef struct fileInfo_t
 }FILE_INFO;
 
 
+typedef struct amsQueueInfo_t
+{
+	DWORD           srvGrpId;
+	
+	WORD            queuingLen;
+	WORD            queuingTime;
+
+}QUEUE_INFO;
+
+
 typedef struct tellerWorkInfo_t
 {
 	WORD          connectNum;           //柜员工作量
@@ -152,20 +184,6 @@ typedef struct stateOperateInfo_t
 	WORD          timeLen;
 
 }STATE_OP_INFO;
-
-typedef struct termInfo_t
-{
-	DWORD		ip;
-	unsigned char ipv6[16];
-	WORD		port;
-}TERM_INFO;
-
-typedef struct tellerPersonalInfo_t
-{
-	unsigned char tellerUserName[AMS_MAX_NAME_LEN + 1];
-	unsigned char tellerNickName[AMS_MAX_NAME_LEN + 1];
-	unsigned char tellertype;
-}TELLER_PERSONAL_INFO;
 
 typedef struct tellerInfo_t
 {
@@ -217,7 +235,7 @@ typedef struct tellerInfo_t
 	WORD            vtaRemoteCoopPort;             //vta pack          
 	WORD            vtaRemoteCoopType;             //vta pack  
 
-	TERM_INFO		termInfo;                     //终端网络信息
+	TERM_NET_INFO		termInfo;                     //终端网络信息
 	TELLER_PERSONAL_INFO tellerPersionalInfo;     //坐席个人信息
 	
 }TELLER_INFO;
@@ -234,12 +252,12 @@ typedef struct tellerInfoNode_t
 	
 }TELLER_INFO_NODE;
 
-typedef struct vtmInfo_t
+typedef struct termInfo_t
 {
 	unsigned char   flag;	                       //是否配置
 
-	DWORD           vtmIdLen;                         //柜员机标识
-	unsigned char   vtmId[AMS_MAX_VTM_ID_LEN + 1];
+	DWORD           termIdLen;                         
+	unsigned char   termId[AMS_MAX_VTM_ID_LEN + 1];  //终端标识
 	
 
 	DWORD           terminalType;                  //终端类型
@@ -247,27 +265,9 @@ typedef struct vtmInfo_t
 	DWORD           srvGrpIdLen;                      //业务组编号
 	unsigned char	srvGrpId[AMS_MAX_SERVICE_GROUP_NAME_LEN + 1];
 
-//	unsigned char   vtmNoLen;                      //柜员机设备号长度 zhuyn added 20160621 
-//	unsigned char   vtmNo[AMS_MAX_VTM_NO_LEN + 1];
+	unsigned int    srvGrpIdpos;
 
-	unsigned char   vtmNameLen;                    //柜员机名称长度
-	char            vtmName[AMS_MAX_NAME_LEN + 1];
-
-	unsigned char   vtmPwdLen;                     //柜员机密码长度
-	unsigned char   vtmPwd[AMS_MAX_PWD_LEN + 1];	
-
-	DWORD           orgId;                         //机构ID
-
-//	VNC_AUTH_PARA   vncAuth;                       //远程接入鉴权密码
-	
-	unsigned char   transIpLen;                        //柜员机IP地址字符串长度
-	unsigned char   transIp[AMS_MAX_TRANS_IP_LEN + 1]; //柜员机IP地址字符串	
-	DWORD           vtmIp;                         //in_addr_t
-	DWORD           vtmPort;                       //Sip
-	WORD            vtmRemoteCoopPort; 
-	BYTE            vtmRemoteCoopType; 
-
-}VTM_INFO;
+}TERM_INFO;
 
 
 typedef struct vtmInfoNode_t
@@ -318,6 +318,7 @@ typedef struct queueSysInfo_t
 
 	DWORD           srvGrpIdLen;                      //业务组编号
 	unsigned char	srvGrpId[AMS_MAX_SERVICE_GROUP_NAME_LEN + 1];
+	unsigned char   srvGrpIdPos;
 	
 	unsigned short  maxQueLen;                     //此业务组编号允许的最大排队长度
 	unsigned short  avgSrvTime;	                   //此业务组编号客户平均服务时长
@@ -372,7 +373,7 @@ typedef struct vtaNode_t
 
 
 /* 终端结点结构体定义 */
-typedef struct vtmNode_t
+typedef struct termNode_t
 {
 	NODE            node;  
 
@@ -401,7 +402,8 @@ typedef struct vtmNode_t
 	time_t          handshakeTime;
 	time_t          enterQueueTime;
 
-	DWORD           serviceType;
+	unsigned char   serviceTypeLen;
+	unsigned char   serviceType[AMS_MAX_SERVICE_NAME_LEN+1];
 
 	//timer
 	int             iTimerId; //Not Use Yet
@@ -418,17 +420,10 @@ typedef struct vtmNode_t
 	PID_t	        cmsPid;   //cms
 	PID_t	        vtaPid;   //VTA	
 
-	VTM_INFO        vtmInfo;
-
-	//VNC_AUTH_PARA   vncAuth;                       //远程接入鉴权密码
-
-	DWORD           vtmCfgPos;
-	DWORD           vtmRegPos;
-	DWORD           orgCfgPos;
+	TERM_INFO        termInfo;
 	
-	//OACBPARA_t      oaCbPara;       //网管回调用参数 zhuyn 20160704
-	
-}VTM_NODE;
+}TERM_NODE;
+
 
 typedef struct vtaId_t{
 	NODE          		node;     
@@ -513,7 +508,7 @@ typedef struct amsDataSysCfg_t
 	TELLER_INFO_NODE	*tellerInfoHashTbl[AMS_VTA_ID_HASH_SIZE];
 
 	unsigned int		vtmcfgnum;
-	VTM_INFO           vtmInfo[AMS_MAX_VTM_NUM];
+	//VTM_INFO           vtmInfo[AMS_MAX_VTM_NUM];
 	VTM_INFO_NODE		*vtmInfoHashTbl[AMS_VTM_ID_HASH_SIZE];
 
 	VTA_ID_NODE        *VtaIdHashTbl[AMS_VTA_ID_HASH_SIZE];	
@@ -547,13 +542,13 @@ typedef struct amsServiecProc_t
 //	DWORD            preSrvTellerId;
 	
 	sem_t	         vtaCtrl;	
-	LIST 		     vtaList;
+	LIST 		     vtaList; //坐席队列
 
-	sem_t	         vtmCtrl;
-	LIST 		     vtmList;
+	sem_t	         termCtrl;
+	LIST 		     termList; //客户信息
 
 	sem_t            freevtaCtrl;
-	LIST			 freevtaList;
+	LIST			 freevtaList; //空闲坐席队列
 	
 }AMS_SERVICE_MANAGE;
 
@@ -684,6 +679,7 @@ typedef struct amsResultStat_t
 	unsigned long  vtaLoginOrgStateErr;	
 	unsigned long  vtaLoginLicenseTimeout;
 	unsigned long  vtaLoginTellerNumBeyondLic;
+	unsigned long vtalogintellerloginnotresiter;
 
 	//Vta Logout Result
 	unsigned long  vtaLogoutSuccess;

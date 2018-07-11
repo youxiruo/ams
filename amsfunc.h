@@ -32,7 +32,11 @@ int AmsSrvQueueSenten(WORD_t *word,int wordcount,unsigned char pCurrId[]);
 
 
 //func defined int amspack.c
+int	AmsUnPackParaIdAndLenLE(unsigned char body[], int bodyLen, unsigned char *pParaID, int *lenValue);
+int AmsUnPackParaIdAndLenBE(unsigned char body[], int bodyLen, unsigned char *pParaID, int *lenValue);
 int AmsUnpackStateOperateReqOpartPara(unsigned char body[], int bodyLen, STATE_OP_INFO *pStateOpInfo);
+int AmsUnpackTellerpersionalinfo(unsigned char body[], int bodyLen, TELLER_PERSONAL_INFO *pTellerPersonalInfo);
+
 int AmsPackVtaLoginBase(unsigned char tellerIdLen,unsigned char tellerId[],int iret,unsigned char p[],LP_AMS_DATA_t	*lpAmsData);
 
 
@@ -42,6 +46,11 @@ int AmsCfgDataInit();
 int VtaListInit();
 VTA_NODE * VtaNodeGet(void);
 void VtaNodeFree(VTA_NODE *pNode);
+
+int TermListInit();
+TERM_NODE * TermNodeGet(void);
+void TermNodeFree(TERM_NODE *pNode);
+
 int AmsCfgDataInit();
 int AmsUpdateSingleVtaWorkInfo(VTA_NODE *pVtaNode, time_t currentTime);
 int AmsSendServiceProcMsg();

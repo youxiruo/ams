@@ -105,6 +105,9 @@ int AmsVtaLoginResultStatProc(int resultCode)
 	case AMS_VTA_LOGIN_TELLER_NUM_ERR: 
 		AmsResultStat.vtaLoginTellerNumErr++;
 		break;	
+	case AMS_VTA_LOGIN_TELLER_LOGIN_NOTREGSITER:
+		AmsResultStat.vtalogintellerloginnotresiter++;
+		break;
 	default:
 		AmsResultStat.amsUnknownResult++;
 		return AMS_ERROR;
@@ -357,54 +360,6 @@ int AmsCmsGetVtaResultStatProc(int resultCode)
 	case AMS_CMS_GET_VTA_NO_VALID_SERVICE_GROUP_ID_OR_TYPE: 
 		AmsResultStat.cmsGetVtaNoValidSrvGrpOrType++;
 		break;
-	
-	case AMS_CMS_GET_VTA_CALL_TYPE_ERR: 
-		AmsResultStat.cmsGetVtaCallTypeErr++;
-		break;
-		
-	case AMS_CMS_GET_VTA_ORIGIN_TELLER_ID_ERR: 
-		AmsResultStat.cmsGetVtaOriginTellerIdErr++;
-		break;
-
-	case AMS_CMS_GET_VTA_ORIGIN_TELLER_STATE_ERR: 
-		AmsResultStat.cmsGetVtaOriginTellerStateErr++;
-		break;
-		
-	case AMS_CMS_GET_VTA_ORIGIN_TELLER_AMS_PID_ERR: 
-		AmsResultStat.cmsGetVtaOriginTellerAmsPidErr++;
-		break;
-
-	case AMS_CMS_GET_VTA_ORIGIN_TELLER_SERVICE_GROUP_ID_ERR: 
-		AmsResultStat.cmsGetVtaOriginTellerSrvGrpIdErr++;
-		break;
-		
-	case AMS_CMS_GET_VTA_ORIGIN_TELLER_SERVICE_STATE_ERR: 
-		AmsResultStat.cmsGetVtaOriginTellerSrvStateErr++;
-		break;
-		
-	case AMS_CMS_GET_VTA_TARGET_TYPE_ERR: 
-		AmsResultStat.cmsGetVtaTargetTypeErr++;
-		break;
-		
-	case AMS_CMS_GET_VTA_TARGET_GROUP_ERR: 
-		AmsResultStat.cmsGetVtaTargetGroupErr++;
-		break;
-		
-	case AMS_CMS_GET_VTA_TARGET_TELLER_ID_ERR: 
-		AmsResultStat.cmsGetVtaTargetTellerIdErr++;
-		break;
-			
-	case AMS_CMS_GET_VTA_TARGET_TELLER_STATE_ERR: 
-		AmsResultStat.cmsGetVtaTargetTellerStateErr++;
-		break;
-		
-	case AMS_CMS_GET_VTA_VTM_ID_ERR: 
-		AmsResultStat.cmsGetVtaVtmIdErr++;
-		break;
-		
-	case AMS_CMS_GET_VTA_ASSOC_CALL_ID_ERR: 
-		AmsResultStat.cmsGetVtaAssocCallIdErr++;
-		break;	
 		
 	case AMS_CMS_GET_VTA_LICENSE_TIMEOUT: 
 		AmsResultStat.cmsGetVtaLicenseTimeout++;
