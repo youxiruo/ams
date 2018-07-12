@@ -85,7 +85,7 @@ int ProcessAmsMessage(int iThreadId,MESSAGE_t *pMsg)
 		iret = AmsProcBMsg(iThreadId,pMsg);	
 		break;
 	case C:
-		//iret = AmsProcCMsg(iThreadId,pMsg);		
+		iret = AmsProcCMsg(iThreadId,pMsg);		
 		break;	
 
 	default:
@@ -289,7 +289,12 @@ int AmsProcBMsg(int iThreadId,MESSAGE_t *pMsg)
 			AmsTimerStatProc(T_AMS_VTA_STATE_OPERATE_IND_TIMER, AMS_TIMER_TIMEOUT);
 			iret = VtaStateOperateIndTimeoutProc(iThreadId,pTmMsg); 
 			break;
-						
+
+		case B_AMS_CUSTOMER_IN_QUEUE_TIMEOUT:			
+			AmsTimerStatProc(T_AMS_CUSTOMER_IN_QUEUE_TIMER, AMS_TIMER_TIMEOUT);
+            iret = AmsCustomerInQueueTimeoutProc(iThreadId,pTmMsg); 
+			break;
+			
 		default:
 			//消息统计，默认未知定时器统计
 			AmsTimerStatProc(T_AMS_TIMER_MAX, AMS_TIMER_TIMEOUT);
@@ -298,5 +303,56 @@ int AmsProcBMsg(int iThreadId,MESSAGE_t *pMsg)
 	}
 
 	return iret;
+}
+
+
+int AmsProcCMsg(int iThreadId,MESSAGE_t *pMsg)
+{
+	int 				iret = 0;
+		
+	//入参检查
+	if(NULL == pMsg)
+	{	
+		return AMS_ERROR;
+	}
+
+	if((pMsg->iMessageLength < 0) || (pMsg->iMessageLength >= MSG_BODY_LEN))
+	{
+		//统计
+		AmsMsgStat.amsErrMsg++;
+		
+		return AMS_ERROR;
+	}
+
+	//接收进程号检查
+	if(   (pMsg->s_ReceiverPid.cModuleId != SystemData.cMid)
+	   || (pMsg->s_ReceiverPid.cFunctionId != FID_AMS)
+	   || (pMsg->s_SenderPid.cModuleId != SystemData.cMid)
+	   || (pMsg->s_SenderPid.cFunctionId != FID_AMS))
+	{
+		//统计
+		AmsMsgStat.amsErrMsg++;
+		
+		return AMS_ERROR;
+	}
+
+	AmsMsgStatProc(AMS_C_MSG, pMsg->iMessageType);
+
+	switch(pMsg->iMessageType)
+	{					
+		case C_AMS_SERVICE_PROC_REQ:
+			AmsMsgStatProc(AMS_C_MSG, pMsg->iMessageType);
+			iret = AmsProcServiceProcMsg(iThreadId,pMsg); 
+			break;
+
+		default:
+			//消息统计
+			AmsMsgStatProc(AMS_OTHER_MSG_TYPE, pMsg->iMessageType);
+			dbgprint("AMS C Area Msg Error: MsgCode: iMessageType=0x%x.\n\t", pMsg->iMessageType);
+			return AMS_ERROR;
+	}
+
+	return iret;
+
 }
 

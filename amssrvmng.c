@@ -690,6 +690,10 @@ int AmsStartCustomerQueueProcess(MESSAGE_t *pMsg,
 
 	//record vtmPid, may be used later
     memcpy(&lpQueueData->vtmPid,&pTermNode->rPid,sizeof(PID_t));
+
+	lpQueueData->queueId = ((((unsigned int)lpQueueData->myPid.cModuleId) << 24)&0xff000000) | 
+		                 ((((unsigned int)lpQueueData->myPid.cFunctionId) << 16)&0x00ff0000) |
+		                 (((unsigned int)lpQueueData->myPid.iProcessId)&0x0000ffff);
 	
 	//消息跟踪开关配置
 	lpQueueData->debugTrace  = (unsigned char)AmsDebugTrace;
@@ -709,7 +713,7 @@ int AmsStartCustomerQueueProcess(MESSAGE_t *pMsg,
 	    && AmsCfgData.amsCustomerInQueueTimeLength <= T_AMS_CUSTOMER_IN_QUEUE_TIMER_LENGTH_MAX)
     {
 		memset(timerPara, 0, PARA_LEN);
-		BEPUTLONG(lpQueueData->vtmId,timerPara);
+		BEPUTLONG(lpQueueData->queueId,timerPara);
         if(AMS_OK != AmsQueueCreateTimerPara(lpQueueData->myPid.iProcessId,
 											 &lpQueueData->iTimerId, 
 											 B_AMS_CUSTOMER_IN_QUEUE_TIMEOUT, 
@@ -739,7 +743,7 @@ int AmsStartCustomerQueueProcess(MESSAGE_t *pMsg,
 
 VTA_NODE *AmsSelectVta(	unsigned char termId[],
 						   unsigned int srvGrpId, 
-						   unsigned char serviceType,
+						   unsigned char serviceType[],
 						   unsigned int vtaNum,
 						   int *pResult)
 {
@@ -785,26 +789,18 @@ VTA_NODE *AmsSelectVta(	unsigned char termId[],
 }
 
 
-VTA_NODE *AmsServiceIntelligentSelectVta(unsigned char *pTermNo,
-											   unsigned char termId[],
-											   unsigned int srvGrpId, 
-											   unsigned char serviceType[],
-											   int *pResult)
+VTA_NODE *AmsServiceIntelligentSelectVta(
+									   unsigned char termId[],
+									   unsigned int srvGrpId, 
+									   unsigned char serviceType[],
+									   int *pResult)
 {
 	
 	unsigned int		vtaNum;
 	VTA_NODE			*pVtaNode = NULL;	
 	QUEUE_INFO			queueInfo;
 	unsigned int		i = 0;
-
-	//检查柜员机设备号
-	if(NULL == pTermNo)
-	{
-		dbgprint("AmsSISelectVta TermId[%u] SrvGrpId[%d] VtmNoErr", 
-			termId, srvGrpId);
-		*pResult = AMS_CMS_GET_VTA_SIR_VTMNO_ERR;
-		return NULL;		
-	}
+	
 	
 	//检查业务组编号
 	if(srvGrpId > AMS_MAX_SERVICE_GROUP_NUM)
@@ -934,4 +930,565 @@ int AmsSendServiceProcMsg()
 
 	return SUCCESS;
 }
+
+
+TERM_NODE * AmsGetIdleLongestTerm(unsigned int srvGrpId, int termNum, time_t currentTime)
+{
+	TERM_NODE            *pTermNode = NULL;	
+	TERM_NODE            *pTermIdleLongestNode = NULL;
+	unsigned int        idleLongestTime = 0;	
+	unsigned int        j = 0;
+	
+	if(termNum > AMS_MAX_TERM_NODES)
+	{
+		return NULL;
+	}
+
+	if(srvGrpId >= AMS_MAX_SERVICE_GROUP_NUM)
+	{
+		return NULL;
+	}
+	
+	//找到呼叫等待时间最长的客户(数量不多，顺序比较)
+	pTermNode = (TERM_NODE *)lstFirst(&AmsSrvData(srvGrpId).termList);
+	while(NULL != pTermNode && j < termNum)
+	{
+		if(    AMS_TERM_STATE_BUSY == pTermNode->state 
+			&& AMS_CUSTOMER_IN_QUEUE == pTermNode->serviceState 
+			&& currentTime > pTermNode->enterQueueTime)
+		{
+			if(idleLongestTime < (currentTime - pTermNode->enterQueueTime))
+			{
+				idleLongestTime = (currentTime - pTermNode->enterQueueTime);
+				pTermIdleLongestNode = pTermNode;
+			}
+		}
+		
+		pTermNode = (TERM_NODE *)lstNext((NODE *)pTermNode);	
+		j ++;
+	}
+
+	return pTermIdleLongestNode;	
+	
+}
+
+
+
+void AmsGetVtaInServiceProcTask(int iThreadId, time_t currentTime)
+{
+	int					iret = AMS_CMS_PRCOESS_SUCCESS;		
+	LP_QUEUE_DATA_t     *lpQueueData = NULL;      //排队进程数据区指针	
+	LP_AMS_DATA_t		*lpAmsData = NULL;        //进程数据区指针			
+	TERM_NODE            *pTermNode = NULL;	
+	VTA_NODE            *pVtaNode = NULL;
+	DWORD               srvGrpId = 0;
+	MESSAGE_t           msg;	
+	int                 termNum = 0;
+	int                 procNum = 0;
+	int                 pid = 0;	
+	int                 i = 0;	
+	int                 j = 0;	
+	
+	for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
+	{
+		termNum = lstCount(&AmsSrvData(i).termList);
+		termNum = Min(termNum, AMS_MAX_TERM_NODES);
+
+		if(0 == termNum)
+		{
+			continue;
+		}
+		
+		for(j = 0; j < termNum; j++)	
+		{
+			pTermNode = AmsGetIdleLongestTerm(i, termNum, currentTime);
+
+			if(NULL == pTermNode)
+			{
+				break;
+			}
+			
+			iret = AMS_CMS_PRCOESS_SUCCESS;
+			
+			if(   AMS_CUSTOMER_IN_QUEUE != pTermNode->serviceState 
+			   || 0 == pTermNode->customerPid 
+			   || pTermNode->customerPid >= LOGIC_PROCESS_SIZE)
+			{
+				//状态及参数校验错误
+				continue;
+			}
+
+			lpQueueData=(LP_QUEUE_DATA_t *)ProcessData[pTermNode->customerPid];
+
+//			dbgprint("AmsServiceIntelligentSelectVta Vtm[%s][%u]SrvGrpId[%u]\r\n",
+//				lpQueueData->vtmNo, lpQueueData->vtmId, lpQueueData->srvGrpId);	
+
+			//仅携带业务类型，没有指明业务组
+			if (1 == lpQueueData->srvGrpSelfAdapt)
+			{
+				//根据业务类型选择业务组
+				iret = AmsSelectSrvGrpIdByServiceType(
+				                                      lpQueueData->termId,
+				                                      lpQueueData->serviceType,
+				                                      &srvGrpId);
+				
+				if(AMS_OK == iret && srvGrpId != lpQueueData->srvGrpId)
+				{
+					//转移业务组
+					lpQueueData->srvGrpId = srvGrpId;
+					
+					//呼叫添加到新业务组的链表尾
+				    /* Del Vtm Node from Origin List */
+				    Sem_wait(&AmsSrvData(pTermNode->termInfo.srvGrpIdpos).termCtrl);
+					lstDelete(&AmsSrvData(pTermNode->termInfo.srvGrpIdpos).termList, (NODE *)pTermNode);
+					Sem_post(&AmsSrvData(pTermNode->termInfo.srvGrpIdpos).termCtrl);
+
+					/* Add Vtm Node to new List */
+				    Sem_wait(&AmsSrvData(srvGrpId).termCtrl);
+					lstAdd(&AmsSrvData(srvGrpId).termList, (NODE *)pTermNode);
+					Sem_post(&AmsSrvData(srvGrpId).termCtrl);
+
+					//更新当前柜员机的业务组编号
+					if(pTermNode->termInfo.srvGrpIdpos!= srvGrpId)
+					{
+						//update srvGrpId
+						pTermNode->termInfo.srvGrpIdpos = srvGrpId;
+					}		
+				}	
+			}
+
+			//业务智能路由
+			pVtaNode = AmsServiceIntelligentSelectVta(
+													  lpQueueData->termId,
+			                                          lpQueueData->srvGrpId,
+			                                          lpQueueData->serviceType,
+			                                          &iret);
+			if(NULL == pVtaNode)
+			{
+				if(AMS_CMS_GET_VTA_SERVICE_IN_QUEUE != iret)
+				{
+					dbgprint("ServiceProcTask Vtm[%s] GetVta SISelectVta Failed",
+						lpQueueData->termId);
+					
+					if(AMS_ERROR == iret)
+					{
+						iret = AMS_CMS_GET_VTA_SERVICE_INTELLIGENT_ROUTING_ERR;
+					}
+
+					memset(&msg, 0, sizeof(MESSAGE_t));
+					
+					//pack cmsPid
+					msg.s_SenderPid.cModuleId   = pTermNode->cmsPid.cModuleId;
+					msg.s_SenderPid.cFunctionId = pTermNode->cmsPid.cFunctionId;
+					msg.s_SenderPid.iProcessId  = pTermNode->cmsPid.iProcessId;
+
+					//pack amsPid
+					msg.s_ReceiverPid.iProcessId = 0;
+					
+					//pack callId
+					msg.cMessageBody[0] = lpQueueData->callIdLen;
+					if(lpQueueData->callIdLen <= AMS_MAX_CALLID_LEN)
+					{
+						memcpy(&msg.cMessageBody[1], lpQueueData->callId, lpQueueData->callIdLen);	
+					}
+					AmsSendCmsVtaGetRsp(NULL,&msg,iret,NULL,pTermNode);	
+					
+					//update Customer Service State
+					AmsSetTermServiceState(pTermNode, AMS_CUSTOMER_SERVICE_NULL);
+			
+					/* 杀掉定时器 */
+					if(lpQueueData->iTimerId >= 0)
+					{
+						AmsQueueKillTimer(pTermNode->customerPid, &lpQueueData->iTimerId);//或 lpQueueData->myPid.iProcessId
+						AmsTimerStatProc(T_AMS_CUSTOMER_IN_QUEUE_TIMER, AMS_KILL_TIMER);
+					} 
+		
+					//release lpQueueData Pid
+	        		AmsReleassPid(lpQueueData->myPid, END);
+					
+					procNum ++;
+
+					if(procNum >= AMS_MAX_PROC_NUM_IN_QUEUE)
+					{
+						return;
+					}						
+
+					continue;
+				}
+				else
+				{					
+					break;
+				}
+			}
+			else
+			{
+				memset(&msg, 0, sizeof(MESSAGE_t));
+
+				//pack cmsPid
+				msg.s_SenderPid.cModuleId   = pTermNode->cmsPid.cModuleId;
+				msg.s_SenderPid.cFunctionId = pTermNode->cmsPid.cFunctionId;
+				msg.s_SenderPid.iProcessId  = pTermNode->cmsPid.iProcessId;
+
+				//pack amsPid
+				msg.s_ReceiverPid.iProcessId = 0;
+
+				//pack callId
+				msg.cMessageBody[0] = lpQueueData->callIdLen;
+				if(lpQueueData->callIdLen <= AMS_MAX_CALLID_LEN)
+				{
+					memcpy(&msg.cMessageBody[1], lpQueueData->callId, lpQueueData->callIdLen);	
+				}
+
+				//检查进程号
+				pid = pVtaNode->amsPid & 0xffff;
+				if((0 == pid) || (pid >= LOGIC_PROCESS_SIZE))
+				{
+					dbgprint("ServiceProcTask Vtm[%s] GetVta Pid:%d Err", 
+						lpQueueData->termId, pid);
+					
+					iret = AMS_CMS_GET_VTA_AMS_PID_ERR;
+					AmsSendCmsVtaGetRsp(NULL,&msg,iret,pVtaNode,NULL);
+
+					//update Customer Service State
+					AmsSetTermServiceState(pTermNode, AMS_CUSTOMER_SERVICE_NULL);
+			
+					/* 杀掉定时器 */
+					if(lpQueueData->iTimerId >= 0)
+					{
+						AmsQueueKillTimer(pTermNode->customerPid, &lpQueueData->iTimerId);//或 lpQueueData->myPid.iProcessId
+						AmsTimerStatProc(T_AMS_CUSTOMER_IN_QUEUE_TIMER, AMS_KILL_TIMER);
+					} 
+		
+					//release lpQueueData Pid
+	        		AmsReleassPid(lpQueueData->myPid, END);
+
+					procNum ++;
+					
+					if(procNum >= AMS_MAX_PROC_NUM_IN_QUEUE)
+					{
+						return;
+					}
+					
+					continue;
+				}
+				
+				lpAmsData=(LP_AMS_DATA_t *)ProcessData[pid];
+				
+				//更新进程数据
+				//record vtmId
+				lpAmsData->termIdLen = lpQueueData->termIdLen;
+				memcpy(lpAmsData->termId,lpQueueData->termId,lpQueueData->termIdLen);
+				
+				//record vtmPos
+				//lpAmsData->vtmPos = pVtmNode->vtmCfgPos;
+				
+				//Set vta call State, only one pthread!!!
+				AmsSetVtaCallState(lpAmsData, pVtaNode, AMS_CALL_STATE_WAIT_ANSWER);
+
+#ifdef AMS_TEST_LT
+			    //calc vta workInfo
+				AmsUpdateSingleVtaWorkInfo(pVtaNode, currentTime);
+		
+				//set Vta State and State Start Time
+				AmsSetVtaState(iThreadId, lpAmsData, pVtaNode, AMS_VTA_STATE_BUSY, 0);
+#endif
+
+				//record vtmPid, may be used later
+				memcpy(&lpAmsData->termPid,&pTermNode->rPid,sizeof(PID_t));
+				
+				//record callId
+				lpAmsData->callIdLen = lpQueueData->callIdLen;
+				if(lpQueueData->callIdLen <= AMS_MAX_CALLID_LEN)
+				{
+					memcpy(lpAmsData->callId, lpQueueData->callId, lpQueueData->callIdLen);
+				}
+
+				//record amsPid
+				pTermNode->amsPid = pVtaNode->amsPid;
+
+				//update Customer Service State
+				AmsSetTermServiceState(pTermNode, AMS_CUSTOMER_IN_SERVICE);
+
+				//record cmsPid
+				lpAmsData->cmsPid.cModuleId	   = pTermNode->cmsPid.cModuleId;
+				lpAmsData->cmsPid.cFunctionId  = pTermNode->cmsPid.cFunctionId;
+				lpAmsData->cmsPid.iProcessId   = pTermNode->cmsPid.iProcessId;
+
+				Sem_wait(&AmsSrvData(srvGrpId).freevtaCtrl);
+				lstDelete(&AmsSrvData(srvGrpId).freevtaList, (NODE *)pVtaNode);
+				Sem_post(&AmsSrvData(srvGrpId).freevtaCtrl);
+				
+			}
+
+			//update srvGrpId
+//			pVtmNode->vtmInfo.srvGrpId = lpQueueData->srvGrpId;
+
+			//send Vta Get Rsp to CMS
+		    AmsSendCmsVtaGetRsp(lpAmsData,&msg,iret,pVtaNode,NULL);
+
+			/* 杀掉定时器 */
+			if(lpQueueData->iTimerId >= 0)
+			{
+				AmsQueueKillTimer(pTermNode->customerPid, &lpQueueData->iTimerId);//或 lpQueueData->myPid.iProcessId
+				AmsTimerStatProc(T_AMS_CUSTOMER_IN_QUEUE_TIMER, AMS_KILL_TIMER);
+			} 
+
+			//release lpQueueData Pid
+			AmsReleassPid(lpQueueData->myPid, END);
+
+			procNum ++;
+
+			if(procNum > AMS_MAX_PROC_NUM_IN_QUEUE)
+			{
+				return;
+			}
+			
+		}	
+	}
+}
+
+
+
+int AmsProcServiceProcMsg(int iThreadId, MESSAGE_t *pMsg)
+{
+
+	time_t              currentTime;
+
+	time(&currentTime);	
+
+	//清理不活动的VTA连接，及释放业务处理进程
+	//AmsClearInactiveVta(iThreadId, currentTime);
+
+	//清理不活动的Term连接，及释放排队服务进程
+	//AmsClearInactiveTerm(iThreadId, currentTime);
+
+
+    //判断是否有等待业务的客户
+    //若有，从队列头开始顺序为客户选择柜员；
+    //若选择成功，则释放排队服务进程	
+    AmsGetVtaInServiceProcTask(iThreadId, currentTime);
+
+
+	//清理不活动的RCAS服务器
+	//AmsClearInactiveRcas(iThreadId, currentTime);
+
+	//清理不活动的CMS呼叫
+	//AmsClearInactiveCmsCall(iThreadId, currentTime);
+
+	
+    //calc teller WorkInfo Every 5 Minutes
+	//AmsUpdateVtaWorkInfoProc(currentTime);
+
+	return AMS_OK;
+	
+}
+
+int AmsSendCmsGetVtaTimeoutRsp(LP_QUEUE_DATA_t *lpQueueData,MESSAGE_t *pMsg,int iret)
+{
+	MESSAGE_t           s_Msg;
+	unsigned char       *p;
+
+	memset(&s_Msg,0,sizeof(MESSAGE_t));
+
+	if(NULL == pMsg || NULL == lpQueueData)
+	{
+		return AMS_ERROR;
+	}
+
+	s_Msg.eMessageAreaId = A;
+	memcpy(&s_Msg.s_ReceiverPid,&pMsg->s_SenderPid,sizeof(PID_t));
+	s_Msg.s_SenderPid.cModuleId = SystemData.cMid;
+	s_Msg.s_SenderPid.cFunctionId = FID_AMS;
+	s_Msg.s_SenderPid.iProcessId = pMsg->s_ReceiverPid.iProcessId;
+	s_Msg.iMessageType = A_VTA_GET_RSP;
+	s_Msg.iMessageLength = 0;
+
+    p = &s_Msg.cMessageBody[0];
+
+	//Pack callId
+	*p++ = lpQueueData->callIdLen;
+	memcpy(p, lpQueueData->callId, lpQueueData->callIdLen);
+
+	p += lpQueueData->callIdLen;
+
+	s_Msg.iMessageLength += (1 + lpQueueData->callIdLen);	
+	
+	//Pack iret
+	BEPUTLONG(iret, p);
+
+	//Pack amsPid
+	p += 4;
+
+	//Pack tellerId
+	p += 4;
+
+	s_Msg.iMessageLength += 12;
+	
+	SendMsgBuff(&s_Msg,0);
+
+	if(AmsMsgTrace)
+	{	
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"send A_VTA_GET_RSP msg \n");	
+		AmsTraceToFile(s_Msg.s_ReceiverPid,s_Msg.s_SenderPid,"A_VTA_GET_RSP",description,
+						descrlen,s_Msg.cMessageBody,s_Msg.iMessageLength,lpQueueData->sTraceName);				
+	}
+
+    AmsMsgStatProc(AMS_CMS_MSG, s_Msg.iMessageType);
+	AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);
+	
+	return SUCCESS;
+}
+
+
+int AmsCustomerInQueueTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
+{
+	int					iret = AMS_CMS_GET_VTA_TIMEOUT;
+	LP_QUEUE_DATA_t     *lpQueueData = NULL;             //排队进程数据区指针
+	LP_AMS_DATA_t		*lpAmsData = NULL;               //进程数据区指针	
+	TERM_NODE            *pTermNode = NULL;			
+	int                 pid = 0;
+	MESSAGE_t           msg;
+	unsigned int        queueId = 0;	
+	unsigned int        i = 0;
+	unsigned char       *p;
+	
+	if(AmsMsgTrace)
+	{
+		unsigned char description [1024];
+		int descrlen;
+		memset(description,0,sizeof(description));
+		descrlen=snprintf(description,1024,"recv B_AMS_CUSTOMER_IN_QUEUE_TIMEOUT msg[%d] \n",pTmMsg->iTimerId);	
+		AmsTraceToFile(pTmMsg->s_ReceiverPid,pTmMsg->s_SenderPid,"B_AMS_CUSTOMER_IN_QUEUE_TIMEOUT",description,
+						descrlen,pTmMsg->cTimerParameter,PARA_LEN,"ams");
+	}
+	
+	//进程号有效性检查
+	pid = pTmMsg->s_ReceiverPid.iProcessId;
+	if((0 == pid) || (pid >= LOGIC_PROCESS_SIZE))
+	{
+		dbgprint("AmsCustomerInQueueTimeoutProc Pid:%d Err", pid);
+		iret = AMS_CMS_GET_VTA_TIMEOUT_PARA_ERR;
+		AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);
+		return AMS_ERROR;
+	}
+
+	//消息长度检查
+	if(pTmMsg->iMessageLength > (PARA_LEN + sizeof(char) + sizeof(int)))
+	{
+		dbgprint("AmsCustomerInQueueTimeoutProc[%d] Len:%d Err", pid, pTmMsg->iMessageLength);
+		iret = AMS_CMS_GET_VTA_TIMEOUT_LEN_ERR;
+		AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);
+		return AMS_ERROR;
+	}
+
+	lpQueueData=(LP_QUEUE_DATA_t *)ProcessData[pid];
+
+	/* 杀掉定时器 */
+	if(lpQueueData->iTimerId >= 0)
+	{
+		AmsQueueKillTimer(pid, &lpQueueData->iTimerId);
+		AmsTimerStatProc(T_AMS_CUSTOMER_IN_QUEUE_TIMER, AMS_KILL_TIMER);
+		pTmMsg->iTimerId = -1;
+	} 
+
+	//进程号匹配性检查
+	if(lpQueueData->myPid.iProcessId != pid)
+	{
+		dbgprint("AmsCustomerInQueueTimeoutProc Term[%s] PID[%d][%d] Not Equal", 
+			lpQueueData->termId,
+			lpQueueData->myPid.iProcessId, pid);
+		iret = AMS_CMS_GET_VTA_TIMEOUT_PARA_ERR;
+		AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);
+		return AMS_ERROR;
+	}
+	
+	//fill cmsPid
+	memset(&msg, 0, sizeof(MESSAGE_t));
+	memcpy(&msg.s_SenderPid, &lpQueueData->cmsPid, sizeof(PID_t));
+	
+	//
+	p = pTmMsg->cTimerParameter;
+	BEGETLONG(queueId, p);
+	if(lpQueueData->queueId != queueId|| 0 == queueId)
+	{
+		dbgprint("AmsCustomerInQueueTimeoutProc[%d] Term[%s]Id[%u]Err.", 
+			pid, lpQueueData->termId, queueId);
+		iret = 	AMS_CMS_GET_VTA_TIMEOUT_VTM_ID_ERR;
+		AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);
+		return AMS_ERROR;		
+	}
+			
+    /* find Vtm Node in process */
+	for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
+	{
+		pTermNode = AmsSearchTermNode(i, lpQueueData->termId,lpQueueData->termIdLen);
+		if(NULL != pTermNode)
+		{
+			break;
+		}
+	}
+	
+	if(NULL == pTermNode)
+	{
+		dbgprint("AmsCustomerInQueueTimeoutProc[%d] Term[%s]Id[%u]Err", 
+			pid, lpQueueData->termId, queueId);
+		iret = 	AMS_CMS_GET_VTA_TIMEOUT_VTM_ID_ERR;
+		AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);
+		return AMS_ERROR;		
+	}
+
+    //check state
+ 	if(AMS_TERM_STATE_BUSY != pTermNode->state)
+	{
+		dbgprint("AmsCustomerInQueueTimeoutProc[%d] Term[%s][%u]State[%d]Err", 
+			pid, lpQueueData->termId, pTermNode->state);
+		iret = 	AMS_CMS_GET_VTA_TIMEOUT_STATE_ERR;
+		AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);	
+	}
+	if(AMS_TERM_STATE_IDLE != pTermNode->state)
+	{
+		//set Vtm State and State Start Time
+		AmsSetTermState(iThreadId, pTermNode, AMS_TERM_STATE_IDLE);		
+	}
+
+	//check vtm serviceState
+ 	if(AMS_CUSTOMER_IN_QUEUE != pTermNode->serviceState)
+	{
+		dbgprint("AmsCustomerInQueueTimeoutProc[%d] Term[%s]ServiceState[%d]Err", 
+			pid, lpQueueData->termId, pTermNode->serviceState);
+		iret = 	AMS_CMS_GET_VTA_TIMEOUT_SERVICE_STATE_ERR;
+		AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);	
+	}
+	if(AMS_CUSTOMER_SERVICE_NULL != pTermNode->serviceState)
+	{
+		//update Customer Service State
+		AmsSetTermServiceState(pTermNode, AMS_CUSTOMER_SERVICE_NULL);
+	}
+	
+	//update callState if need
+	if(AMS_CALL_STATE_NULL != pTermNode->callState)
+	{
+		//set Vtm Call State and State Start Time
+		AmsSetTermCallState(pTermNode, AMS_CALL_STATE_NULL);
+	}
+	
+	//reset amsPid
+	pTermNode->amsPid = 0;
+
+	//reset customerPid
+	pTermNode->customerPid = 0;
+		
+	//send Cms Vta Get Rsp
+	AmsSendCmsGetVtaTimeoutRsp(lpQueueData,&msg,iret);
+
+	//release lpQueueData Pid
+	AmsReleassPid(lpQueueData->myPid, END);
+
+	return iret;
+
+}
+
 

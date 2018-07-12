@@ -50,6 +50,7 @@
 #define AMS_VTM_ID_HASH_SIZE                           (AMS_MAX_VTM_NUM)
 
 #define	AMS_MAX_TIMER_PARA_LEN                         (PARA_LEN)
+#define AMS_MAX_PROC_NUM_IN_QUEUE                      20
 
 
 typedef struct tellerLoginInfo_t

@@ -434,7 +434,7 @@ int VtaGetReqProc(int iThreadId, MESSAGE_t *pMsg)
 	}
 
 	//业务智能路由
-	pVtaNode = AmsServiceIntelligentSelectVta(pTermNode,termId,srvGrpId,srvtype,&iret);
+	pVtaNode = AmsServiceIntelligentSelectVta(termId,srvGrpId,srvtype,&iret);
 	if(NULL == pVtaNode)
 	{
 		if(AMS_CMS_GET_VTA_SERVICE_IN_QUEUE != iret)

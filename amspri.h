@@ -132,7 +132,7 @@ typedef struct callTarget_t
 //排队进程数与排队客户数一致，数量不定
 typedef struct
 {
-	DWORD   vtmId;
+	DWORD   queueId;
 	DWORD   srvGrpId;
 
 	unsigned char   serviceTypeLen;
