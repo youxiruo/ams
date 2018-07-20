@@ -20,6 +20,7 @@
 #define AmsErrorTrace                   (SystemData.AmsPriData.amsDebug.error)
 #define AmsAlarmTrace                   (SystemData.AmsPriData.amsDebug.alarm)
 #define AmsResultStat                   (SystemData.AmsPriData.amsStat.resultStat)
+#define AmsCMsgTrace					(SystemData.AmsPriData.amsDebug.cmsg)
 
 
 
@@ -34,23 +35,21 @@ typedef struct
 	int     rcasRemoteCoopState;
 	int     vtmRemoteCoopState;	
 	int     snapState;
-	
-	int     sendMsgToVtaState;
-	int     sendMsgToVtmState;
-	int     sendFileToVtaState;
-	int     sendFileToVtmState;
 
 	int     multiSessState;
 	int     monitorState;
-	int     vtaParaCfgState;
 
 	WORD	amsTellerNum;
 
 	DWORD   amsPid;
 	//DWORD   tellerId;
+	DWORD   termType;
 	unsigned char   termIdLen;
 	unsigned char   termId[AMS_MAX_TERM_ID_LEN+1];
 	DWORD   assocTellerId;
+
+	unsigned char srvTypeLen;
+	unsigned char srvType[AMS_MAX_SERVICE_NAME_LEN + 1];
 	
 	unsigned char srvGrpIdLen;
 	unsigned char srvGrpId[AMS_MAX_SERVICE_GROUP_NAME_LEN+1];
@@ -72,28 +71,23 @@ typedef struct
 	unsigned char   assocCallId[AMS_MAX_CALLID_LEN + 1];	
 
 	//timer
-	int     iTimerId;             //VTA
+	int     iTimerId;             //CRM
 	int     callTimerId;          //CMS
 	int     volumeCtrlTimerId;    //VTM
 	int     rcasRemoteCoopTimerId;//RCAS
 	int     vtmRemoteCoopTimerId; //VTM
-	int     snapTimerId;          //VTM
-	int     restTimerId;          //VTA
-	int     sendMsgToVtaTimerId;  //VTA
-	int     sendMsgToVtmTimerId;  //VTM
-	int     sendFileToVtaTimerId; //VTA
-	int     sendFileToVtmTimerId; //VTM
-	
-	int     multiSessTimerId;     //VTA/VTM
-	int     monitorTimerId;       //VTA/VTM
-	int     vtaParaCfgTimerId;    //VTA
+	int     restTimerId;          //CRM
+
+	int     multiSessTimerId;     //CRM/VTM
+	int     monitorTimerId;       //CRM/VTM
+	int     crmParaCfgTimerId;    //CRM
 	
 //	int		iTimerType;
 	
 	//communication pid
 	PID_t	myPid;
-	PID_t	rPid;    //vta
-	PID_t	termPid;  //vtm
+	PID_t	rPid;    //crm
+	PID_t	termPid;  //term
 	PID_t	cmsPid;
 	PID_t	rcasPid;	
 
@@ -111,6 +105,7 @@ typedef struct
 	BYTE	timerTrace;
 	BYTE	errorTrace;
 	BYTE	alarmTrace;
+	BYTE    cmsgTrace;
 	
 	BYTE	sTraceName[32];
 	BYTE	lTraceNameLen;
@@ -149,7 +144,7 @@ typedef struct
 	CALL_TARGET     callTarget;		
 
 	//timer
-	int     iTimerId;            //Vta
+	int     iTimerId;            //Crm
 
 	//communication pid
 	PID_t	myPid;
@@ -164,6 +159,7 @@ typedef struct
 	BYTE	timerTrace;
 	BYTE	errorTrace;
 	BYTE	alarmTrace;
+	BYTE	cmsgTrace;
 
 	BYTE	sTraceName[32];
 	BYTE	lTraceNameLen;

@@ -10,8 +10,8 @@ int AmsTimerStatProc(int code, int action)
 	
 	switch(code)
 	{
-	case T_AMS_VTA_STATE_OPERATE_IND_TIMER: 
-		AmsTimerStat.WaitVtaOperateIndRsp[action]++;
+	case T_AMS_CRM_STATE_OPERATE_IND_TIMER: 
+		AmsTimerStat.WaitCrmOperateIndRsp[action]++;
 		break;  
 
 	case T_AMS_CUSTOMER_IN_QUEUE_TIMER: 
@@ -66,47 +66,47 @@ int AmsCommonResultStatProc(int resultCode)
 	return AMS_OK;
 }
 
-int AmsVtaLoginResultStatProc(int resultCode)
+int AmsCrmLoginResultStatProc(int resultCode)
 {
 	switch(resultCode)
 	{
-	case AMS_VTA_QUEUE_MNG_SUCCESS:
-		AmsResultStat.vtaLoginSuccess++;
+	case AMS_CRM_QUEUE_MNG_SUCCESS:
+		AmsResultStat.crmLoginSuccess++;
 		break;
 		
-	case AMS_VTA_LOGIN_PARA_ERR: //AMS_VTA_QUEUE_MNG_REASON_BASE
-		AmsResultStat.vtaLoginParaErr++;
+	case AMS_CRM_LOGIN_PARA_ERR: //AMS_CRM_QUEUE_MNG_REASON_BASE
+		AmsResultStat.crmLoginParaErr++;
 		break; 
 		
-	case AMS_VTA_LOGIN_LP_RESOURCE_LIMITED: 
-		AmsResultStat.vtaLoginLpResourceLimited++;
+	case AMS_CRM_LOGIN_LP_RESOURCE_LIMITED: 
+		AmsResultStat.crmLoginLpResourceLimited++;
 		break;		
 		
-	case AMS_VTA_LOGIN_NODE_RESOURCE_LIMITED: 
-		AmsResultStat.vtaLoginNodeResourceLimited++;
+	case AMS_CRM_LOGIN_NODE_RESOURCE_LIMITED: 
+		AmsResultStat.crmLoginNodeResourceLimited++;
 		break;
 		
-	case AMS_VTA_LOGIN_TELLER_LEN_ERR: 
-		AmsResultStat.vtaLoginTellerLenErr++;
+	case AMS_CRM_LOGIN_TELLER_LEN_ERR: 
+		AmsResultStat.crmLoginTellerLenErr++;
 		break;
 
-	case AMS_VTA_LOGIN_TELLER_NO_ERR: 
-		AmsResultStat.vtaLoginTellerNoErr++;
+	case AMS_CRM_LOGIN_TELLER_NO_ERR: 
+		AmsResultStat.crmLoginTellerNoErr++;
 		break;
 		
-	case AMS_VTA_LOGIN_TELLER_PWD_ERR: 
-		AmsResultStat.vtaLoginTellerPwdErr++;
+	case AMS_CRM_LOGIN_TELLER_PWD_ERR: 
+		AmsResultStat.crmLoginTellerPwdErr++;
 		break;	
 		
-	case AMS_VTA_LOGIN_TELLER_LOGIN_REPEATEDLY: 
-		AmsResultStat.vtaLoginTellerLoginRepeatedly++;
+	case AMS_CRM_LOGIN_TELLER_LOGIN_REPEATEDLY: 
+		AmsResultStat.crmLoginTellerLoginRepeatedly++;
 		break;
  
-	case AMS_VTA_LOGIN_TELLER_NUM_ERR: 
-		AmsResultStat.vtaLoginTellerNumErr++;
+	case AMS_CRM_LOGIN_TELLER_NUM_ERR: 
+		AmsResultStat.crmLoginTellerNumErr++;
 		break;	
-	case AMS_VTA_LOGIN_TELLER_LOGIN_NOTREGSITER:
-		AmsResultStat.vtalogintellerloginnotresiter++;
+	case AMS_CRM_LOGIN_TELLER_LOGIN_NOTREGSITER:
+		AmsResultStat.crmlogintellerloginnotresiter++;
 		break;
 	default:
 		AmsResultStat.amsUnknownResult++;
@@ -117,92 +117,92 @@ int AmsVtaLoginResultStatProc(int resultCode)
 }
 
 
-int AmsVtaStateOperateResultStatProc(int resultCode)
+int AmsCrmStateOperateResultStatProc(int resultCode)
 {
 	switch(resultCode)
 	{
-	case AMS_VTA_QUEUE_MNG_SUCCESS:
-		AmsResultStat.vtaStateOperateSuccess++;
+	case AMS_CRM_QUEUE_MNG_SUCCESS:
+		AmsResultStat.crmStateOperateSuccess++;
 		break;
 				
-	case AMS_VTA_STATE_OPERATE_PARA_ERR:  
-		AmsResultStat.vtaStateOperateParaErr++;
+	case AMS_CRM_STATE_OPERATE_PARA_ERR:  
+		AmsResultStat.crmStateOperateParaErr++;
 		break;
 		
-	case AMS_VTA_STATE_OPERATE_STATE_ERR: 
-		AmsResultStat.vtaStateOperateStateErr++;
+	case AMS_CRM_STATE_OPERATE_STATE_ERR: 
+		AmsResultStat.crmStateOperateStateErr++;
 		break;
 		
-	case AMS_VTA_STATE_OPERATE_LEN_ERR: 
-		AmsResultStat.vtaStateOperateLenErr++;
+	case AMS_CRM_STATE_OPERATE_LEN_ERR: 
+		AmsResultStat.crmStateOperateLenErr++;
 		break;
 		
-	case AMS_VTA_STATE_OPERATE_AMS_PID_ERR: 
-		AmsResultStat.vtaStateOperateAmsPidErr++;
+	case AMS_CRM_STATE_OPERATE_AMS_PID_ERR: 
+		AmsResultStat.crmStateOperateAmsPidErr++;
 		break;		
 		
-	case AMS_VTA_STATE_OPERATE_TELLER_ID_ERR: 
-		AmsResultStat.vtaStateOperateTellerIdErr++;
+	case AMS_CRM_STATE_OPERATE_TELLER_ID_ERR: 
+		AmsResultStat.crmStateOperateTellerIdErr++;
 		break;
 		
-	case AMS_VTA_STATE_OPERATE_SERVICE_GROUP_ID_ERR: 
-		AmsResultStat.vtaStateOperateSrvGrpIdErr++;
+	case AMS_CRM_STATE_OPERATE_SERVICE_GROUP_ID_ERR: 
+		AmsResultStat.crmStateOperateSrvGrpIdErr++;
 		break;
 
-	case AMS_VTA_STATE_OPERATE_SERVICE_STATE_ERR: 
-		AmsResultStat.vtaStateOperateServiceStateErr++;
+	case AMS_CRM_STATE_OPERATE_SERVICE_STATE_ERR: 
+		AmsResultStat.crmStateOperateServiceStateErr++;
 		break;
 		
-	case AMS_VTA_STATE_OPERATE_CODE_ERR: 
-		AmsResultStat.vtaStateOperateCodeErr++;
+	case AMS_CRM_STATE_OPERATE_CODE_ERR: 
+		AmsResultStat.crmStateOperateCodeErr++;
 		break;	
 
-	case AMS_VTA_STATE_OPERATE_STATE_OP_REASON_ERR: 
-		AmsResultStat.vtaStateOperateOpReasonErr++;
+	case AMS_CRM_STATE_OPERATE_STATE_OP_REASON_ERR: 
+		AmsResultStat.crmStateOperateOpReasonErr++;
 		break;
 		
-	case AMS_VTA_STATE_OPERATE_STATE_OP_TIMELEN_ERR: 
-		AmsResultStat.vtaStateOperateOpTimeLenErr++;
+	case AMS_CRM_STATE_OPERATE_STATE_OP_TIMELEN_ERR: 
+		AmsResultStat.crmStateOperateOpTimeLenErr++;
 		break;
 		
-	case AMS_VTA_STATE_OPERATE_UPDATE_STATE_ERR: 
-		AmsResultStat.vtaStateOperateUpdateStateErr++;
+	case AMS_CRM_STATE_OPERATE_UPDATE_STATE_ERR: 
+		AmsResultStat.crmStateOperateUpdateStateErr++;
 		break;
 		
-	case AMS_VTA_STATE_OPERATE_START_TIMER_ERR: 
-		AmsResultStat.vtaStateOperateStartTimerErr++;
+	case AMS_CRM_STATE_OPERATE_START_TIMER_ERR: 
+		AmsResultStat.crmStateOperateStartTimerErr++;
 		break;
 		
-	case AMS_VTA_STATE_OPERATE_REST_TIMEOUT: 
-		AmsResultStat.vtaStateOperateRestTimeout++;
+	case AMS_CRM_STATE_OPERATE_REST_TIMEOUT: 
+		AmsResultStat.crmStateOperateRestTimeout++;
 		break;
 		
-	case AMS_VTA_STATE_OPERATE_REST_TIMEOUT_PARA_ERR: 
-		AmsResultStat.vtaStateOpRestTimeoutParaErr++;
+	case AMS_CRM_STATE_OPERATE_REST_TIMEOUT_PARA_ERR: 
+		AmsResultStat.crmStateOpRestTimeoutParaErr++;
 		break;
 	
-	case AMS_VTA_STATE_OPERATE_REST_TIMEOUT_STATE_ERR: 
-		AmsResultStat.vtaStateOpRestTimeoutStateErr++;
+	case AMS_CRM_STATE_OPERATE_REST_TIMEOUT_STATE_ERR: 
+		AmsResultStat.crmStateOpRestTimeoutStateErr++;
 		break;
 		
-	case AMS_VTA_STATE_OPERATE_REST_TIMEOUT_LEN_ERR: 
-		AmsResultStat.vtaStateOpRestTimeoutLenErr++;
+	case AMS_CRM_STATE_OPERATE_REST_TIMEOUT_LEN_ERR: 
+		AmsResultStat.crmStateOpRestTimeoutLenErr++;
 		break;
 		
-	case AMS_VTA_STATE_OPERATE_REST_TIMEOUT_AMS_PID_ERR: 
-		AmsResultStat.vtaStateOpRestTimeoutAmsPidErr++;
+	case AMS_CRM_STATE_OPERATE_REST_TIMEOUT_AMS_PID_ERR: 
+		AmsResultStat.crmStateOpRestTimeoutAmsPidErr++;
 		break;
 		
-	case AMS_VTA_STATE_OPERATE_REST_TIMEOUT_TELLER_ID_ERR: 
-		AmsResultStat.vtaStateOpRestTimeoutTellerIdErr++;
+	case AMS_CRM_STATE_OPERATE_REST_TIMEOUT_TELLER_ID_ERR: 
+		AmsResultStat.crmStateOpRestTimeoutTellerIdErr++;
 		break;
 
-	case AMS_VTA_STATE_OPERATE_REST_TIMEOUT_SERVICE_GROUP_ID_ERR: 
-		AmsResultStat.vtaStateOpRestTimeoutSrvGrpIdErr++;
+	case AMS_CRM_STATE_OPERATE_REST_TIMEOUT_SERVICE_GROUP_ID_ERR: 
+		AmsResultStat.crmStateOpRestTimeoutSrvGrpIdErr++;
 		break;
 		
-	case AMS_VTA_STATE_OPERATE_REST_TIMEOUT_SERVICE_STATE_ERR: 
-		AmsResultStat.vtaStateOpRestTimeoutSrvGrpIdErr++;
+	case AMS_CRM_STATE_OPERATE_REST_TIMEOUT_SERVICE_STATE_ERR: 
+		AmsResultStat.crmStateOpRestTimeoutSrvGrpIdErr++;
 		break;
 		
 	default:
@@ -212,68 +212,68 @@ int AmsVtaStateOperateResultStatProc(int resultCode)
 	return AMS_OK;
 }
 
-int AmsVtaEventNoticeResultStatProc(int resultCode)
+int AmsCrmEventNoticeResultStatProc(int resultCode)
 {		
 	switch(resultCode)
 	{
-	case AMS_VTA_QUEUE_MNG_SUCCESS:
-		AmsResultStat.vtaEventNoticeSuccess++;
+	case AMS_CRM_QUEUE_MNG_SUCCESS:
+		AmsResultStat.crmEventNoticeSuccess++;
 		break;
 		
-	case AMS_VTA_EVENT_NOTICE_PARA_ERR: 
-		AmsResultStat.vtaEventNoticeParaErr++;
+	case AMS_CRM_EVENT_NOTICE_PARA_ERR: 
+		AmsResultStat.crmEventNoticeParaErr++;
 		break;
 		
-	case AMS_VTA_EVENT_NOTICE_STATE_ERR:
-		AmsResultStat.vtaEventNoticeStateErr++;
+	case AMS_CRM_EVENT_NOTICE_STATE_ERR:
+		AmsResultStat.crmEventNoticeStateErr++;
 		break;
 		
-	case AMS_VTA_EVENT_NOTICE_LEN_ERR: 
-		AmsResultStat.vtaEventNoticeLenErr++;
+	case AMS_CRM_EVENT_NOTICE_LEN_ERR: 
+		AmsResultStat.crmEventNoticeLenErr++;
 		break;
 		
-	case AMS_VTA_EVENT_NOTICE_SERVICE_GROUP_ID_ERR: 
-		AmsResultStat.vtaEventNoticeSrvGrpIdErr++;
+	case AMS_CRM_EVENT_NOTICE_SERVICE_GROUP_ID_ERR: 
+		AmsResultStat.crmEventNoticeSrvGrpIdErr++;
 		break;
 		
-	case AMS_VTA_EVENT_NOTICE_SERVICE_STATE_ERR: 
-		AmsResultStat.vtaEventNoticeServiceStateErr++;
+	case AMS_CRM_EVENT_NOTICE_SERVICE_STATE_ERR: 
+		AmsResultStat.crmEventNoticeServiceStateErr++;
 		break;		
 
-	case AMS_VTA_EVENT_NOTICE_CALL_ID_ERR: 
-		AmsResultStat.vtaEventNoticeCallIdErr++;
+	case AMS_CRM_EVENT_NOTICE_CALL_ID_ERR: 
+		AmsResultStat.crmEventNoticeCallIdErr++;
 		break;	
 
-	case AMS_VTA_EVENT_NOTICE_CALL_STATE_ERR: 
-		AmsResultStat.vtaEventNoticeCallStateErr++;
+	case AMS_CRM_EVENT_NOTICE_CALL_STATE_ERR: 
+		AmsResultStat.crmEventNoticeCallStateErr++;
 		break;
 		
-	case AMS_VTA_EVENT_NOTICE_AMS_PID_ERR: 
-		AmsResultStat.vtaEventNoticeAmsPidErr++;
+	case AMS_CRM_EVENT_NOTICE_AMS_PID_ERR: 
+		AmsResultStat.crmEventNoticeAmsPidErr++;
 		break;
 
-	case AMS_VTA_EVENT_NOTICE_TELLER_ID_ERR: 
-		AmsResultStat.vtaEventNoticeTellerIdErr++;
+	case AMS_CRM_EVENT_NOTICE_TELLER_ID_ERR: 
+		AmsResultStat.crmEventNoticeTellerIdErr++;
 		break;
 		
-	case AMS_VTA_EVENT_NOTICE_VTM_ID_ERR: 
-		AmsResultStat.vtaEventNoticeVtmIdErr++;
+	case AMS_CRM_EVENT_NOTICE_TERM_ID_ERR: 
+		AmsResultStat.crmEventNoticeVtmIdErr++;
 		break;	 
 
-	case AMS_VTA_EVENT_NOTICE_TYPE_ERR: 
-		AmsResultStat.vtaEventNoticeTypeErr++;
+	case AMS_CRM_EVENT_NOTICE_TYPE_ERR: 
+		AmsResultStat.crmEventNoticeTypeErr++;
 		break;	 
 
-	case AMS_VTA_EVENT_NOTICE_LACK_FILE_INFO: 
-		AmsResultStat.vtaEventNoticeLackFileInfo++;
+	case AMS_CRM_EVENT_NOTICE_LACK_FILE_INFO: 
+		AmsResultStat.crmEventNoticeLackFileInfo++;
 		break;	
 		
-	case AMS_VTA_EVENT_NOTICE_FILE_PATH_LEN_ERR: 
-		AmsResultStat.vtaEventNoticeFilePathLenErr++;
+	case AMS_CRM_EVENT_NOTICE_FILE_PATH_LEN_ERR: 
+		AmsResultStat.crmEventNoticeFilePathLenErr++;
 		break;	 
 		
-	case AMS_VTA_EVENT_NOTICE_FILE_NAME_LEN_ERR: 
-		AmsResultStat.vtaEventNoticeFileNameLenErr++;
+	case AMS_CRM_EVENT_NOTICE_FILE_NAME_LEN_ERR: 
+		AmsResultStat.crmEventNoticeFileNameLenErr++;
 		break;	 
 	
 	default:
@@ -285,32 +285,32 @@ int AmsVtaEventNoticeResultStatProc(int resultCode)
 }
 
 
-int AmsCmsVtaRegResultStatProc(int resultCode)
+int AmsCmsCrmRegResultStatProc(int resultCode)
 {
 	switch(resultCode)
 	{
 	case AMS_CMS_PRCOESS_SUCCESS:
-		AmsResultStat.cmsVtaRegSuccess++;
+		AmsResultStat.cmsCrmRegSuccess++;
 		break;
 				
-	case AMS_CMS_VTA_REG_PARA_ERR: 
-		AmsResultStat.cmsVtaRegParaErr++;
+	case AMS_CMS_CRM_REG_PARA_ERR: 
+		AmsResultStat.cmsCrmRegParaErr++;
 		break;
 		
-	case AMS_CMS_VTA_REG_STATE_ERR: 
-		AmsResultStat.cmsVtaRegStateErr++;
+	case AMS_CMS_CRM_REG_STATE_ERR: 
+		AmsResultStat.cmsCrmRegStateErr++;
 		break;
 		
-	case AMS_CMS_VTA_REG_LEN_ERR: 
-		AmsResultStat.cmsVtaRegLenErr++;
+	case AMS_CMS_CRM_REG_LEN_ERR: 
+		AmsResultStat.cmsCrmRegLenErr++;
 		break;
 		
-	case AMS_CMS_VTA_REG_TELLER_ID_ERR: 
-		AmsResultStat.cmsVtaRegTellerIdErr++;
+	case AMS_CMS_CRM_REG_TELLER_ID_ERR: 
+		AmsResultStat.cmsCrmRegTellerIdErr++;
 		break;		
 		
-	case AMS_CMS_VTA_REG_RESOURCE_LIMITED: 
-		AmsResultStat.cmsVtaRegResourceLimited++;
+	case AMS_CMS_CRM_REG_RESOURCE_LIMITED: 
+		AmsResultStat.cmsCrmRegResourceLimited++;
 		break;
 		 
 	default:
@@ -321,148 +321,148 @@ int AmsCmsVtaRegResultStatProc(int resultCode)
 	return AMS_OK;
 }
 
-int AmsCmsGetVtaResultStatProc(int resultCode)
+int AmsCmsGetCrmResultStatProc(int resultCode)
 {
 	switch(resultCode)
 	{
 	case AMS_CMS_PRCOESS_SUCCESS:
-		AmsResultStat.cmsGetVtaSuccess++;
+		AmsResultStat.cmsGetCrmSuccess++;
 		break;
  	
-	case AMS_CMS_GET_VTA_PARA_ERR: 
-		AmsResultStat.cmsGetVtaParaErr++;
+	case AMS_CMS_GET_CRM_PARA_ERR: 
+		AmsResultStat.cmsGetCrmParaErr++;
 		break;
 		
-	case AMS_CMS_GET_VTA_LEN_ERR: 
-		AmsResultStat.cmsGetVtaLenErr++;
+	case AMS_CMS_GET_CRM_LEN_ERR: 
+		AmsResultStat.cmsGetCrmLenErr++;
 		break;		
 		
-	case AMS_CMS_GET_VTA_AMS_PID_ERR: 
-		AmsResultStat.cmsGetVtaAmsPidErr++;
+	case AMS_CMS_GET_CRM_AMS_PID_ERR: 
+		AmsResultStat.cmsGetCrmAmsPidErr++;
 		break;
 		
-	case AMS_CMS_GET_VTA_CALL_ID_ERR: 
-		AmsResultStat.cmsGetVtaCallIdErr++;
-		break;
-
-	case AMS_CMS_GET_VTA_TERMINAL_TYPE_ERR: 
-		AmsResultStat.cmsGetVtaTerminalTypeErr++;
-		break;
-		
-	case AMS_CMS_GET_VTA_SERVICE_GROUP_ID_ERR: 
-		AmsResultStat.cmsGetVtaSrvGrpIdErr++;
-		break;	
-		
-	case AMS_CMS_GET_VTA_SERVICE_TYPE_ERR: 
-		AmsResultStat.cmsGetVtaServiceTypeErr++;
+	case AMS_CMS_GET_CRM_CALL_ID_ERR: 
+		AmsResultStat.cmsGetCrmCallIdErr++;
 		break;
 
-	case AMS_CMS_GET_VTA_NO_VALID_SERVICE_GROUP_ID_OR_TYPE: 
-		AmsResultStat.cmsGetVtaNoValidSrvGrpOrType++;
+	case AMS_CMS_GET_CRM_TERMINAL_TYPE_ERR: 
+		AmsResultStat.cmsGetCrmTerminalTypeErr++;
 		break;
 		
-	case AMS_CMS_GET_VTA_LICENSE_TIMEOUT: 
-		AmsResultStat.cmsGetVtaLicenseTimeout++;
+	case AMS_CMS_GET_CRM_SERVICE_GROUP_ID_ERR: 
+		AmsResultStat.cmsGetCrmSrvGrpIdErr++;
 		break;	
 		
-	case AMS_CMS_GET_VTA_TPS_BEYOND_LIC: 
-		AmsResultStat.cmsGetVtaTpsBeyondLic++;
-		break;	
-		
-	case AMS_CMS_GET_VTA_SERVICE_IN_QUEUE: 
-		AmsResultStat.cmsGetVtaServiceInQueue++;
-		break;
-		
-	case AMS_CMS_GET_VTA_SERVICE_INTELLIGENT_ROUTING_ERR: 
-		AmsResultStat.cmsGetVtaSIRErr++;
+	case AMS_CMS_GET_CRM_SERVICE_TYPE_ERR: 
+		AmsResultStat.cmsGetCrmServiceTypeErr++;
 		break;
 
-	case AMS_CMS_GET_VTA_SIR_VTMNO_ERR: 
-		AmsResultStat.cmsGetVtaSIRVtmNoErr++;
+	case AMS_CMS_GET_CRM_NO_VALID_SERVICE_GROUP_ID_OR_TYPE: 
+		AmsResultStat.cmsGetCrmNoValidSrvGrpOrType++;
 		break;
 		
-	case AMS_CMS_GET_VTA_SIR_SERVICE_GROUP_ID_ERR: 
-		AmsResultStat.cmsGetVtaSIRSrvGrpIdErr++;
+	case AMS_CMS_GET_CRM_LICENSE_TIMEOUT: 
+		AmsResultStat.cmsGetCrmLicenseTimeout++;
+		break;	
+		
+	case AMS_CMS_GET_CRM_TPS_BEYOND_LIC: 
+		AmsResultStat.cmsGetCrmTpsBeyondLic++;
+		break;	
+		
+	case AMS_CMS_GET_CRM_SERVICE_IN_QUEUE: 
+		AmsResultStat.cmsGetCrmServiceInQueue++;
 		break;
 		
-	case AMS_CMS_GET_VTA_SIR_CALL_TYPE_ERR: 
-		AmsResultStat.cmsGetVtaSIRCallTypeErr++;
+	case AMS_CMS_GET_CRM_SERVICE_INTELLIGENT_ROUTING_ERR: 
+		AmsResultStat.cmsGetCrmSIRErr++;
+		break;
+
+	case AMS_CMS_GET_CRM_SIR_TERMNO_ERR: 
+		AmsResultStat.cmsGetCrmSIRVtmNoErr++;
 		break;
 		
-	case AMS_CMS_GET_VTA_SIR_VTA_EMPTY: 
-		AmsResultStat.cmsGetVtaSIRVtaEmpty++;
+	case AMS_CMS_GET_CRM_SIR_SERVICE_GROUP_ID_ERR: 
+		AmsResultStat.cmsGetCrmSIRSrvGrpIdErr++;
 		break;
 		
-	case AMS_CMS_GET_VTA_SIR_CALC_QUEUE_INFO_ERR: 
-		AmsResultStat.cmsGetVtaSIRCalcQueueInfoErr++;
+	case AMS_CMS_GET_CRM_SIR_CALL_TYPE_ERR: 
+		AmsResultStat.cmsGetCrmSIRCallTypeErr++;
 		break;
 		
-	case AMS_CMS_GET_VTA_SIR_TOO_MANY_CUSTOMER_IN_QUEUE: 
-		AmsResultStat.cmsGetVtaSIRTooManyCustInQueue++;
+	case AMS_CMS_GET_CRM_SIR_CRM_EMPTY: 
+		AmsResultStat.cmsGetCrmSIRCrmEmpty++;
 		break;
 		
-	case AMS_CMS_GET_VTA_SIR_TARGET_TELLER_NOT_LOGIN: 
-		AmsResultStat.cmsGetVtaSIRTargetTellerNotLogin++;
+	case AMS_CMS_GET_CRM_SIR_CALC_QUEUE_INFO_ERR: 
+		AmsResultStat.cmsGetCrmSIRCalcQueueInfoErr++;
 		break;
 		
-	case AMS_CMS_GET_VTA_SIR_TARGET_TELLER_NOT_REGISTERED: 
-		AmsResultStat.cmsGetVtaSIRTargetTellerNotReg++;
+	case AMS_CMS_GET_CRM_SIR_TOO_MANY_CUSTOMER_IN_QUEUE: 
+		AmsResultStat.cmsGetCrmSIRTooManyCustInQueue++;
 		break;
 		
-	case AMS_CMS_GET_VTA_SIR_TARGET_TELLER_STATE_ERR: 
-		AmsResultStat.cmsGetVtaSIRTargetTellerStateErr++;
+	case AMS_CMS_GET_CRM_SIR_TARGET_TELLER_NOT_LOGIN: 
+		AmsResultStat.cmsGetCrmSIRTargetTellerNotLogin++;
+		break;
+		
+	case AMS_CMS_GET_CRM_SIR_TARGET_TELLER_NOT_REGISTERED: 
+		AmsResultStat.cmsGetCrmSIRTargetTellerNotReg++;
+		break;
+		
+	case AMS_CMS_GET_CRM_SIR_TARGET_TELLER_STATE_ERR: 
+		AmsResultStat.cmsGetCrmSIRTargetTellerStateErr++;
 		break;
 	
-	case AMS_CMS_GET_VTA_SIR_CALL_TRANSFER_TOO_MANY_TIMES: 
-		AmsResultStat.cmsGetVtaSIRCallTransTooManyTimes++;
+	case AMS_CMS_GET_CRM_SIR_CALL_TRANSFER_TOO_MANY_TIMES: 
+		AmsResultStat.cmsGetCrmSIRCallTransTooManyTimes++;
 		break;
 		
-	case AMS_CMS_GET_VTA_ORG_ID_ERR: 
-		AmsResultStat.cmsGetVtaOrgIdErr++;
+	case AMS_CMS_GET_CRM_ORG_ID_ERR: 
+		AmsResultStat.cmsGetCrmOrgIdErr++;
 		break;
 	
-	case AMS_CMS_GET_VTA_ORG_POS_ERR: 
-		AmsResultStat.cmsGetVtaOrgPosErr++;
+	case AMS_CMS_GET_CRM_ORG_POS_ERR: 
+		AmsResultStat.cmsGetCrmOrgPosErr++;
 		break;
 		
-	case AMS_CMS_GET_VTA_PARENT_ORG_ID_ERR: 
-		AmsResultStat.cmsGetVtaParentOrgIdErr++;
+	case AMS_CMS_GET_CRM_PARENT_ORG_ID_ERR: 
+		AmsResultStat.cmsGetCrmParentOrgIdErr++;
 		break;
 	
-	case AMS_CMS_GET_VTA_SELECT_SERVICE_GROUP_ID_ERR: 
-		AmsResultStat.cmsGetVtaSelectSrvGrpIdErr++;
+	case AMS_CMS_GET_CRM_SELECT_SERVICE_GROUP_ID_ERR: 
+		AmsResultStat.cmsGetCrmSelectSrvGrpIdErr++;
 		break;	
 		
-	case AMS_CMS_GET_VTA_LP_RESOURCE_LIMITED: 
-		AmsResultStat.cmsGetVtaLpResourceLimited++;
+	case AMS_CMS_GET_CRM_LP_RESOURCE_LIMITED: 
+		AmsResultStat.cmsGetCrmLpResourceLimited++;
 		break;
 		
-	case AMS_CMS_GET_VTA_CREATE_TIMER_ERR: 
-		AmsResultStat.cmsGetVtaCreateTimerErr++;
+	case AMS_CMS_GET_CRM_CREATE_TIMER_ERR: 
+		AmsResultStat.cmsGetCrmCreateTimerErr++;
 		break;
 		
-	case AMS_CMS_GET_VTA_TIMEOUT: 
-		AmsResultStat.cmsGetVtaTimeout++;
+	case AMS_CMS_GET_CRM_TIMEOUT: 
+		AmsResultStat.cmsGetCrmTimeout++;
 		break;
 		
-	case AMS_CMS_GET_VTA_TIMEOUT_PARA_ERR: 
-		AmsResultStat.cmsGetVtaTimeoutParaErr++;
+	case AMS_CMS_GET_CRM_TIMEOUT_PARA_ERR: 
+		AmsResultStat.cmsGetCrmTimeoutParaErr++;
 		break;
 		
-	case AMS_CMS_GET_VTA_TIMEOUT_STATE_ERR: 
-		AmsResultStat.cmsGetVtaTimeoutStateErr++;
+	case AMS_CMS_GET_CRM_TIMEOUT_STATE_ERR: 
+		AmsResultStat.cmsGetCrmTimeoutStateErr++;
 		break;
 
-	case AMS_CMS_GET_VTA_TIMEOUT_LEN_ERR: 
-		AmsResultStat.cmsGetVtaTimeoutLenErr++;
+	case AMS_CMS_GET_CRM_TIMEOUT_LEN_ERR: 
+		AmsResultStat.cmsGetCrmTimeoutLenErr++;
 		break;
 		
-	case AMS_CMS_GET_VTA_TIMEOUT_VTM_ID_ERR: 
-		AmsResultStat.cmsGetVtaTimeoutVtmIdErr++;
+	case AMS_CMS_GET_CRM_TIMEOUT_TERM_ID_ERR: 
+		AmsResultStat.cmsGetCrmTimeoutVtmIdErr++;
 		break;
 		
-	case AMS_CMS_GET_VTA_TIMEOUT_SERVICE_STATE_ERR: 
-		AmsResultStat.cmsGetVtaTimeoutServiceStateErr++;
+	case AMS_CMS_GET_CRM_TIMEOUT_SERVICE_STATE_ERR: 
+		AmsResultStat.cmsGetCrmTimeoutServiceStateErr++;
 		break;	
 		
 	default:
@@ -514,7 +514,7 @@ int AmsCmsEventNoticeResultStatProc(int resultCode)
 		AmsResultStat.cmsEventNoticeTellerIdErr++;
 		break;	
 		
-	case AMS_CMS_EVENT_NOTICE_VTM_ID_ERR: 
+	case AMS_CMS_EVENT_NOTICE_TERM_ID_ERR: 
 		AmsResultStat.cmsEventNoticeVtmIdErr++;
 		break;
 		
@@ -522,11 +522,11 @@ int AmsCmsEventNoticeResultStatProc(int resultCode)
 		AmsResultStat.cmsEventNoticeCodeErr++;
 		break;
 		
-	case AMS_CMS_EVENT_NOTICE_VTA_STATE_ERR: 
-		AmsResultStat.cmsEventNoticeVtaStateErr++;
+	case AMS_CMS_EVENT_NOTICE_CRM_STATE_ERR: 
+		AmsResultStat.cmsEventNoticeCrmStateErr++;
 		break;
 		
-	case AMS_CMS_EVENT_NOTICE_VTM_STATE_ERR: 
+	case AMS_CMS_EVENT_NOTICE_TERM_STATE_ERR: 
 		AmsResultStat.cmsEventNoticeVtmStateErr++;
 		break;
 
@@ -562,12 +562,12 @@ int AmsCmsEventNoticeResultStatProc(int resultCode)
 	return AMS_OK;
 }
 
-int AmsCmsVtaCalloutStatProc(int resultCode)
+int AmsCmsCrmCalloutStatProc(int resultCode)
 {
 	switch(resultCode)
 	{
 	case AMS_CMS_PRCOESS_SUCCESS:
-		AmsResultStat.cmsvtaCalloutSuccess++;
+		AmsResultStat.cmscrmCalloutSuccess++;
 		break;
 	case AMS_CMS_CALLOUT_AMS_PID_ERR:
 		AmsResultStat.cmsCalloutAmspidErr++;
@@ -578,29 +578,29 @@ int AmsCmsVtaCalloutStatProc(int resultCode)
 	case AMS_CMS_CALLOUT_STATE_ERR:
 		AmsResultStat.cmsCalloutStateErr++;
 		break;
-	case AMS_CMS_CALLOUT_VTA_CALL_ID_ERR:
-		AmsResultStat.cmsCalloutvtaCallidErr++;
+	case AMS_CMS_CALLOUT_CRM_CALL_ID_ERR:
+		AmsResultStat.cmsCalloutcrmCallidErr++;
 		break;
-	case AMS_CMS_CALLOUT_VTA_TELLER_ID_ERR:
-		AmsResultStat.cmsCalloutvtaTelleridErr++;
+	case AMS_CMS_CALLOUT_CRM_TELLER_ID_ERR:
+		AmsResultStat.cmsCalloutcrmTelleridErr++;
 		break;
-	case AMS_CMS_CALLOUT_VTA_SRVGRP_ID_ERR:
-		AmsResultStat.cmsCalloutvtaSrvgrpidErr++;
+	case AMS_CMS_CALLOUT_CRM_SRVGRP_ID_ERR:
+		AmsResultStat.cmsCalloutcrmSrvgrpidErr++;
 		break;
-	case AMS_CMS_CALLOUT_VTA_SRVTYPE_ERR:
-		AmsResultStat.cmsCalloutvtaSrvtypeErr++;
+	case AMS_CMS_CALLOUT_CRM_SRVTYPE_ERR:
+		AmsResultStat.cmsCalloutcrmSrvtypeErr++;
 		break;
-	case AMS_CMS_CALLOUT_VTA_TELLER_ID_NOTCFG_ERR:
-		AmsResultStat.cmsCalloutvtaTelleridNotcfgErr++;
+	case AMS_CMS_CALLOUT_CRM_TELLER_ID_NOTCFG_ERR:
+		AmsResultStat.cmsCalloutcrmTelleridNotcfgErr++;
 		break;
-	case AMS_CMS_CALLOUT_VTA_TELLER_ID_NOT_REG_ERR:
-		AmsResultStat.cmsCalloutvtaTelleridNotregErr++;
+	case AMS_CMS_CALLOUT_CRM_TELLER_ID_NOT_REG_ERR:
+		AmsResultStat.cmsCalloutcrmTelleridNotregErr++;
 		break;
-	case AMS_CMS_CALLOUT_VTA_TELLER_ID_NOTLOGIN_ERR:
-		AmsResultStat.cmsCalloutvtaTelleridNotloginErr++;
+	case AMS_CMS_CALLOUT_CRM_TELLER_ID_NOTLOGIN_ERR:
+		AmsResultStat.cmsCalloutcrmTelleridNotloginErr++;
 		break;
-	case AMS_CMS_CALLOUT_VTAREPEAT_ERR:
-		AmsResultStat.cmsCalloutvtaRepeatErr++;
+	case AMS_CMS_CALLOUT_CRMREPEAT_ERR:
+		AmsResultStat.cmsCalloutcrmRepeatErr++;
 		break;
 	default:
 		AmsResultStat.amsUnknownResult++;
@@ -613,57 +613,57 @@ int AmsResultStatProc(int resultType, int resultCode)
 { 
 	switch(resultType)
 	{
-	// ams <-> vta
+	// ams <-> crm
 	case AMS_COMMON_RESULT: 
 		AmsCommonResultStatProc(resultCode);
 		break;
 		
-	case AMS_VTA_LOGIN_RESULT: 
-		AmsVtaLoginResultStatProc(resultCode);
+	case AMS_CRM_LOGIN_RESULT: 
+		AmsCrmLoginResultStatProc(resultCode);
 		break;
 		
-	case AMS_VTA_LOGOUT_RESULT: 
-		//AmsVtaLogoutResultStatProc(resultCode);
+	case AMS_CRM_LOGOUT_RESULT: 
+		//AmsCrmLogoutResultStatProc(resultCode);
 		break;	
 		
-	case AMS_VTA_STATE_OPERATE_RESULT: 
-		AmsVtaStateOperateResultStatProc(resultCode);
+	case AMS_CRM_STATE_OPERATE_RESULT: 
+		AmsCrmStateOperateResultStatProc(resultCode);
 		break;
 		
-	case AMS_VTA_MODIFY_PASSWORD_RESULT: 
-		//AmsVtaModifyPasswordResultStatProc(resultCode);
+	case AMS_CRM_MODIFY_PASSWORD_RESULT: 
+		//AmsCrmModifyPasswordResultStatProc(resultCode);
 		break;	
 		
-	case AMS_VTA_FORCE_LOGIN_RESULT: 
-//		AmsVtaForceLoginResultStatProc(resultCode);
+	case AMS_CRM_FORCE_LOGIN_RESULT: 
+//		AmsCrmForceLoginResultStatProc(resultCode);
 		break;
 		
-	case AMS_VTA_QUERY_INFO_RESULT: 
-//		AmsVtaQueryInfoResultStatProc(resultCode);
+	case AMS_CRM_QUERY_INFO_RESULT: 
+//		AmsCrmQueryInfoResultStatProc(resultCode);
 		break;
 
-	case AMS_MANAGER_SET_VTA_STATE_RESULT: 
-//		AmsManagerSetVtaStateResultStatProc(resultCode);
+	case AMS_MANAGER_SET_CRM_STATE_RESULT: 
+//		AmsManagerSetCrmStateResultStatProc(resultCode);
 		break;	
 		
-	case AMS_VTA_EVENT_NOTICE_RESULT: 
-		AmsVtaEventNoticeResultStatProc(resultCode);
+	case AMS_CRM_EVENT_NOTICE_RESULT: 
+		AmsCrmEventNoticeResultStatProc(resultCode);
 		break;	
 
 	//	ams <-> cms
-	case AMS_CMS_VTA_REG_RESULT: 
-		AmsCmsVtaRegResultStatProc(resultCode);
+	case AMS_CMS_CRM_REG_RESULT: 
+		AmsCmsCrmRegResultStatProc(resultCode);
 		break;
 
-	case AMS_CMS_GET_VTA_RESULT: 
-		AmsCmsGetVtaResultStatProc(resultCode);
+	case AMS_CMS_GET_CRM_RESULT: 
+		AmsCmsGetCrmResultStatProc(resultCode);
 		break;
 
-	case AMS_CMS_VTA_CALLOUT_RESULT:
-		AmsCmsVtaCalloutStatProc(resultCode);
+	case AMS_CMS_CRM_CALLOUT_RESULT:
+		AmsCmsCrmCalloutStatProc(resultCode);
 		break;
-	case AMS_CMS_VTA_AUTHINFO_RESULT:
-		//AmsCmsVtaAuthinfoStatProc(resultCode);
+	case AMS_CMS_CRM_AUTHINFO_RESULT:
+		//AmsCmsCrmAuthinfoStatProc(resultCode);
 		break;
 	case AMS_CMS_EVENT_NOTICE_RESULT: 
 		AmsCmsEventNoticeResultStatProc(resultCode);
@@ -683,76 +683,76 @@ int AmsResultStatProc(int resultType, int resultCode)
 
 
 //case is too many ...
-int AmsVtaMsgStatProc(int msgCode)
+int AmsCrmMsgStatProc(int msgCode)
 {
 	switch(msgCode)
 	{
-	//ams <-> vta msg begin
-	case A_VTA_LOGIN_REQ: 
-		AmsMsgStat.recvVtaLoginReq++;
+	//ams <-> crm msg begin
+	case A_TELLER_LOGIN_REQ: 
+		AmsMsgStat.recvCrmLoginReq++;
 		break;
 		
-	case A_VTA_LOGIN_RSP: 
-		AmsMsgStat.sendVtaLoginRsp++;
+	case A_TELLER_LOGIN_RSP: 
+		AmsMsgStat.sendCrmLoginRsp++;
 		break;		      
 
-	case A_VTA_LOGOUT_REQ: 
-		AmsMsgStat.recvVtaLogoutReq++;
+	case A_TELLER_LOGOUT_REQ: 
+		AmsMsgStat.recvCrmLogoutReq++;
 		break;	
 		
-	case A_VTA_LOGOUT_RSP: 
-		AmsMsgStat.sendVtaLogoutRsp++;
+	case A_TELLER_LOGOUT_RSP: 
+		AmsMsgStat.sendCrmLogoutRsp++;
 		break;
 
-	case A_VTA_STATE_OPERATE_REQ: 
-		AmsMsgStat.recvVtaStateOperateReq++;
+	case A_TELLER_STATE_OPERATE_REQ: 
+		AmsMsgStat.recvCrmStateOperateReq++;
 		break;
 		
-	case A_VTA_STATE_OPERATE_RSP: 
-		AmsMsgStat.sendVtaStateOperateRsp++;
+	case A_TELLER_STATE_OPERATE_RSP: 
+		AmsMsgStat.sendCrmStateOperateRsp++;
 		break;		      
 
-	case A_VTA_STATE_OPERATE_IND: 
-		AmsMsgStat.sendVtaStateOperateInd++;
+	case A_TELLER_STATE_OPERATE_IND: 
+		AmsMsgStat.sendCrmStateOperateInd++;
 		break;	
 		
-	case A_VTA_STATE_OPERATE_CNF: 
-		AmsMsgStat.recvVtaStateOperateCnf++;
+	case A_TELLER_STATE_OPERATE_CNF: 
+		AmsMsgStat.recvCrmStateOperateCnf++;
 		break;
 		
-	case A_VTA_MODIFY_PASSWORD_REQ: 
-		AmsMsgStat.recvVtaModifyPasswordReq++;
+	case A_TELLER_MODIFY_PASSWORD_REQ: 
+		AmsMsgStat.recvCrmModifyPasswordReq++;
 		break;	
 		
-	case A_VTA_MODIFY_PASSWORD_RSP: 
-		AmsMsgStat.sendVtaModifyPasswordRsp++;
+	case A_TELLER_MODIFY_PASSWORD_RSP: 
+		AmsMsgStat.sendCrmModifyPasswordRsp++;
 		break;
 		
-	case A_VTA_FORCE_LOGIN_REQ: 
-		AmsMsgStat.recvVtaForceLoginReq++;
+	case A_TELLER_FORCE_LOGIN_REQ: 
+		AmsMsgStat.recvCrmForceLoginReq++;
 		break;
 		
-	case A_VTA_FORCE_LOGIN_RSP: 
-		AmsMsgStat.sendVtaForceLoginRsp++;
+	case A_TELLER_FORCE_LOGIN_RSP: 
+		AmsMsgStat.sendCrmForceLoginRsp++;
 		break;	
 		
-	case A_VTA_QUERY_INFO_REQ: 
-		AmsMsgStat.recvVtaQueryInfoReq++;
+	case A_TELLER_QUERY_INFO_REQ: 
+		AmsMsgStat.recvCrmQueryInfoReq++;
 		break;
 		
-	case A_VTA_QUERY_INFO_RSP: 
-		AmsMsgStat.sendVtaQueryInfoRsp++;
+	case A_TELLER_QUERY_INFO_RSP: 
+		AmsMsgStat.sendCrmQueryInfoRsp++;
 		break;
 		
-	case A_VTA_EVENT_NOTICE: 
-		AmsMsgStat.recvVtaEventNotice++;
+	case A_TELLER_EVENT_NOTICE: 
+		AmsMsgStat.recvCrmEventNotice++;
 		break;	
 
-	case A_VTA_EVENT_IND: 
-		AmsMsgStat.sendVtaEventInd++;
+	case A_TELLER_EVENT_IND: 
+		AmsMsgStat.sendCrmEventInd++;
 		break;	
 	
-    //ams <-> vta msg end
+    //ams <-> crm msg end
 
 	default:
 		AmsMsgStat.amsUnknownMsg++;
@@ -767,36 +767,36 @@ int AmsCmsMsgStatProc(int msgCode)
 	switch(msgCode)
 	{
 	//ams <-> cms msg begin
-	case A_VTA_REG_REQ: 
-		AmsMsgStat.recvVtaRegReq++;
+	case A_TELLER_REG_REQ: 
+		AmsMsgStat.recvCrmRegReq++;
 		break;
 		
-	case A_VTA_REG_RSP: 
-		AmsMsgStat.sendVtaRegRsp++;
+	case A_TELLER_REG_RSP: 
+		AmsMsgStat.sendCrmRegRsp++;
 		break;	
 		
-	case A_VTA_GET_REQ: 
-		AmsMsgStat.recvVtaGetReq++;
+	case A_TELLER_GET_REQ: 
+		AmsMsgStat.recvCrmGetReq++;
 		break;
 		
-	case A_VTA_GET_RSP: 
-		AmsMsgStat.sendVtaGetRsp++;
+	case A_TELLER_GET_RSP: 
+		AmsMsgStat.sendCrmGetRsp++;
 		break;
 
-	case A_VTA_CALLOUT_REQ:
-		AmsMsgStat.recvVtaCalloutReq++;
+	case A_TELLER_CALLOUT_REQ:
+		AmsMsgStat.recvCrmCalloutReq++;
 		break;
 
-	case A_VTA_CALLOUT_RSP:
-		AmsMsgStat.sendVtaCalloutRsp++;
+	case A_TELLER_CALLOUT_RSP:
+		AmsMsgStat.sendCrmCalloutRsp++;
 		break;
 
-	case A_AUTHINFO_QUERY_REQ:
-		AmsMsgStat.recvVtaAuthinfoReq++;
+	case A_TELLER_AUTH_INFO_QUERY_REQ:
+		AmsMsgStat.recvCrmAuthinfoReq++;
 		break;
 
-	case A_AUTHINFO_QUERY_RSP:
-		AmsMsgStat.sendVtaAuthinfoRsp++;
+	case A_TELLER_AUTH_INFO_QUERY_RSP:
+		AmsMsgStat.sendCrmAuthinfoRsp++;
 		break;
 		
 	case A_AMS_CALL_EVENT_NOTICE: 
@@ -823,11 +823,11 @@ int AmsBMsgStatProc(int msgCode)
 	switch(msgCode)
 	{
 	//ams B Area msg begin
-	case B_AMS_VTA_STATE_OP_IND_TIMEOUT: 
-		AmsMsgStat.vtaStateOperateIndTimeout++;
+	case B_AMS_TELLER_STATE_OP_IND_TIMEOUT: 
+		AmsMsgStat.crmStateOperateIndTimeout++;
 		break;
 		
-	case B_AMS_REST_TIMEOUT: 
+	case B_AMS_TELLER_REST_TIMEOUT: 
 		AmsMsgStat.restTimeout++;
 		break;
 		
@@ -851,8 +851,8 @@ int AmsMsgStatProc(int msgType, int msgCode)
 {
 	switch(msgType)
 	{
-	case AMS_VTA_MSG: 
-		AmsVtaMsgStatProc(msgCode);
+	case AMS_CRM_MSG: 
+		AmsCrmMsgStatProc(msgCode);
 		break;
 		
 	case AMS_CMS_MSG: 

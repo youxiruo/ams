@@ -8,7 +8,7 @@
 #define AMS_MAX_VTM_NUM				(5000)
 
 #define AMS_MAX_CRM_NODES				(10000) //最大坐席节点数
-#define AMS_MAX_TERM_NODES				(500) //最大用户节点数
+#define AMS_MAX_TERM_NODES				(5000) //最大用户节点数
 #define AMS_MAX_SERVICE_TYPE_NUM		(128) //AMS业务类型最大配置数
 
 #define AMS_MAX_SERVICE_NUM				(64)
@@ -364,6 +364,7 @@ typedef struct crmNode_t
 	time_t          handshakeTime;
 	time_t          workInfoUpdateTime;	
 	time_t          callTransferFreezeTime;	
+	time_t          updateScoreExpectTime;
 	
 	TELLER_INFO     crmInfo;
 
@@ -463,13 +464,13 @@ typedef struct amsDataSysCfg_t
 	unsigned int vtmRemoteCoopTimeLength;	
 	unsigned int vtmSnapTimeLength;
 	unsigned int crmRestTimeLength;
-	unsigned int amsCrmRecvMsgTimeLength;
+	unsigned int amsVtaRecvMsgTimeLength;
 	unsigned int amsVtmRecvMsgTimeLength;	
-	unsigned int amsCrmRecvFileTimeLength;
+	unsigned int amsVtaRecvFileTimeLength;
 	unsigned int amsVtmRecvFileTimeLength;	
 	unsigned int amsMultiSessTimeLength;
 	unsigned int amsMonitorTimeLength;
-	unsigned int amsCrmParaCfgTimeLength;
+	unsigned int amsVtaParaCfgTimeLength;
 	unsigned int amsVtmParaCfgTimeLength;	
 
 	unsigned int       amsParaCfgTimeLength;
@@ -479,14 +480,14 @@ typedef struct amsDataSysCfg_t
 	unsigned short     tellerCallRelState; //柜员呼叫释放后进入默认状态 zhuyn added 20160701  
 	unsigned short     tellerAnswerType;   
 	
-	unsigned int       maxCrmNum;
+	unsigned int       maxVtaNum;
 	unsigned int       maxVtmNum;
 	unsigned int       maxRcasNum;
 
 	CMS_INFO           cmsInfo;
 	//RCAS_INFO          rcasInfo[AMS_MAX_RCAS_NUM];
 	//RFB_INIT_PARA      rfbInitParaForVtm;   //remote Cooperative, CRM is Server
-	//RFB_INIT_PARA      rfbInitParaForCrm;   //remote Cooperative, RCAS is Server, transProto get from crm
+	//RFB_INIT_PARA      rfbInitParaForVta;   //remote Cooperative, RCAS is Server, transProto get from crm
 	
 	//FILE_SERVER_INFO   fileServerInfo;
 	//ENCRYPT_INFO       encryptInfo;
@@ -509,7 +510,7 @@ typedef struct amsDataSysCfg_t
 	//VTM_INFO           vtmInfo[AMS_MAX_VTM_NUM];
 	VTM_INFO_NODE		*vtmInfoHashTbl[AMS_VTM_ID_HASH_SIZE];
 
-	CRM_ID_NODE        *CrmIdHashTbl[AMS_CRM_ID_HASH_SIZE];	
+	CRM_ID_NODE        *VtaIdHashTbl[AMS_CRM_ID_HASH_SIZE];	
 
 	VTM_ID_NODE        *VtmIdHashTbl[AMS_VTM_ID_HASH_SIZE];
 
@@ -578,7 +579,7 @@ typedef struct amsTellerStat_t
 typedef struct amsTimerStat_t
 {
 	unsigned long  WaitCustomerGetTeller[3];
-	unsigned long  WaitCrmOperateIndRsp[3]; 
+	unsigned long  WaitVtaOperateIndRsp[3]; 
 	unsigned long  WaitRestRsp[3];
 			
 	unsigned long  UnknownTimer[3];
@@ -589,40 +590,40 @@ typedef struct amsTimerStat_t
 typedef struct amsMsgStat_t
 {
 	// ams <-> crm msg
-	unsigned long  recvCrmLoginReq;
-	unsigned long  sendCrmLoginRsp;
-	unsigned long  recvCrmLogoutReq;
-	unsigned long  sendCrmLogoutRsp;
+	unsigned long  recvVtaLoginReq;
+	unsigned long  sendVtaLoginRsp;
+	unsigned long  recvVtaLogoutReq;
+	unsigned long  sendVtaLogoutRsp;
 
-	unsigned long  recvCrmStateOperateReq;
-	unsigned long  sendCrmStateOperateRsp; 
+	unsigned long  recvVtaStateOperateReq;
+	unsigned long  sendVtaStateOperateRsp; 
 
-	unsigned long  sendCrmStateOperateInd; 
-	unsigned long  recvCrmStateOperateCnf;
+	unsigned long  sendVtaStateOperateInd; 
+	unsigned long  recvVtaStateOperateCnf;
 
-	unsigned long  recvCrmModifyPasswordReq;
-	unsigned long  sendCrmModifyPasswordRsp;
+	unsigned long  recvVtaModifyPasswordReq;
+	unsigned long  sendVtaModifyPasswordRsp;
 
-	unsigned long  recvCrmForceLoginReq;
-	unsigned long  sendCrmForceLoginRsp;
+	unsigned long  recvVtaForceLoginReq;
+	unsigned long  sendVtaForceLoginRsp;
 
-	unsigned long  recvCrmQueryInfoReq;
-	unsigned long  sendCrmQueryInfoRsp;
+	unsigned long  recvVtaQueryInfoReq;
+	unsigned long  sendVtaQueryInfoRsp;
 
-	unsigned long  recvCrmEventNotice;
-	unsigned long  sendCrmEventInd;
+	unsigned long  recvVtaEventNotice;
+	unsigned long  sendVtaEventInd;
 
 	// ams <-> cms msg
-	unsigned long  recvCrmRegReq;
-	unsigned long  sendCrmRegRsp;
-	unsigned long  recvCrmGetReq;
-	unsigned long  sendCrmGetRsp;
+	unsigned long  recvVtaRegReq;
+	unsigned long  sendVtaRegRsp;
+	unsigned long  recvVtaGetReq;
+	unsigned long  sendVtaGetRsp;
 
-	unsigned long  recvCrmCalloutReq;
-	unsigned long  sendCrmCalloutRsp;
+	unsigned long  recvVtaCalloutReq;
+	unsigned long  sendVtaCalloutRsp;
 
-	unsigned long  recvCrmAuthinfoReq;
-	unsigned long  sendCrmAuthinfoRsp;
+	unsigned long  recvVtaAuthinfoReq;
+	unsigned long  sendVtaAuthinfoRsp;
 
 	
 	unsigned long  recvAmsCallEventNoticeReq;
@@ -657,7 +658,7 @@ typedef struct amsResultStat_t
 	unsigned long  amsAllocLpFailed;
 	unsigned long  amsAllocLtFailed;
 
-	//Crm Login Result
+	//Vta Login Result
 	unsigned long  crmLoginSuccess;
 	unsigned long  crmLoginParaErr;
 	unsigned long  crmLoginStateErr;
@@ -679,7 +680,7 @@ typedef struct amsResultStat_t
 	unsigned long  crmLoginTellerNumBeyondLic;
 	unsigned long crmlogintellerloginnotresiter;
 
-	//Crm Logout Result
+	//Vta Logout Result
 	unsigned long  crmLogoutSuccess;
 	unsigned long  crmLogoutParaErr;          
 	unsigned long  crmLogoutStateErr;         
@@ -689,7 +690,7 @@ typedef struct amsResultStat_t
 	unsigned long  crmLogoutSrvGrpIdErr;  
 	unsigned long  crmLogoutServiceStateErr;   
 	
-	//Crm State Operate Result
+	//Vta State Operate Result
 	unsigned long  crmStateOperateSuccess;
 	unsigned long  crmStateOperateParaErr;
 	unsigned long  crmStateOperateStateErr;
@@ -713,7 +714,7 @@ typedef struct amsResultStat_t
 	unsigned long  crmStateOpRestTimeoutSrvGrpIdErr;
 	unsigned long  crmStateOpRestTimeoutSrvStErr;
 
-	//Crm Modify Password Result
+	//Vta Modify Password Result
 	unsigned long  crmModifyPasswordSuccess;
 	unsigned long  crmModifyPasswordParaErr;
 	unsigned long  crmModifyPasswordStateErr;
@@ -726,7 +727,7 @@ typedef struct amsResultStat_t
 	unsigned long  crmModifyPasswordServiceStateErr;
 	unsigned long  crmModifyPasswordTellerPosErr; 
 
-	//Crm Force Login Result
+	//Vta Force Login Result
 	unsigned long  crmForceLoginSuccess;
 	unsigned long  crmForceLoginParaErr;
 	unsigned long  crmForceLoginStateErr;
@@ -746,7 +747,7 @@ typedef struct amsResultStat_t
 	unsigned long  crmForceLoginLicenseTimeout;
 	unsigned long  crmForceLoginTellerNumBeyondLic;
 
-	//Crm Query Info Result	
+	//Vta Query Info Result	
 	unsigned long  crmQueryInfoSuccess;
 	unsigned long  crmQueryInfoParaErr;
 	unsigned long  crmQueryInfoStateErr;
@@ -764,7 +765,7 @@ typedef struct amsResultStat_t
 	unsigned long  crmQueryInfoTellerNoKeyLenErr;
 	unsigned long  crmQueryInfoTellerNameKeyLenErr; 
  
-	//--Crm State Op Ind Cnf Result--
+	//--Vta State Op Ind Cnf Result--
 	unsigned long  crmStateOperateIndCnfParaErr;
 	unsigned long  crmStateOperateIndCnfStateErr;
 	unsigned long  crmStateOperateIndCnfLenErr;
@@ -778,16 +779,16 @@ typedef struct amsResultStat_t
 	unsigned long  crmStateOperateIndCnfManagerSrvStErr;	
 	unsigned long  crmStateOperateIndCnfCodeErr;
 	
-	unsigned long  managerSetCrmStateTimeoutParaErr;
-	unsigned long  managerSetCrmStateTimeoutStateErr;
-	unsigned long  managerSetCrmStateTimeoutLenErr;
-	unsigned long  managerSetCrmStateTimeoutAmsPidErr;	
-	unsigned long  managerSetCrmStateTimeoutTellerIdErr;
-	unsigned long  managerSetCrmStateTimeoutSrvGrpIdErr;
-	unsigned long  managerSetCrmStateTimeoutServiceStateErr;
-	unsigned long  managerSetCrmStateTimeoutStSetStateErr;
+	unsigned long  managerSetVtaStateTimeoutParaErr;
+	unsigned long  managerSetVtaStateTimeoutStateErr;
+	unsigned long  managerSetVtaStateTimeoutLenErr;
+	unsigned long  managerSetVtaStateTimeoutAmsPidErr;	
+	unsigned long  managerSetVtaStateTimeoutTellerIdErr;
+	unsigned long  managerSetVtaStateTimeoutSrvGrpIdErr;
+	unsigned long  managerSetVtaStateTimeoutServiceStateErr;
+	unsigned long  managerSetVtaStateTimeoutStSetStateErr;
  
-	//Crm Event Notice Result
+	//Vta Event Notice Result
 	unsigned long  crmEventNoticeSuccess;
 	unsigned long  crmEventNoticeParaErr;
 	unsigned long  crmEventNoticeStateErr;
@@ -835,76 +836,76 @@ typedef struct amsResultStat_t
 	unsigned long  crmEvntCancRecvFileOrgnVtmStErr;
 	unsigned long  crmEvntCancRecvFileRecvStErr;
 	
-	unsigned long  crmEvntNtceAudioRecCrmRepFail;
-	unsigned long  crmEvntNtceUpldAudioFileCrmRepFail;
-	unsigned long  crmEvntNtceScrRecCrmRepFail;
-	unsigned long  crmEvntNtceUpldScrRecFileCrmRepFail;
-	unsigned long  crmEvntNtceSnapCrmRepFail;
-	unsigned long  crmEvntNtceDownldSnapFileCrmRepFail;
-	unsigned long  crmEvntNtceUpldFileCrmRepFail;
-	unsigned long  crmEvntNtceDownldFileCrmRepFail;
-	unsigned long  crmEvntNtceCrmCancRecvFileRepFail;
-	unsigned long  crmEvntNtceRemCoopCrmRepFail;  
+	unsigned long  crmEvntNtceAudioRecVtaRepFail;
+	unsigned long  crmEvntNtceUpldAudioFileVtaRepFail;
+	unsigned long  crmEvntNtceScrRecVtaRepFail;
+	unsigned long  crmEvntNtceUpldScrRecFileVtaRepFail;
+	unsigned long  crmEvntNtceSnapVtaRepFail;
+	unsigned long  crmEvntNtceDownldSnapFileVtaRepFail;
+	unsigned long  crmEvntNtceUpldFileVtaRepFail;
+	unsigned long  crmEvntNtceDownldFileVtaRepFail;
+	unsigned long  crmEvntNtceVtaCancRecvFileRepFail;
+	unsigned long  crmEvntNtceRemCoopVtaRepFail;  
 	
-	//Cms Crm Reg Result
-	unsigned long  cmsCrmRegSuccess;
-	unsigned long  cmsCrmRegParaErr;
-	unsigned long  cmsCrmRegStateErr;
-	unsigned long  cmsCrmRegLenErr;
-	unsigned long  cmsCrmRegTellerIdErr;
-	unsigned long  cmsCrmRegResourceLimited;
+	//Cms Vta Reg Result
+	unsigned long  cmsVtaRegSuccess;
+	unsigned long  cmsVtaRegParaErr;
+	unsigned long  cmsVtaRegStateErr;
+	unsigned long  cmsVtaRegLenErr;
+	unsigned long  cmsVtaRegTellerIdErr;
+	unsigned long  cmsVtaRegResourceLimited;
  
-	//Cms Get Crm Result
-	unsigned long  cmsGetCrmSuccess;
-	unsigned long  cmsGetCrmParaErr;
-	unsigned long  cmsGetCrmLenErr;
-	unsigned long  cmsGetCrmAmsPidErr;
-	unsigned long  cmsGetCrmCallIdErr;
-	unsigned long  cmsGetCrmTerminalTypeErr;
-	unsigned long  cmsGetCrmSrvGrpIdErr;
-	unsigned long  cmsGetCrmServiceTypeErr;
-	unsigned long  cmsGetCrmNoValidSrvGrpOrType;
-	unsigned long  cmsGetCrmCallTypeErr;
-	unsigned long  cmsGetCrmOriginTellerIdErr;
-	unsigned long  cmsGetCrmOriginTellerStateErr;
-	unsigned long  cmsGetCrmOriginTellerAmsPidErr;
-	unsigned long  cmsGetCrmOriginTellerSrvGrpIdErr;
-	unsigned long  cmsGetCrmOriginTellerSrvStateErr;	
-	unsigned long  cmsGetCrmTargetTypeErr;
-	unsigned long  cmsGetCrmTargetGroupErr; 
-	unsigned long  cmsGetCrmTargetTellerIdErr;
-	unsigned long  cmsGetCrmTargetTellerStateErr;	
-	unsigned long  cmsGetCrmVtmIdErr;
-	unsigned long  cmsGetCrmAssocCallIdErr;
-	unsigned long  cmsGetCrmLicenseTimeout;
-	unsigned long  cmsGetCrmTpsBeyondLic;
+	//Cms Get Vta Result
+	unsigned long  cmsGetVtaSuccess;
+	unsigned long  cmsGetVtaParaErr;
+	unsigned long  cmsGetVtaLenErr;
+	unsigned long  cmsGetVtaAmsPidErr;
+	unsigned long  cmsGetVtaCallIdErr;
+	unsigned long  cmsGetVtaTerminalTypeErr;
+	unsigned long  cmsGetVtaSrvGrpIdErr;
+	unsigned long  cmsGetVtaServiceTypeErr;
+	unsigned long  cmsGetVtaNoValidSrvGrpOrType;
+	unsigned long  cmsGetVtaCallTypeErr;
+	unsigned long  cmsGetVtaOriginTellerIdErr;
+	unsigned long  cmsGetVtaOriginTellerStateErr;
+	unsigned long  cmsGetVtaOriginTellerAmsPidErr;
+	unsigned long  cmsGetVtaOriginTellerSrvGrpIdErr;
+	unsigned long  cmsGetVtaOriginTellerSrvStateErr;	
+	unsigned long  cmsGetVtaTargetTypeErr;
+	unsigned long  cmsGetVtaTargetGroupErr; 
+	unsigned long  cmsGetVtaTargetTellerIdErr;
+	unsigned long  cmsGetVtaTargetTellerStateErr;	
+	unsigned long  cmsGetVtaVtmIdErr;
+	unsigned long  cmsGetVtaAssocCallIdErr;
+	unsigned long  cmsGetVtaLicenseTimeout;
+	unsigned long  cmsGetVtaTpsBeyondLic;
 
-	unsigned long  cmsGetCrmServiceInQueue;
-	unsigned long  cmsGetCrmSIRErr;
-	unsigned long  cmsGetCrmSIRVtmNoErr;
-	unsigned long  cmsGetCrmSIRSrvGrpIdErr;
-	unsigned long  cmsGetCrmSIRCallTypeErr;
-	unsigned long  cmsGetCrmSIRCrmEmpty;
-	unsigned long  cmsGetCrmSIRCalcQueueInfoErr;
-	unsigned long  cmsGetCrmSIRTooManyCustInQueue;
-	unsigned long  cmsGetCrmSIRTargetTellerNotLogin;
-	unsigned long  cmsGetCrmSIRTargetTellerNotReg;
-	unsigned long  cmsGetCrmSIRTargetTellerStateErr;
-	unsigned long  cmsGetCrmSIRCallTransTooManyTimes;
+	unsigned long  cmsGetVtaServiceInQueue;
+	unsigned long  cmsGetVtaSIRErr;
+	unsigned long  cmsGetVtaSIRVtmNoErr;
+	unsigned long  cmsGetVtaSIRSrvGrpIdErr;
+	unsigned long  cmsGetVtaSIRCallTypeErr;
+	unsigned long  cmsGetVtaSIRVtaEmpty;
+	unsigned long  cmsGetVtaSIRCalcQueueInfoErr;
+	unsigned long  cmsGetVtaSIRTooManyCustInQueue;
+	unsigned long  cmsGetVtaSIRTargetTellerNotLogin;
+	unsigned long  cmsGetVtaSIRTargetTellerNotReg;
+	unsigned long  cmsGetVtaSIRTargetTellerStateErr;
+	unsigned long  cmsGetVtaSIRCallTransTooManyTimes;
 
-	unsigned long  cmsGetCrmOrgIdErr;
-	unsigned long  cmsGetCrmOrgPosErr;
-	unsigned long  cmsGetCrmParentOrgIdErr;
-	unsigned long  cmsGetCrmSelectSrvGrpIdErr;
-	unsigned long  cmsGetCrmLpResourceLimited;
-	unsigned long  cmsGetCrmCreateTimerErr;
+	unsigned long  cmsGetVtaOrgIdErr;
+	unsigned long  cmsGetVtaOrgPosErr;
+	unsigned long  cmsGetVtaParentOrgIdErr;
+	unsigned long  cmsGetVtaSelectSrvGrpIdErr;
+	unsigned long  cmsGetVtaLpResourceLimited;
+	unsigned long  cmsGetVtaCreateTimerErr;
 	
-	unsigned long  cmsGetCrmTimeout;
-	unsigned long  cmsGetCrmTimeoutParaErr;
-	unsigned long  cmsGetCrmTimeoutStateErr;
-	unsigned long  cmsGetCrmTimeoutLenErr;
-	unsigned long  cmsGetCrmTimeoutVtmIdErr;
-	unsigned long  cmsGetCrmTimeoutServiceStateErr;	 
+	unsigned long  cmsGetVtaTimeout;
+	unsigned long  cmsGetVtaTimeoutParaErr;
+	unsigned long  cmsGetVtaTimeoutStateErr;
+	unsigned long  cmsGetVtaTimeoutLenErr;
+	unsigned long  cmsGetVtaTimeoutVtmIdErr;
+	unsigned long  cmsGetVtaTimeoutServiceStateErr;	 
 
 	//Cms Callout Result
 	unsigned long cmscrmCalloutSuccess;
@@ -932,7 +933,7 @@ typedef struct amsResultStat_t
 	unsigned long  cmsEventNoticeTellerIdErr;
 	unsigned long  cmsEventNoticeVtmIdErr;
 	unsigned long  cmsEventNoticeCodeErr;
-	unsigned long  cmsEventNoticeCrmStateErr;
+	unsigned long  cmsEventNoticeVtaStateErr;
 	unsigned long  cmsEventNoticeVtmStateErr;
 	unsigned long  cmsEventNoticeOrgnTellerIdErr;
 	unsigned long  cmsEventNoticeOrgnTellerStateErr;
@@ -1008,7 +1009,6 @@ typedef struct amsDebug_t	     //调试开关
 	unsigned char timer;         //定时器信息
 	unsigned char error;         //错误信息
 	unsigned char alarm;         //告警信息
-	unsigned char cmsg;          //c区消息
 	
 }AMS_DEBUG;
 
@@ -1049,7 +1049,7 @@ typedef struct
 #define AmsCfgSrvGroup(i)	(SystemData.AmsPriData.amsCfgData.srvGroupInfo[i])
 #define AmsCfgQueueSys(i)	(SystemData.AmsPriData.amsCfgData.queueSysInfo[i])
 
-#define	AmsCrmIdHashTbl		(SystemData.AmsPriData.amsCfgData.CrmIdHashTbl)
+#define	AmsVtaIdHashTbl		(SystemData.AmsPriData.amsCfgData.VtaIdHashTbl)
 #define AmsVtmIdHashTbl    	(SystemData.AmsPriData.amsCfgData.VtmIdHashTbl)
 
 #define AmsRegTellerHashTbl	(SystemData.AmsPriData.amsRegData.tellerRegisterInfoHashTbl)

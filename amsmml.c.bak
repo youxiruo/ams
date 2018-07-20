@@ -532,26 +532,26 @@ int DisplayAmsMsgStat(int SocketId,int Source)
     len = snprintf(s,sizeof(s),"\r\nAms Msg Proc Stat:\r\n");
     len += snprintf(s+len,sizeof(s)-len,
 "\
-recvTellerLoginReq                     =%20ld,\t sendTellerLoginRsp                     =%20ld\r\n\
-recvTellerLogoutReq                    =%20ld,\t sendTellerLogoutRsp                    =%20ld\r\n\
-recvTellerStateOperateReq              =%20ld,\t sendTellerStateOperateRsp              =%20ld\r\n\
-recvTellerStateOperateCnf              =%20ld,\t sendTellerStateOperateInd              =%20ld\r\n\
-recvTellerModifyPasswordReq            =%20ld,\t sendTellerModifyPasswordRsp            =%20ld\r\n\
-recvTellerForceLoginReq                =%20ld,\t sendTellerForceLoginRsp                =%20ld\r\n\
-recvTellerQueryInfoReq                 =%20ld,\t sendTellerQueryInfoRsp                 =%20ld\r\n\r\n\
-recvTellerEventNotice                  =%20ld\r\n\
-sendTellerEventInd                     =%20ld\r\n\r\n",
+recvVtaLoginReq                     =%20ld,\t sendVtaLoginRsp                     =%20ld\r\n\
+recvVtaLogoutReq                    =%20ld,\t sendVtaLogoutRsp                    =%20ld\r\n\
+recvVtaStateOperateReq              =%20ld,\t sendVtaStateOperateRsp              =%20ld\r\n\
+recvVtaStateOperateCnf              =%20ld,\t sendVtaStateOperateInd              =%20ld\r\n\
+recvVtaModifyPasswordReq            =%20ld,\t sendVtaModifyPasswordRsp            =%20ld\r\n\
+recvVtaForceLoginReq                =%20ld,\t sendVtaForceLoginRsp                =%20ld\r\n\
+recvVtaQueryInfoReq                 =%20ld,\t sendVtaQueryInfoRsp                 =%20ld\r\n\r\n\
+recvVtaEventNotice                  =%20ld\r\n\
+sendVtaEventInd                     =%20ld\r\n\r\n",
 
-	//ams <-> crm msg	
-	AmsMsgStat.recvCrmLoginReq,               AmsMsgStat.sendCrmLoginRsp,
-	AmsMsgStat.recvCrmLogoutReq,              AmsMsgStat.sendCrmLogoutRsp,
-	AmsMsgStat.recvCrmStateOperateReq,        AmsMsgStat.sendCrmStateOperateRsp, 
-	AmsMsgStat.recvCrmStateOperateCnf,        AmsMsgStat.sendCrmStateOperateInd, 
-	AmsMsgStat.recvCrmModifyPasswordReq,      AmsMsgStat.sendCrmModifyPasswordRsp,
-	AmsMsgStat.recvCrmForceLoginReq,          AmsMsgStat.sendCrmForceLoginRsp,
-	AmsMsgStat.recvCrmQueryInfoReq,           AmsMsgStat.sendCrmQueryInfoRsp,	
-	AmsMsgStat.recvCrmEventNotice,
-	AmsMsgStat.sendCrmEventInd);
+	//ams <-> vta msg	
+	AmsMsgStat.recvVtaLoginReq,               AmsMsgStat.sendVtaLoginRsp,
+	AmsMsgStat.recvVtaLogoutReq,              AmsMsgStat.sendVtaLogoutRsp,
+	AmsMsgStat.recvVtaStateOperateReq,        AmsMsgStat.sendVtaStateOperateRsp, 
+	AmsMsgStat.recvVtaStateOperateCnf,        AmsMsgStat.sendVtaStateOperateInd, 
+	AmsMsgStat.recvVtaModifyPasswordReq,      AmsMsgStat.sendVtaModifyPasswordRsp,
+	AmsMsgStat.recvVtaForceLoginReq,          AmsMsgStat.sendVtaForceLoginRsp,
+	AmsMsgStat.recvVtaQueryInfoReq,           AmsMsgStat.sendVtaQueryInfoRsp,	
+	AmsMsgStat.recvVtaEventNotice,
+	AmsMsgStat.sendVtaEventInd);
 
     if(Source == OMP_COMM)
     {
@@ -566,17 +566,17 @@ sendTellerEventInd                     =%20ld\r\n\r\n",
 	 memset(s,0,sizeof(s));
 	len = snprintf(s,sizeof(s),
 	"\
-recvTellerRegReq                       =%20ld,\t sendTellerRegRsp                       =%20ld\r\n\
-recvTellerGetReq                       =%20ld,\t sendTellerGetRsp                       =%20ld\r\n\
-recvTellerCalloutReq                   =%20ld,\t sendTellerCalloutRsp                   =%20ld\r\n\
-recvTellerAuthinfoReq                  =%20ld,\t sendTellerAuthinfoRsp                  =%20ld\r\n\
-recvTellerCallEventNoticeReq           =%20ld,\t sendAmsCallEventInd                 =%20ld\r\n\r\n",
+recvVtaRegReq                       =%20ld,\t sendVtaRegRsp                       =%20ld\r\n\
+recvVtaGetReq                       =%20ld,\t sendVtaGetRsp                       =%20ld\r\n\
+recvVtaCalloutReq                   =%20ld,\t sendVtaCalloutRsp                   =%20ld\r\n\
+recvVtaAuthinfoReq                  =%20ld,\t sendVtaAuthinfoRsp                  =%20ld\r\n\
+recvAmsCallEventNoticeReq           =%20ld,\t sendAmsCallEventInd                 =%20ld\r\n\r\n",
 	
 		//ams <-> cms msg
-		AmsMsgStat.recvCrmRegReq,				   AmsMsgStat.sendCrmRegRsp,
-		AmsMsgStat.recvCrmGetReq,				   AmsMsgStat.sendCrmGetRsp,
-		AmsMsgStat.recvCrmCalloutReq,			   AmsMsgStat.sendCrmCalloutRsp,
-		AmsMsgStat.recvCrmAuthinfoReq,			   AmsMsgStat.sendCrmAuthinfoRsp,
+		AmsMsgStat.recvVtaRegReq,				   AmsMsgStat.sendVtaRegRsp,
+		AmsMsgStat.recvVtaGetReq,				   AmsMsgStat.sendVtaGetRsp,
+		AmsMsgStat.recvVtaCalloutReq,			   AmsMsgStat.sendVtaCalloutRsp,
+		AmsMsgStat.recvVtaAuthinfoReq,			   AmsMsgStat.sendVtaAuthinfoRsp,
 		AmsMsgStat.recvAmsCallEventNoticeReq,	   AmsMsgStat.sendAmsCallEventInd);
 	
 		if(Source == OMP_COMM)
@@ -594,11 +594,11 @@ recvTellerCallEventNoticeReq           =%20ld,\t sendAmsCallEventInd            
     len = snprintf(s,sizeof(s),"\r\nAms B Msg Proc Stat:\r\n");
     len += snprintf(s+len,sizeof(s)-len,
 "\
-crmStateOperateIndTimeout           =%20ld,\t RestTimeout                 =%20ld\r\n\
+vtaStateOperateIndTimeout           =%20ld,\t RestTimeout                 =%20ld\r\n\
 customerInQueueTimeout              =%20ld\r\n\r\n",
 
 	//ams B msg
-	AmsMsgStat.crmStateOperateIndTimeout,   AmsMsgStat.restTimeout,
+	AmsMsgStat.vtaStateOperateIndTimeout,   AmsMsgStat.restTimeout,
 	AmsMsgStat.customerInQueueTimeout);  
 
     if(Source == OMP_COMM)
@@ -650,10 +650,10 @@ int DisplayAmsTimerStat(int SocketId,int Source)
     len = snprintf(s,sizeof(s),"\r\nAms Timer Stat:\r\n");                                  
     len += snprintf(s+len,sizeof(s)-len,"%-36s:\r\n\
 CreateTimer=%26ld,     KillTimer=%26ld,      TimerOut=%26ld\r\n",
-                    strAmsTimerName[T_AMS_CRM_STATE_OPERATE_IND_TIMER],
-                    AmsTimerStat.WaitCrmOperateIndRsp[0],
-                    AmsTimerStat.WaitCrmOperateIndRsp[1],
-                    AmsTimerStat.WaitCrmOperateIndRsp[2]);       
+                    strAmsTimerName[T_AMS_VTA_STATE_OPERATE_IND_TIMER],
+                    AmsTimerStat.WaitVtaOperateIndRsp[0],
+                    AmsTimerStat.WaitVtaOperateIndRsp[1],
+                    AmsTimerStat.WaitVtaOperateIndRsp[2]);       
     len += snprintf(s+len,sizeof(s)-len,"%-36s:\r\n\
 CreateTimer=%26ld,     KillTimer=%26ld,      TimerOut=%26ld\r\n",
                     strAmsTimerName[T_AMS_CUSTOMER_IN_QUEUE_TIMER],
@@ -712,7 +712,7 @@ amsAllocLpFailed                    =%20lu,\t amsAllocLtFailed                  
 	return SUCCESS;	
 }
 
-int DisplayAmsCrmLoginResultStat(int SocketId,int Source)
+int DisplayAmsVtaLoginResultStat(int SocketId,int Source)
 {
 	char             s[2048];//careful of len!! 
 	int              i = 0;
@@ -721,30 +721,30 @@ int DisplayAmsCrmLoginResultStat(int SocketId,int Source)
 		
     memset(s,0,sizeof(s));
 
-    len = snprintf(s,sizeof(s),"\r\nAms Crm Login Result Stat:\r\n");
+    len = snprintf(s,sizeof(s),"\r\nAms Vta Login Result Stat:\r\n");
     len += snprintf(s + len, sizeof(s) - len,
 "\
-tellerLoginSuccess                     =%20lu,\t tellerLoginParaErr                     =%20lu\r\n\
-tellerLoginStateErr                    =%20lu,\t tellerLoginLenErr                      =%20lu\r\n\
-tellerLoginLpResourceLimited           =%20lu,\t tellerLoginNodeResourceLimited         =%20lu\r\n\
-tellerLoginTellerLenErr                =%20lu,\t tellerLoginTellerNoErr                 =%20lu\r\n\
-tellerLoginTellerPwdErr                =%20lu,\t tellerLoginTellerVncAuthPwdErr         =%20lu\r\n\
-tellerLoginTellerLoginRepeatedly       =%20lu,\t tellerLoginTellerTypeErr               =%20lu\r\n\
-tellerLoginTellerNumErr                =%20lu,\t tellerLoginFileServerUsrNameErr        =%20lu\r\n\
-tellerLoginFileServerUsrPwdErr         =%20lu,\t tellerLoginOrgIdErr                    =%20lu\r\n\
-tellerLoginOrgStateErr                 =%20lu,\t tellerLoginLicenseTimeout              =%20lu\r\n\
-tellerlogintellerloginnotresiter       =%20lu,\r tellerLoginTellerNumBeyondLic          =%20lu\r\n\r\n",
+vtaLoginSuccess                     =%20lu,\t vtaLoginParaErr                     =%20lu\r\n\
+vtaLoginStateErr                    =%20lu,\t vtaLoginLenErr                      =%20lu\r\n\
+vtaLoginLpResourceLimited           =%20lu,\t vtaLoginNodeResourceLimited         =%20lu\r\n\
+vtaLoginTellerLenErr                =%20lu,\t vtaLoginTellerNoErr                 =%20lu\r\n\
+vtaLoginTellerPwdErr                =%20lu,\t vtaLoginTellerVncAuthPwdErr         =%20lu\r\n\
+vtaLoginTellerLoginRepeatedly       =%20lu,\t vtaLoginTellerTypeErr               =%20lu\r\n\
+vtaLoginTellerNumErr                =%20lu,\t vtaLoginFileServerUsrNameErr        =%20lu\r\n\
+vtaLoginFileServerUsrPwdErr         =%20lu,\t vtaLoginOrgIdErr                    =%20lu\r\n\
+vtaLoginOrgStateErr                 =%20lu,\t vtaLoginLicenseTimeout              =%20lu\r\n\
+vtalogintellerloginnotresiter       =%20lu,\r vtaLoginTellerNumBeyondLic          =%20lu\r\n\r\n",
 
-	AmsResultStat.crmLoginSuccess,               AmsResultStat.crmLoginParaErr,
-	AmsResultStat.crmLoginStateErr,              AmsResultStat.crmLoginLenErr,
-	AmsResultStat.crmLoginLpResourceLimited,     AmsResultStat.crmLoginNodeResourceLimited,
-	AmsResultStat.crmLoginTellerLenErr,          AmsResultStat.crmLoginTellerNoErr, 
-	AmsResultStat.crmLoginTellerPwdErr,          AmsResultStat.crmLoginTellerVncAuthPwdErr, 
-	AmsResultStat.crmLoginTellerLoginRepeatedly, AmsResultStat.crmLoginTellerTypeErr,
-	AmsResultStat.crmLoginTellerNumErr,          AmsResultStat.crmLoginFileServerUsrNameErr, 
-	AmsResultStat.crmLoginFileServerUsrPwdErr,   AmsResultStat.crmLoginOrgIdErr,
-	AmsResultStat.crmLoginOrgStateErr,           AmsResultStat.crmLoginLicenseTimeout,
-	AmsResultStat.crmlogintellerloginnotresiter, AmsResultStat.crmLoginTellerNumBeyondLic);
+	AmsResultStat.vtaLoginSuccess,               AmsResultStat.vtaLoginParaErr,
+	AmsResultStat.vtaLoginStateErr,              AmsResultStat.vtaLoginLenErr,
+	AmsResultStat.vtaLoginLpResourceLimited,     AmsResultStat.vtaLoginNodeResourceLimited,
+	AmsResultStat.vtaLoginTellerLenErr,          AmsResultStat.vtaLoginTellerNoErr, 
+	AmsResultStat.vtaLoginTellerPwdErr,          AmsResultStat.vtaLoginTellerVncAuthPwdErr, 
+	AmsResultStat.vtaLoginTellerLoginRepeatedly, AmsResultStat.vtaLoginTellerTypeErr,
+	AmsResultStat.vtaLoginTellerNumErr,          AmsResultStat.vtaLoginFileServerUsrNameErr, 
+	AmsResultStat.vtaLoginFileServerUsrPwdErr,   AmsResultStat.vtaLoginOrgIdErr,
+	AmsResultStat.vtaLoginOrgStateErr,           AmsResultStat.vtaLoginLicenseTimeout,
+	AmsResultStat.vtalogintellerloginnotresiter, AmsResultStat.vtaLoginTellerNumBeyondLic);
 
     if(Source == OMP_COMM)
     {
@@ -759,7 +759,7 @@ tellerlogintellerloginnotresiter       =%20lu,\r tellerLoginTellerNumBeyondLic  
 	return SUCCESS;	
 }
 
-int DisplayAmsCrmStateOperateResultStat(int SocketId,int Source)
+int DisplayAmsVtaStateOperateResultStat(int SocketId,int Source)
 {
 	char             s[4096];//careful of len!! 	                         
 	int              i = 0;
@@ -768,36 +768,36 @@ int DisplayAmsCrmStateOperateResultStat(int SocketId,int Source)
 		
     memset(s,0,sizeof(s));
 
-    len = snprintf(s,sizeof(s),"\r\nAms Crm State Operate Result Stat:\r\n");
+    len = snprintf(s,sizeof(s),"\r\nAms Vta State Operate Result Stat:\r\n");
     len += snprintf(s + len, sizeof(s) - len,
 "\
-tellerStateOperateSuccess              =%20lu,\t tellerStateOperateParaErr              =%20lu\r\n\
-tellerStateOperateStateErr             =%20lu,\t tellerStateOperateLenErr               =%20lu\r\n\
-tellerStateOperateAmsPidErr            =%20lu,\t tellerStateOperateTellerIdErr          =%20lu\r\n\
-tellerStateOperateSrvGrpIdErr          =%20lu,\t tellerStateOperateServiceStateErr      =%20lu\r\n\
-tellerStateOperateCodeErr              =%20lu,\t tellerStateOperateOpReasonErr          =%20lu\r\n\
-tellerStateOperateOpTimeLenErr         =%20lu,\t tellerStateOperateUpdateStateErr       =%20lu\r\n\
-tellerStateOperateStartTimerErr        =%20lu,\t tellerStateOperateRestTimeout          =%20lu\r\n\r\n",
+vtaStateOperateSuccess              =%20lu,\t vtaStateOperateParaErr              =%20lu\r\n\
+vtaStateOperateStateErr             =%20lu,\t vtaStateOperateLenErr               =%20lu\r\n\
+vtaStateOperateAmsPidErr            =%20lu,\t vtaStateOperateTellerIdErr          =%20lu\r\n\
+vtaStateOperateSrvGrpIdErr          =%20lu,\t vtaStateOperateServiceStateErr      =%20lu\r\n\
+vtaStateOperateCodeErr              =%20lu,\t vtaStateOperateOpReasonErr          =%20lu\r\n\
+vtaStateOperateOpTimeLenErr         =%20lu,\t vtaStateOperateUpdateStateErr       =%20lu\r\n\
+vtaStateOperateStartTimerErr        =%20lu,\t vtaStateOperateRestTimeout          =%20lu\r\n\r\n",
 
-	AmsResultStat.crmStateOperateSuccess,                AmsResultStat.crmStateOperateParaErr,
-	AmsResultStat.crmStateOperateStateErr,               AmsResultStat.crmStateOperateLenErr,
-	AmsResultStat.crmStateOperateAmsPidErr,              AmsResultStat.crmStateOperateTellerIdErr,
-	AmsResultStat.crmStateOperateSrvGrpIdErr,            AmsResultStat.crmStateOperateServiceStateErr, 
-	AmsResultStat.crmStateOperateCodeErr,                AmsResultStat.crmStateOperateOpReasonErr, 
-	AmsResultStat.crmStateOperateOpTimeLenErr,           AmsResultStat.crmStateOperateUpdateStateErr,
-	AmsResultStat.crmStateOperateStartTimerErr,          AmsResultStat.crmStateOperateRestTimeout);
+	AmsResultStat.vtaStateOperateSuccess,                AmsResultStat.vtaStateOperateParaErr,
+	AmsResultStat.vtaStateOperateStateErr,               AmsResultStat.vtaStateOperateLenErr,
+	AmsResultStat.vtaStateOperateAmsPidErr,              AmsResultStat.vtaStateOperateTellerIdErr,
+	AmsResultStat.vtaStateOperateSrvGrpIdErr,            AmsResultStat.vtaStateOperateServiceStateErr, 
+	AmsResultStat.vtaStateOperateCodeErr,                AmsResultStat.vtaStateOperateOpReasonErr, 
+	AmsResultStat.vtaStateOperateOpTimeLenErr,           AmsResultStat.vtaStateOperateUpdateStateErr,
+	AmsResultStat.vtaStateOperateStartTimerErr,          AmsResultStat.vtaStateOperateRestTimeout);
 
     len += snprintf(s + len, sizeof(s) - len,
 "\
-tellerStateOpRestTimeoutParaErr        =%20lu,\t tellerStateOpRestTimeoutStateErr       =%20lu\r\n\
-tellerStateOpRestTimeoutLenErr         =%20lu,\t tellerStateOpRestTimeoutAmsPidErr      =%20lu\r\n\
-tellerStateOpRestTimeoutTellerIdErr    =%20lu,\t tellerStateOpRestTimeoutSrvGrpIdErr    =%20lu\r\n\
-tellerStateOpRestTimeoutSrvGrpIdErr    =%20lu\r\n\r\n",
+vtaStateOpRestTimeoutParaErr        =%20lu,\t vtaStateOpRestTimeoutStateErr       =%20lu\r\n\
+vtaStateOpRestTimeoutLenErr         =%20lu,\t vtaStateOpRestTimeoutAmsPidErr      =%20lu\r\n\
+vtaStateOpRestTimeoutTellerIdErr    =%20lu,\t vtaStateOpRestTimeoutSrvGrpIdErr    =%20lu\r\n\
+vtaStateOpRestTimeoutSrvGrpIdErr    =%20lu\r\n\r\n",
 
-	AmsResultStat.crmStateOpRestTimeoutParaErr,          AmsResultStat.crmStateOpRestTimeoutStateErr,
-	AmsResultStat.crmStateOpRestTimeoutLenErr,           AmsResultStat.crmStateOpRestTimeoutAmsPidErr,
-	AmsResultStat.crmStateOpRestTimeoutTellerIdErr,      AmsResultStat.crmStateOpRestTimeoutSrvGrpIdErr,
-	AmsResultStat.crmStateOpRestTimeoutSrvGrpIdErr);
+	AmsResultStat.vtaStateOpRestTimeoutParaErr,          AmsResultStat.vtaStateOpRestTimeoutStateErr,
+	AmsResultStat.vtaStateOpRestTimeoutLenErr,           AmsResultStat.vtaStateOpRestTimeoutAmsPidErr,
+	AmsResultStat.vtaStateOpRestTimeoutTellerIdErr,      AmsResultStat.vtaStateOpRestTimeoutSrvGrpIdErr,
+	AmsResultStat.vtaStateOpRestTimeoutSrvGrpIdErr);
 
     if(Source == OMP_COMM)
     {
@@ -829,7 +829,7 @@ cmsEventNoticeStateErr              =%20lu,\t cmsEventNoticeSrvGrpIdErr         
 cmsEventNoticeServiceStateErr       =%20lu,\t cmsEventNoticeLenErr                =%20lu\r\n\
 cmsEventNoticeAmsPidErr             =%20lu,\t cmsEventNoticeCallIdErr             =%20lu\r\n\
 cmsEventNoticeTellerIdErr           =%20lu,\t cmsEventNoticeVtmIdErr              =%20lu\r\n\
-cmsEventNoticeCodeErr               =%20lu,\t cmsEventNoticeCrmStateErr           =%20lu\r\n\
+cmsEventNoticeCodeErr               =%20lu,\t cmsEventNoticeVtaStateErr           =%20lu\r\n\
 cmsEventNoticeVtmStateErr           =%20lu,\t cmsEventNoticeOrgnTellerIdErr       =%20lu\r\n\
 cmsEventNoticeOrgnTellerStateErr    =%20lu,\t cmsEventNoticeOrgnTellerAmsPidErr   =%20lu\r\n\
 cmsEventNoticeOrgnTellerSrvGrpIdErr =%20lu,\t cmsEventNoticeOrgnTellerSrvStateErr =%20lu\r\n\
@@ -840,7 +840,7 @@ cmsHandshakeClearInactiveCall       =%20lu\r\n\r\n",
 	AmsResultStat.cmsEventNoticeServiceStateErr,       AmsResultStat.cmsEventNoticeLenErr, 
 	AmsResultStat.cmsEventNoticeAmsPidErr,             AmsResultStat.cmsEventNoticeCallIdErr, 
 	AmsResultStat.cmsEventNoticeTellerIdErr,           AmsResultStat.cmsEventNoticeVtmIdErr,
-	AmsResultStat.cmsEventNoticeCodeErr,               AmsResultStat.cmsEventNoticeCrmStateErr,     
+	AmsResultStat.cmsEventNoticeCodeErr,               AmsResultStat.cmsEventNoticeVtaStateErr,     
 	AmsResultStat.cmsEventNoticeVtmStateErr,           AmsResultStat.cmsEventNoticeOrgnTellerIdErr,
 	AmsResultStat.cmsEventNoticeOrgnTellerStateErr,    AmsResultStat.cmsEventNoticeOrgnTellerAmsPidErr,
 	AmsResultStat.cmsEventNoticeOrgnTellerSrvGrpIdErr, AmsResultStat.cmsEventNoticeOrgnTellerSrvStateErr,
@@ -859,7 +859,7 @@ cmsHandshakeClearInactiveCall       =%20lu\r\n\r\n",
 	return SUCCESS;	
 }
 
-int DisplayAmsCmsCrmCalloutResultStat(int SocketId,int Source)
+int DisplayAmsCmsVtaCalloutResultStat(int SocketId,int Source)
 {
 	char             s[2048];//careful of len!! 
 	int              i = 0;
@@ -871,19 +871,19 @@ int DisplayAmsCmsCrmCalloutResultStat(int SocketId,int Source)
     len = snprintf(s,sizeof(s),"\r\nAms Cms Event Notice Result Stat:\r\n");
     len += snprintf(s + len, sizeof(s) - len,
 "\
-cmsCalloutSuccess                   =%20lu,\t cmsCalloutAmspidErr                 =%20lu\r\n\
+cmsvtaCalloutSuccess                =%20lu,\t cmsCalloutAmspidErr                 =%20lu\r\n\
 cmsCalloutParaErr                   =%20lu,\t cmsCalloutStateErr                  =%20lu\r\n\
-cmsCalloutcrmCallidErr              =%20lu,\t cmsCalloutcrmTelleridErr            =%20lu\r\n\
-cmsCalloutcrmSrvgrpidErr            =%20lu,\t cmsCalloutcrmSrvtypeErr             =%20lu\r\n\
-cmsCalloutcrmTelleridNotcfgErr      =%20lu,\t cmsCalloutcrmTelleridNotregErr      =%20lu\r\n\
-cmsCalloutcrmTelleridNotloginErr    =%20lu,\t cmsCalloutcrmRepeatErr              =%20lu\r\n\r\n",	
+cmsCalloutvtaCallidErr              =%20lu,\t cmsCalloutvtaTelleridErr            =%20lu\r\n\
+cmsCalloutvtaSrvgrpidErr            =%20lu,\t cmsCalloutvtaSrvtypeErr             =%20lu\r\n\
+cmsCalloutvtaTelleridNotcfgErr      =%20lu,\t cmsCalloutvtaTelleridNotregErr      =%20lu\r\n\
+cmsCalloutvtaTelleridNotloginErr    =%20lu,\t cmsCalloutvtaRepeatErr              =%20lu\r\n\r\n",	
 
-	AmsResultStat.cmscrmCalloutSuccess,				AmsResultStat.cmsCalloutAmspidErr,
+	AmsResultStat.cmsvtaCalloutSuccess,				AmsResultStat.cmsCalloutAmspidErr,
 	AmsResultStat.cmsCalloutParaErr,				AmsResultStat.cmsCalloutStateErr,
-	AmsResultStat.cmsCalloutcrmCallidErr,			AmsResultStat.cmsCalloutcrmTelleridErr,
-	AmsResultStat.cmsCalloutcrmSrvgrpidErr,			AmsResultStat.cmsCalloutcrmSrvtypeErr,
-	AmsResultStat.cmsCalloutcrmTelleridNotcfgErr,	AmsResultStat.cmsCalloutcrmTelleridNotregErr,
-	AmsResultStat.cmsCalloutcrmTelleridNotloginErr,	AmsResultStat.cmsCalloutcrmRepeatErr);
+	AmsResultStat.cmsCalloutvtaCallidErr,			AmsResultStat.cmsCalloutvtaTelleridErr,
+	AmsResultStat.cmsCalloutvtaSrvgrpidErr,			AmsResultStat.cmsCalloutvtaSrvtypeErr,
+	AmsResultStat.cmsCalloutvtaTelleridNotcfgErr,	AmsResultStat.cmsCalloutvtaTelleridNotregErr,
+	AmsResultStat.cmsCalloutvtaTelleridNotloginErr,	AmsResultStat.cmsCalloutvtaRepeatErr);
 
 	if(Source == OMP_COMM)
     {
@@ -896,82 +896,6 @@ cmsCalloutcrmTelleridNotloginErr    =%20lu,\t cmsCalloutcrmRepeatErr            
     }
 	
 	return SUCCESS;	
-}
-
-int DisplayAmsCmsGetCrmResultStat(int SocketId,int Source)
-{
-	char			 s[2048];//careful of len!! 
-		int 			 i = 0;
-		unsigned char	 j = 0;
-		int 			 len = 0;
-			
-		memset(s,0,sizeof(s));
-	
-		len = snprintf(s,sizeof(s),"\r\nAms Cms Event Notice Result Stat:\r\n");
-		len += snprintf(s + len, sizeof(s) - len,
-"\
-cmsGetCrmSuccess                  =%20lu,\t cmsGetCrmParaErr                      =%20lu\r\n\
-cmsGetCrmLenErr                   =%20lu,\t cmsGetCrmAmsPidErr                    =%20lu\r\n\
-cmsGetCrmCallIdErr                =%20lu,\t cmsGetCrmTerminalTypeErr              =%20lu\r\n\
-cmsGetCrmSrvGrpIdErr              =%20lu,\t cmsGetCrmServiceTypeErr               =%20lu\r\n\
-cmsGetCrmNoValidSrvGrpOrType      =%20lu,\t cmsGetCrmCallTypeErr                  =%20lu\r\n\
-cmsGetCrmOriginTellerIdErr        =%20lu,\t cmsGetCrmOriginTellerStateErr         =%20lu\r\n\
-cmsGetCrmOriginTellerAmsPidErr    =%20lu,\t cmsGetCrmOriginTellerSrvGrpIdErr      =%20lu\r\n\
-cmsGetCrmOriginTellerSrvStateErr  =%20lu,\t	cmsGetCrmTargetTypeErr                =%20lu\r\n\
-cmsGetCrmTargetGroupErr           =%20lu,\t cmsGetCrmTargetTellerIdErr            =%20lu\r\n\
-cmsGetCrmTargetTellerStateErr     =%20lu,\t	cmsGetCrmVtmIdErr                     =%20lu\r\n\
-cmsGetCrmAssocCallIdErr           =%20lu,\t cmsGetCrmLicenseTimeout               =%20lu\r\n\
-cmsGetCrmTpsBeyondLic             =%20lu,\t cmsGetCrmServiceInQueue               =%20lu\r\n\
-cmsGetCrmSIRErr                   =%20lu,\t cmsGetCrmSIRVtmNoErr                  =%20lu\r\n\
-cmsGetCrmSIRSrvGrpIdErr           =%20lu,\t cmsGetCrmSIRCallTypeErr               =%20lu\r\n\
-cmsGetCrmSIRCrmEmpty              =%20lu,\t cmsGetCrmSIRCalcQueueInfoErr          =%20lu\r\n\
-cmsGetCrmSIRTooManyCustInQueue    =%20lu,\t cmsGetCrmSIRTargetTellerNotLogin      =%20lu\r\n\
-cmsGetCrmSIRTargetTellerNotReg    =%20lu,\t cmsGetCrmSIRTargetTellerStateErr      =%20lu\r\n\
-cmsGetCrmSIRCallTransTooManyTimes =%20lu,\t cmsGetCrmOrgIdErr                     =%20lu\r\n\
-cmsGetCrmOrgPosErr                =%20lu,\t cmsGetCrmParentOrgIdErr               =%20lu\r\n\
-cmsGetCrmSelectSrvGrpIdErr        =%20lu,\t cmsGetCrmLpResourceLimited            =%20lu\r\n\
-cmsGetCrmCreateTimerErr           =%20lu,\t cmsGetCrmTimeout                      =%20lu\r\n\
-cmsGetCrmTimeoutParaErr           =%20lu,\t cmsGetCrmTimeoutStateErr              =%20lu\r\n\
-cmsGetCrmTimeoutLenErr            =%20lu,\t cmsGetCrmTimeoutVtmIdErr              =%20lu\r\n\
-cmsGetCrmTimeoutServiceStateErr=%20lu\r\n",
-			AmsResultStat.cmsGetCrmSuccess,			AmsResultStat.cmsGetCrmParaErr,
-			AmsResultStat.cmsGetCrmLenErr,			AmsResultStat.cmsGetCrmAmsPidErr,
-			AmsResultStat.cmsGetCrmCallIdErr,			AmsResultStat.cmsGetCrmTerminalTypeErr,
-			AmsResultStat.cmsGetCrmSrvGrpIdErr,			AmsResultStat.cmsGetCrmServiceTypeErr,
-			AmsResultStat.cmsGetCrmNoValidSrvGrpOrType,			AmsResultStat.cmsGetCrmCallTypeErr,
-			AmsResultStat.cmsGetCrmOriginTellerIdErr,			AmsResultStat.cmsGetCrmOriginTellerStateErr,
-			AmsResultStat.cmsGetCrmOriginTellerAmsPidErr,			AmsResultStat.cmsGetCrmOriginTellerSrvGrpIdErr,
-			AmsResultStat.cmsGetCrmOriginTellerSrvStateErr, 			AmsResultStat.cmsGetCrmTargetTypeErr,
-			AmsResultStat.cmsGetCrmTargetGroupErr, 			AmsResultStat.cmsGetCrmTargetTellerIdErr,
-			AmsResultStat.cmsGetCrmTargetTellerStateErr,			AmsResultStat.cmsGetCrmVtmIdErr,
-			AmsResultStat.cmsGetCrmAssocCallIdErr,			AmsResultStat.cmsGetCrmLicenseTimeout,
-			AmsResultStat.cmsGetCrmTpsBeyondLic,			AmsResultStat.cmsGetCrmServiceInQueue,
-			AmsResultStat.cmsGetCrmSIRErr,			AmsResultStat.cmsGetCrmSIRVtmNoErr,
-			AmsResultStat.cmsGetCrmSIRSrvGrpIdErr,			AmsResultStat.cmsGetCrmSIRCallTypeErr,
-			AmsResultStat.cmsGetCrmSIRCrmEmpty,			AmsResultStat.cmsGetCrmSIRCalcQueueInfoErr,
-			AmsResultStat.cmsGetCrmSIRTooManyCustInQueue,			AmsResultStat.cmsGetCrmSIRTargetTellerNotLogin,
-			AmsResultStat.cmsGetCrmSIRTargetTellerNotReg,			AmsResultStat.cmsGetCrmSIRTargetTellerStateErr,
-			AmsResultStat.cmsGetCrmSIRCallTransTooManyTimes,			AmsResultStat.cmsGetCrmOrgIdErr,
-			AmsResultStat.cmsGetCrmOrgPosErr,			AmsResultStat.cmsGetCrmParentOrgIdErr,
-			AmsResultStat.cmsGetCrmSelectSrvGrpIdErr,			AmsResultStat.cmsGetCrmLpResourceLimited,
-			AmsResultStat.cmsGetCrmCreateTimerErr,			AmsResultStat.cmsGetCrmTimeout,
-			AmsResultStat.cmsGetCrmTimeoutParaErr,			AmsResultStat.cmsGetCrmTimeoutStateErr,
-			AmsResultStat.cmsGetCrmTimeoutLenErr,			AmsResultStat.cmsGetCrmTimeoutVtmIdErr,
-			AmsResultStat.cmsGetCrmTimeoutServiceStateErr);
-
-	if(Source == OMP_COMM)
-    {
-        OMSResultPrint(s,len,SocketId,Source);
-        SendPrompt(SocketId);
-    }
-    else
-    {
-        MMLPrint(s,strlen(s),SocketId,Source);
-    }
-	
-	return SUCCESS;	
-
-
 }
 
 int DisplayAmsResultStat(int SocketId,int Source)
@@ -997,25 +921,25 @@ int DisplayAmsResultStat(int SocketId,int Source)
 	
 	DisplayAmsCommonResultStat(SocketId, Source);
 
-	//disp ams <-> crm stat
-	DisplayAmsCrmLoginResultStat(SocketId, Source);
+	//disp ams <-> vta stat
+	DisplayAmsVtaLoginResultStat(SocketId, Source);
 	
-//	DisplayAmsCrmLogoutResultStat(SocketId, Source);
+//	DisplayAmsVtaLogoutResultStat(SocketId, Source);
 	
-	DisplayAmsCrmStateOperateResultStat(SocketId, Source);
+	DisplayAmsVtaStateOperateResultStat(SocketId, Source);
 	
-//	DisplayAmsCrmModifyPasswordResultStat(SocketId, Source);
+//	DisplayAmsVtaModifyPasswordResultStat(SocketId, Source);
 	
-//	DisplayAmsCrmForceLoginResultStat(SocketId, Source);
+//	DisplayAmsVtaForceLoginResultStat(SocketId, Source);
 	
-//	DisplayAmsCrmQueryInfoResultStat(SocketId, Source);	
+//	DisplayAmsVtaQueryInfoResultStat(SocketId, Source);	
 
 	//disp ams <-> cms stat
-//	DisplayAmsCmsCrmRegResultStat(SocketId, Source);
+//	DisplayAmsCmsVtaRegResultStat(SocketId, Source);
 		
-	DisplayAmsCmsGetCrmResultStat(SocketId, Source);
+//	DisplayAmsCmsGetVtaResultStat(SocketId, Source);
 
-	DisplayAmsCmsCrmCalloutResultStat(SocketId,Source);
+	DisplayAmsCmsVtaCalloutResultStat(SocketId,Source);
 	
 	DisplayAmsCmsEventNoticeResultStat(SocketId, Source);
 	
@@ -1168,7 +1092,7 @@ int ResetAmsStat(MMLCMD_t r[],int SocketId,int Source)
 	unsigned char    j = 0;
 	int              len = 0;
 	int              type = AMS_STAT_TYPE_NULL;
-	TELLER_STATE_INFO tellerStateInfo[AMS_MAX_CRM_NUM]; // init later
+	TELLER_STATE_INFO tellerStateInfo[AMS_MAX_VTA_NUM]; // init later
 	
 	memset(s,0,sizeof(s));
 
@@ -1227,18 +1151,18 @@ int ResetAmsStat(MMLCMD_t r[],int SocketId,int Source)
 		}
 		
 /* 	case AMS_TELLER_STAT_TYPE:	
-		memset(tellerStateInfo, 0, sizeof(TELLER_STATE_INFO) * AMS_MAX_CRM_NUM);
+		memset(tellerStateInfo, 0, sizeof(TELLER_STATE_INFO) * AMS_MAX_VTA_NUM);
 		
-		for(i = 0; i < Min(SystemData.AmsPriData.amsCfgData.maxCrmNum, AMS_MAX_CRM_NUM); i++)
+		for(i = 0; i < Min(SystemData.AmsPriData.amsCfgData.maxVtaNum, AMS_MAX_VTA_NUM); i++)
 		{
-			memcpy(&tellerStateInfo[i], &AmsTellerStat(i).crmStateInfo, sizeof(TELLER_STATE_INFO)); //ÔÝ´æcrmStateInfo
+			memcpy(&tellerStateInfo[i], &AmsTellerStat(i).vtaStateInfo, sizeof(TELLER_STATE_INFO)); //ÔÝ´ævtaStateInfo
 		}
 
-		memset(&AmsTellerStat(0), 0, sizeof(AMS_TELLER_STAT) * AMS_MAX_CRM_NUM);
-		for(i = 0; i < Min(SystemData.AmsPriData.amsCfgData.maxCrmNum, AMS_MAX_CRM_NUM); i++)
+		memset(&AmsTellerStat(0), 0, sizeof(AMS_TELLER_STAT) * AMS_MAX_VTA_NUM);
+		for(i = 0; i < Min(SystemData.AmsPriData.amsCfgData.maxVtaNum, AMS_MAX_VTA_NUM); i++)
 		{
 			AmsTellerStat(i).tellerId = AmsCfgTeller(i).tellerId; //»Ö¸´tellerId
-			memcpy(&AmsTellerStat(i).crmStateInfo, &tellerStateInfo[i], sizeof(TELLER_STATE_INFO)); //»Ö¸´crmStateInfo
+			memcpy(&AmsTellerStat(i).vtaStateInfo, &tellerStateInfo[i], sizeof(TELLER_STATE_INFO)); //»Ö¸´vtaStateInfo
 		}
 		
 		if (AMS_TELLER_STAT_TYPE == type)

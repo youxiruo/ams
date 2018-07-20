@@ -546,8 +546,8 @@ int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 		
 		j = AmsCfgSrvGroup(serviceIdpos).srvlogpos;
 		strcpy(AmsCfgSrvGroup(serviceIdpos).srvInfo[j].serviceName,stringword);
-		AmsCfgSrvGroup(serviceIdpos).srvInfo[j].serviceName[srvNameLen] = '\0';
-		AmsCfgSrvGroup(serviceIdpos).srvInfo[j].serviceNameLen = srvNameLen;
+		AmsCfgSrvGroup(i).srvInfo[j].serviceName[srvNameLen] = '\0';
+		AmsCfgSrvGroup(i).srvInfo[j].serviceNameLen = srvNameLen;
 		AmsCfgSrvGroup(serviceIdpos).srvlogpos++ ;
 	}
 	if(0 == strcmp(stringword,"isautoflag"))
@@ -560,7 +560,7 @@ int AmsSrvServiceGroupSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 			return FAILURE;
 		}
 
-		AmsCfgSrvGroup(serviceIdpos).isAutoFlag = isAutoFlag;
+		AmsCfgSrvGroup(i).isAutoFlag = isAutoFlag;
 	}
 	else
 	{
@@ -593,7 +593,7 @@ int AmsSrvTellerSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 
 	memset(stringword, 0, sizeof(stringword));
 	memcpy(stringword, word[0].Body, word[0].Len);
-	crmNum = Min(SystemData.AmsPriData.amsCfgData.maxCrmNum, AMS_MAX_CRM_NUM);
+	crmNum = Min(SystemData.AmsPriData.amsCfgData.maxVtaNum, AMS_MAX_CRM_NUM);
 
 	if(0 == strcmp(stringword,"id"))
 	{
@@ -916,7 +916,6 @@ int AmsSrvQueueSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 	int					idPos= -1;
 	unsigned short		maxQueLen = 0;
 	unsigned short		avgSrvTime = 0;
-	unsigned int		 serviceIdpos = 0;
 	int					result = 0;
 
 	memset(stringword, 0, sizeof(stringword));
@@ -994,50 +993,6 @@ int AmsSrvQueueSenten(WORD_t *word,int wordcount,unsigned char pCurrId[])
 		return SUCCESS;
 	}
 
-	//判断业务组是否已经安装
-	for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
-	{
-		if( (AMS_SERVICE_GROUP_INSTALL == AmsCfgSrvGroup(i).flag)
-			&& (0 == strcmp(AmsCfgSrvGroup(i).srvGrpId,pCurrId)))
-		{
-			serviceIdpos = i;
-			break;
-		}
-	}
-	if(i > AMS_MAX_SERVICE_NUM)
-	{
-		Display("ServiceGroup[%S]Senten not find!\r\n", pCurrId);
-		return FAILURE;
-	}
-	
-	if(0 == strcmp(stringword,"maxquelen"))
-	   {
-		   maxQueLen = atoi((const char *)word[2].Body);
-		   if(maxQueLen > AMS_MAX_TERM_NODES)
-		   {
-			   Display("Queue[%u]Senten MaxQueLen[%d]Err!\r\n", *pCurrId, maxQueLen);
-			   return FAILURE;
-		   }
-		   
-		   AmsCfgQueueSys(serviceIdpos).maxQueLen = maxQueLen; 	   
-	   }
-	   else if(0 == strcmp(stringword,"avgsrvtime"))
-	   {
-		   avgSrvTime = atoi((const char *)word[2].Body);
-		   if(avgSrvTime > AMS_MAX_AVG_SERVICE_TIME)
-		   {
-			   Display("Queue[%u]Senten AvgSrvTime[%d]Err!\r\n", *pCurrId, avgSrvTime);
-			   return FAILURE;
-		   }
-		   
-		   AmsCfgQueueSys(serviceIdpos).avgSrvTime = avgSrvTime;	   
-	   }
-	   else
-	   {
-		   return FAILURE; 
-	   }
-
-	
 	return SUCCESS;
 }
 

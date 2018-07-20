@@ -124,7 +124,7 @@ int AmsKillTimer(int iPid, int *timerId)
 	return AMS_OK;
 }
 
-int AmsKillCrmAllTimer(LP_AMS_DATA_t *lpAmsData, int pid)
+int AmsKillVtaAllTimer(LP_AMS_DATA_t *lpAmsData, int pid)
 {
 	if(NULL == lpAmsData)
 	{
@@ -139,7 +139,7 @@ int AmsKillCrmAllTimer(LP_AMS_DATA_t *lpAmsData, int pid)
 	if(lpAmsData->iTimerId >= 0)
 	{
 	    AmsKillTimer(pid, &lpAmsData->iTimerId);
-		AmsTimerStatProc(T_AMS_CRM_STATE_OPERATE_IND_TIMER, AMS_KILL_TIMER);
+		AmsTimerStatProc(T_AMS_VTA_STATE_OPERATE_IND_TIMER, AMS_KILL_TIMER);
 	} 
 
 	if(lpAmsData->restTimerId >= 0)
@@ -167,7 +167,7 @@ int AmsKillTermAllTimer(TERM_NODE *pTermNode, int pid)
 	if(pTermNode->iTimerId >= 0)
 	{
 	    AmsKillTimer(pid, &pTermNode->iTimerId);//NO USE YET
-		AmsTimerStatProc(T_AMS_CRM_STATE_OPERATE_IND_TIMER, AMS_KILL_TIMER);
+		AmsTimerStatProc(T_AMS_VTA_STATE_OPERATE_IND_TIMER, AMS_KILL_TIMER);
 	}
 	
 	return AMS_OK;	
@@ -188,7 +188,7 @@ int AmsKillTermAllCallTimer(TERM_NODE *pTermNode, int pid)
 	if(pTermNode->iTimerId >= 0)
 	{
 	    AmsKillTimer(pid, &pTermNode->iTimerId);//NO USE YET
-		AmsTimerStatProc(T_AMS_CRM_STATE_OPERATE_IND_TIMER, AMS_KILL_TIMER);
+		AmsTimerStatProc(T_AMS_VTA_STATE_OPERATE_IND_TIMER, AMS_KILL_TIMER);
 	} 
 	
 	return AMS_OK;	
@@ -283,7 +283,7 @@ char *strAmsTimerName[]=
 	"T_AMS_TIMER_NULL",
 
 	"T_AMS_CUSTOMER_IN_QUEUE_TIMER",
-	"T_AMS_CRM_STATE_OPERATE_IND_TIMER",
+	"T_AMS_VTA_STATE_OPERATE_IND_TIMER",
 	"T_AMS_REST_TIMER",
 
 	
@@ -308,18 +308,18 @@ char *AmsGetStateTypeString(int type,int state)
 {
     switch(type)
     {
-	case AMS_CRM_STATE:
+	case AMS_VTA_STATE:
 		switch(state)
 		{
-		case AMS_CRM_STATE_IDLE:
+		case AMS_VTA_STATE_IDLE:
 			return "Idle";
-		case AMS_CRM_STATE_BUSY:
+		case AMS_VTA_STATE_BUSY:
 			return "Busy";
-		case AMS_CRM_STATE_REST:
+		case AMS_VTA_STATE_REST:
 			return "Rest";
-		case AMS_CRM_STATE_PREPARE:
+		case AMS_VTA_STATE_PREPARE:
 			return "Prepare";
-	    case AMS_CRM_STATE_OFFLINE:
+	    case AMS_VTA_STATE_OFFLINE:
 	        return "Offline";	
 		default:
 			break;
@@ -387,67 +387,67 @@ char *AmsGetStateTypeString(int type,int state)
 
 
 
-void AmsSetCrmState(int iThreadId,LP_AMS_DATA_t *lpAmsData,CRM_NODE *pCrmNode,int state,int stateReason)
+void AmsSetVtaState(int iThreadId,LP_AMS_DATA_t *lpAmsData,VTA_NODE *pVtaNode,int state,int stateReason)
 {
 	struct tm           *tLocalTime;      // 东8区
 	
-	if(NULL == lpAmsData || NULL == pCrmNode)
+	if(NULL == lpAmsData || NULL == pVtaNode)
 	{
 		return;
 	}
 	
-	pCrmNode->state = state;
+	pVtaNode->state = state;
 
 	//record state start time
-	time(&pCrmNode->stateStartTime);
-	tLocalTime = localtime(&pCrmNode->stateStartTime);
-	pCrmNode->stateStartLocalTime.year   = tLocalTime->tm_year + 1900; //+1900
-	pCrmNode->stateStartLocalTime.month  = tLocalTime->tm_mon + 1;     //+1
-	pCrmNode->stateStartLocalTime.day    = tLocalTime->tm_mday;
-	pCrmNode->stateStartLocalTime.hour   = tLocalTime->tm_hour;
-	pCrmNode->stateStartLocalTime.minute = tLocalTime->tm_min;
-	pCrmNode->stateStartLocalTime.second = tLocalTime->tm_sec;
+	time(&pVtaNode->stateStartTime);
+	tLocalTime = localtime(&pVtaNode->stateStartTime);
+	pVtaNode->stateStartLocalTime.year   = tLocalTime->tm_year + 1900; //+1900
+	pVtaNode->stateStartLocalTime.month  = tLocalTime->tm_mon + 1;     //+1
+	pVtaNode->stateStartLocalTime.day    = tLocalTime->tm_mday;
+	pVtaNode->stateStartLocalTime.hour   = tLocalTime->tm_hour;
+	pVtaNode->stateStartLocalTime.minute = tLocalTime->tm_min;
+	pVtaNode->stateStartLocalTime.second = tLocalTime->tm_sec;
 
-	if(pCrmNode->tellerCfgPos < AMS_MAX_CRM_NUM)
+	if(pVtaNode->tellerCfgPos < AMS_MAX_VTA_NUM)
 	{
-		AmsTellerStat(pCrmNode->tellerCfgPos).crmStateInfo.lastState = pCrmNode->state;
-		AmsTellerStat(pCrmNode->tellerCfgPos).crmStateInfo.lastStateStartTime = pCrmNode->stateStartTime;
+		AmsTellerStat(pVtaNode->tellerCfgPos).vtaStateInfo.lastState = pVtaNode->state;
+		AmsTellerStat(pVtaNode->tellerCfgPos).vtaStateInfo.lastStateStartTime = pVtaNode->stateStartTime;
 	}
 
 	//柜员实时状态信息入库-柜员状态信息
-	/*if(AMS_CRM_STATE_BUSY == state && CRM_STATE_OPERATE_BUSY_IN_CALL == stateReason)
+	/*if(AMS_VTA_STATE_BUSY == state && VTA_STATE_OPERATE_BUSY_IN_CALL == stateReason)
 	{
 		//UpdateDbTellerState and InsertDbTellerSerialState by Cms
 	}
 	else
 	{
-		AmsUpdateDbTellerState(iThreadId, lpAmsData, AMS_TELLER_STATE_ITEM_BASE, state, &pCrmNode->stateStartTime);
+		AmsUpdateDbTellerState(iThreadId, lpAmsData, AMS_TELLER_STATE_ITEM_BASE, state, &pVtaNode->stateStartTime);
 
-		AmsInsertDbTellerSerialState(iThreadId, lpAmsData, state, &pCrmNode->stateStartLocalTime, 0);
+		AmsInsertDbTellerSerialState(iThreadId, lpAmsData, state, &pVtaNode->stateStartLocalTime, 0);
 	}*/
 
 }
 
-void AmsSetCrmCallState(LP_AMS_DATA_t *lpAmsData,CRM_NODE *pCrmNode,int state)
+void AmsSetVtaCallState(LP_AMS_DATA_t *lpAmsData,VTA_NODE *pVtaNode,int state)
 {
 	struct tm           *tLocalTime;      // 东8区
 
-	if(NULL == lpAmsData || NULL == pCrmNode)
+	if(NULL == lpAmsData || NULL == pVtaNode)
 	{
 		return;
 	}
 	
-	pCrmNode->callState = state;
+	pVtaNode->callState = state;
 
 	//record call state start time
-	time(&pCrmNode->callStateStartTime);
-	tLocalTime = localtime(&pCrmNode->callStateStartTime);
-	pCrmNode->callStateStartLocalTime.year   = tLocalTime->tm_year + 1900; //+1900
-	pCrmNode->callStateStartLocalTime.month  = tLocalTime->tm_mon + 1;     //+1
-	pCrmNode->callStateStartLocalTime.day    = tLocalTime->tm_mday;
-	pCrmNode->callStateStartLocalTime.hour   = tLocalTime->tm_hour;
-	pCrmNode->callStateStartLocalTime.minute = tLocalTime->tm_min;
-	pCrmNode->callStateStartLocalTime.second = tLocalTime->tm_sec;
+	time(&pVtaNode->callStateStartTime);
+	tLocalTime = localtime(&pVtaNode->callStateStartTime);
+	pVtaNode->callStateStartLocalTime.year   = tLocalTime->tm_year + 1900; //+1900
+	pVtaNode->callStateStartLocalTime.month  = tLocalTime->tm_mon + 1;     //+1
+	pVtaNode->callStateStartLocalTime.day    = tLocalTime->tm_mday;
+	pVtaNode->callStateStartLocalTime.hour   = tLocalTime->tm_hour;
+	pVtaNode->callStateStartLocalTime.minute = tLocalTime->tm_min;
+	pVtaNode->callStateStartLocalTime.second = tLocalTime->tm_sec;
 
 }
 
@@ -564,7 +564,7 @@ void AmsSetTermServiceState(TERM_NODE *pTermNode,int state)
 		unsigned char description [256];
 		int descrlen;
 		memset(description,0,sizeof(description));
-		descrlen=snprintf(description,256,"Term[%s] AmsPid[0x%x] Customer[%u]\r\n",
+		descrlen=snprintf(description,256,"Vtm[%s] AmsPid[0x%x] Customer[%u]\r\n",
 			pTermNode->termInfo.termId,pTermNode->amsPid, pTermNode->customerPid);
 		descrlen +=snprintf(description+descrlen,256-descrlen,"Current[%d-%d-%d %d:%d:%d]ServiceState=%s;",
 			pTermNode->serviceStateStartLocalTime.year,
@@ -580,70 +580,70 @@ void AmsSetTermServiceState(TERM_NODE *pTermNode,int state)
 }
 
 
-CRM_NODE *AmsSearchCrmNode(unsigned int srvGrpId, unsigned char tellerId[],unsigned int tellerIdLen)
+VTA_NODE *AmsSearchVtaNode(unsigned int srvGrpId, unsigned char tellerId[],unsigned int tellerIdLen)
 {
-	CRM_NODE *pCrmNode = NULL;	
+	VTA_NODE *pVtaNode = NULL;	
 	int i = 0;
 	int find = 0;
 	
-	pCrmNode = (CRM_NODE *)lstFirst(&AmsSrvData(srvGrpId).crmList);
-	while(NULL != pCrmNode && i < AMS_MAX_CRM_NODES)
+	pVtaNode = (VTA_NODE *)lstFirst(&AmsSrvData(srvGrpId).vtaList);
+	while(NULL != pVtaNode && i < AMS_MAX_VTA_NODES)
 	{
-        if(0 == strcmp(pCrmNode->crmInfo.tellerId,tellerId))
+        if(0 == strcmp(pVtaNode->vtaInfo.tellerId,tellerId))
         {
 			find = 1;
 			break;			
         }
 		
-        pCrmNode = (CRM_NODE *)lstNext((NODE *)pCrmNode);
+        pVtaNode = (VTA_NODE *)lstNext((NODE *)pVtaNode);
 		i++;
     }
 
 	if(0 == find)
 	{
-		pCrmNode = NULL;	
+		pVtaNode = NULL;	
 	}
 	
-    return pCrmNode;
+    return pVtaNode;
 	
 }
 
 //no offline
-int AmsUpdateCrmState(int iThreadId, LP_AMS_DATA_t *lpAmsData, CRM_NODE *pCrmNode, int stateOperate, int stateReason)
+int AmsUpdateVtaState(int iThreadId, LP_AMS_DATA_t *lpAmsData, VTA_NODE *pVtaNode, int stateOperate, int stateReason)
 {
 	int                 iret = AMS_OK;
-	int                 newState = AMS_CRM_STATE_RSVD;
+	int                 newState = AMS_VTA_STATE_RSVD;
 	time_t              currentTime;
 
-	if(NULL == lpAmsData || NULL == pCrmNode)
+	if(NULL == lpAmsData || NULL == pVtaNode)
 	{
 		iret = AMS_ERROR;
 		return iret;
 	}
 
-    switch(pCrmNode->state)
+    switch(pVtaNode->state)
 	{
-	case AMS_CRM_STATE_IDLE:
-		if(stateOperate == CRM_STATE_OPERATE_BUSY)
+	case AMS_VTA_STATE_IDLE:
+		if(stateOperate == VTA_STATE_OPERATE_BUSY)
 		{
-			newState = AMS_CRM_STATE_BUSY;
+			newState = AMS_VTA_STATE_BUSY;
 		}
-		else if(stateOperate == CRM_STATE_OPERATE_REST)
+		else if(stateOperate == VTA_STATE_OPERATE_REST)
 		{
-			newState = AMS_CRM_STATE_REST;
+			newState = AMS_VTA_STATE_REST;
 		}	
-		else if(stateOperate == CRM_STATE_OPERATE_PREPARE)
+		else if(stateOperate == VTA_STATE_OPERATE_PREPARE)
 		{
-			newState = AMS_CRM_STATE_PREPARE;
+			newState = AMS_VTA_STATE_PREPARE;
 		}
-//		else if(stateOperate == CRM_STATE_OPERATE_LEAVE)
+//		else if(stateOperate == VTA_STATE_OPERATE_LEAVE)
 //		{
-//			newState = AMS_CRM_STATE_LEAVE;
+//			newState = AMS_VTA_STATE_LEAVE;
 //		}
-		else if(stateOperate == CRM_STATE_OPERATE_IDLE)
+		else if(stateOperate == VTA_STATE_OPERATE_IDLE)
 		{
 //			return iret;
-			newState = AMS_CRM_STATE_IDLE;
+			newState = AMS_VTA_STATE_IDLE;
 		}
 		else
 		{
@@ -651,27 +651,27 @@ int AmsUpdateCrmState(int iThreadId, LP_AMS_DATA_t *lpAmsData, CRM_NODE *pCrmNod
 			iret = AMS_ERROR;
 		}	
 		break;	
-	case AMS_CRM_STATE_BUSY:
-		if(stateOperate == CRM_STATE_OPERATE_IDLE)
+	case AMS_VTA_STATE_BUSY:
+		if(stateOperate == VTA_STATE_OPERATE_IDLE)
 		{
-			newState = AMS_CRM_STATE_IDLE;
+			newState = AMS_VTA_STATE_IDLE;
 		}
-		else if(stateOperate == CRM_STATE_OPERATE_REST)
+		else if(stateOperate == VTA_STATE_OPERATE_REST)
 		{
-			newState = AMS_CRM_STATE_REST;
+			newState = AMS_VTA_STATE_REST;
 		}		
-		else if(stateOperate == CRM_STATE_OPERATE_PREPARE)
+		else if(stateOperate == VTA_STATE_OPERATE_PREPARE)
 		{
-			newState = AMS_CRM_STATE_PREPARE;
+			newState = AMS_VTA_STATE_PREPARE;
 		}
-//		else if(stateOperate == CRM_STATE_OPERATE_LEAVE)
+//		else if(stateOperate == VTA_STATE_OPERATE_LEAVE)
 //		{
-//			newState = AMS_CRM_STATE_LEAVE;
+//			newState = AMS_VTA_STATE_LEAVE;
 //		}
-		else if(stateOperate == CRM_STATE_OPERATE_BUSY)
+		else if(stateOperate == VTA_STATE_OPERATE_BUSY)
 		{
 //			return iret;
-			newState = AMS_CRM_STATE_BUSY;
+			newState = AMS_VTA_STATE_BUSY;
 		}
 		else
 		{
@@ -679,23 +679,23 @@ int AmsUpdateCrmState(int iThreadId, LP_AMS_DATA_t *lpAmsData, CRM_NODE *pCrmNod
 			iret = AMS_ERROR;
 		}	
 		break;
-	case AMS_CRM_STATE_REST:
-		if(stateOperate == CRM_STATE_OPERATE_IDLE)
+	case AMS_VTA_STATE_REST:
+		if(stateOperate == VTA_STATE_OPERATE_IDLE)
 		{
-			newState = AMS_CRM_STATE_IDLE;
+			newState = AMS_VTA_STATE_IDLE;
 		}
-		else if(stateOperate == CRM_STATE_OPERATE_PREPARE)
+		else if(stateOperate == VTA_STATE_OPERATE_PREPARE)
 		{
-			newState = AMS_CRM_STATE_PREPARE;
+			newState = AMS_VTA_STATE_PREPARE;
 		}
-//		else if(stateOperate == CRM_STATE_OPERATE_LEAVE)
+//		else if(stateOperate == VTA_STATE_OPERATE_LEAVE)
 //		{
-//			newState = AMS_CRM_STATE_LEAVE;
+//			newState = AMS_VTA_STATE_LEAVE;
 //		}		
-		else if(stateOperate == CRM_STATE_OPERATE_REST)
+		else if(stateOperate == VTA_STATE_OPERATE_REST)
 		{
 //			return iret;
-			newState = AMS_CRM_STATE_REST;
+			newState = AMS_VTA_STATE_REST;
 		}
 		else
 		{
@@ -703,15 +703,15 @@ int AmsUpdateCrmState(int iThreadId, LP_AMS_DATA_t *lpAmsData, CRM_NODE *pCrmNod
 			iret = AMS_ERROR;
 		}		
 		break;		
-	case AMS_CRM_STATE_PREPARE:
-		if(stateOperate == CRM_STATE_OPERATE_REST)
+	case AMS_VTA_STATE_PREPARE:
+		if(stateOperate == VTA_STATE_OPERATE_REST)
 		{
-			newState = AMS_CRM_STATE_REST;
+			newState = AMS_VTA_STATE_REST;
 		}	
-		else if(stateOperate == AMS_CRM_STATE_PREPARE)
+		else if(stateOperate == AMS_VTA_STATE_PREPARE)
 		{
 //			return iret;
-			newState = AMS_CRM_STATE_PREPARE;
+			newState = AMS_VTA_STATE_PREPARE;
 		}
 		else
 		{
@@ -719,15 +719,15 @@ int AmsUpdateCrmState(int iThreadId, LP_AMS_DATA_t *lpAmsData, CRM_NODE *pCrmNod
 			iret = AMS_ERROR;
 		}
 		break;	
-	case AMS_CRM_STATE_OFFLINE:
-		if(stateOperate == CRM_STATE_OPERATE_IDLE)
+	case AMS_VTA_STATE_OFFLINE:
+		if(stateOperate == VTA_STATE_OPERATE_IDLE)
 		{
-			newState = AMS_CRM_STATE_IDLE;
+			newState = AMS_VTA_STATE_IDLE;
 		}
-		else if(stateOperate == AMS_CRM_STATE_OFFLINE)
+		else if(stateOperate == AMS_VTA_STATE_OFFLINE)
 		{
 //			return iret;
-			newState = AMS_CRM_STATE_OFFLINE;
+			newState = AMS_VTA_STATE_OFFLINE;
 		}		
 		else
 		{
@@ -736,7 +736,7 @@ int AmsUpdateCrmState(int iThreadId, LP_AMS_DATA_t *lpAmsData, CRM_NODE *pCrmNod
 		}
 		break;			
 	default:
-		dbgprint("AMS Err State[%d]",pCrmNode->state);
+		dbgprint("AMS Err State[%d]",pVtaNode->state);
 		iret = AMS_ERROR;
 		break;
 	}
@@ -746,12 +746,12 @@ int AmsUpdateCrmState(int iThreadId, LP_AMS_DATA_t *lpAmsData, CRM_NODE *pCrmNod
 		return iret;
 	}
 	
-    //calc crm workInfo
+    //calc vta workInfo
 	time(&currentTime);	   
-	AmsUpdateSingleCrmWorkInfo(pCrmNode, currentTime);
+	AmsUpdateSingleVtaWorkInfo(pVtaNode, currentTime);
 	
-	//set Crm State and State Start Time
-	AmsSetCrmState(iThreadId, lpAmsData, pCrmNode, newState, stateReason);
+	//set Vta State and State Start Time
+	AmsSetVtaState(iThreadId, lpAmsData, pVtaNode, newState, stateReason);
 
 	return iret;
 }
@@ -788,7 +788,7 @@ TERM_NODE *AmsSearchTermNode(unsigned int srvGrpId, unsigned char termId[],unsig
 
 
 
-int AmsKillCrmAllCallTimer(LP_AMS_DATA_t *lpAmsData, int pid)
+int AmsKillVtaAllCallTimer(LP_AMS_DATA_t *lpAmsData, int pid)
 {
 	if(NULL == lpAmsData)
 	{
@@ -805,6 +805,183 @@ int AmsKillCrmAllCallTimer(LP_AMS_DATA_t *lpAmsData, int pid)
 	return AMS_OK;	
 }
 
+
+
+static int			freeAmsTellerInfoListInitialled = 0;
+LIST				freeAmsTellerInfoList;
+TELLER_INFO_NODE	*freeAmsTellerInfoListBufPtr = NULL;
+
+static int			freeAmsVtmInfoListInitialled = 0;
+LIST				freeAmsVtmInfoList;
+VTM_INFO_NODE		*freeAmsVtmInfoListBufPtr = NULL;
+
+static int			freeAmsRegTellerInfoListInitialled = 0;
+LIST				freeAmsRegTellerInfoList;
+TELLER_REGISTER_INFO_NODE	*freeAmsRegTellerInfoListBufPtr = NULL;
+
+
+int TellerInfoListInit()
+{
+	TELLER_INFO_NODE			*pNode;
+	int							size;
+	int							i;
+
+	if(0 != freeAmsTellerInfoListInitialled)
+	{
+		return AMS_SUCCESS;
+	}
+
+	lstInit(&freeAmsTellerInfoList);
+
+	size = sizeof(TELLER_INFO_NODE) * AMS_MAX_VTA_NODES;
+	freeAmsTellerInfoListBufPtr = (TELLER_INFO_NODE *)malloc(size);
+	pNode = (TELLER_INFO_NODE *)freeAmsTellerInfoListBufPtr;
+	if(NULL == pNode)
+	{
+		dbgprint("TellerInfoListInit AllocMem[%d]Err\r\n", size);
+		return AMS_ALLOC_MEM_FAILED;
+	}
+
+	for(i = 0; i < AMS_MAX_VTA_NODES;i++,pNode++)
+	{
+		lstAdd(&freeAmsTellerInfoList,(NODE *)pNode);
+	}
+
+	freeAmsTellerInfoListInitialled = 1;
+
+	return AMS_SUCCESS;
+}
+
+
+int RegTellerInfoListInit()
+{
+	TELLER_REGISTER_INFO_NODE			*pNode;
+	int							size;
+	int							i;
+
+	if(0 != freeAmsRegTellerInfoListInitialled)
+	{
+		return AMS_SUCCESS;
+	}
+
+	lstInit(&freeAmsRegTellerInfoList);
+
+	size = sizeof(TELLER_REGISTER_INFO_NODE) * AMS_MAX_VTA_NODES;
+	freeAmsRegTellerInfoListBufPtr = (TELLER_REGISTER_INFO_NODE *)malloc(size);
+	pNode = (TELLER_REGISTER_INFO_NODE *)freeAmsRegTellerInfoListBufPtr;
+	if(NULL == pNode)
+	{
+		dbgprint("TellerInfoListInit AllocMem[%d]Err\r\n", size);
+		return AMS_ALLOC_MEM_FAILED;
+	}
+
+	for(i = 0; i < AMS_MAX_VTA_NODES;i++,pNode++)
+	{
+		lstAdd(&freeAmsRegTellerInfoList,(NODE *)pNode);
+	}
+
+	freeAmsRegTellerInfoListInitialled = 1;
+
+	return AMS_SUCCESS;
+}
+
+
+int VtmInfoListInit()
+{
+	VTM_INFO_NODE			*pNode;
+	int							size;
+	int							i;
+
+	if(0 != freeAmsVtmInfoListInitialled)
+	{
+		return AMS_SUCCESS;
+	}
+
+	lstInit(&freeAmsVtmInfoList);
+
+	size = sizeof(VTM_INFO_NODE) * AMS_MAX_TERM_NODES;
+	freeAmsVtmInfoListBufPtr = (VTM_INFO_NODE *)malloc(size);
+	pNode = (VTM_INFO_NODE *)freeAmsVtmInfoListBufPtr;
+	if(NULL == pNode)
+	{
+		dbgprint("TellerInfoListInit AllocMem[%d]Err\r\n", size);
+		return AMS_ALLOC_MEM_FAILED;
+	}
+
+	for(i = 0; i < AMS_MAX_VTA_NODES;i++,pNode++)
+	{
+		lstAdd(&freeAmsVtmInfoList,(NODE *)pNode);
+	}
+
+	freeAmsVtmInfoListInitialled = 1;
+
+	return AMS_SUCCESS;
+}
+
+//---------------------------------------------------------------
+//功能： get an idle teller info node
+//入口： 
+//返回： pNode
+//说明： 
+//----------------------------------------------------------------
+TELLER_INFO_NODE  *AmsGetTellerInfoNode()
+{
+	TELLER_INFO_NODE         *pNode = NULL;
+	
+    if(!freeAmsTellerInfoListInitialled)
+    {
+		dbgprint("AmsGetTellerInfoNode InitFlag[%d]Err\r\n",freeAmsTellerInfoListInitialled);
+        return NULL;
+    }
+	
+    pNode = (TELLER_INFO_NODE *)lstGet(&freeAmsTellerInfoList);
+	
+	return pNode;
+}
+
+//---------------------------------------------------------------
+//功能： get an idle Regteller info node
+//入口： 
+//返回： pNode
+//说明： 
+//----------------------------------------------------------------
+TELLER_REGISTER_INFO_NODE  *AmsGetRegTellerInfoNode()
+{
+	TELLER_REGISTER_INFO_NODE         *pNode = NULL;
+	
+    if(!freeAmsRegTellerInfoListInitialled)
+    {
+		dbgprint("AmsGetTellerInfoNode InitFlag[%d]Err\r\n",freeAmsRegTellerInfoListInitialled);
+        return NULL;
+    }
+	
+    pNode = (TELLER_REGISTER_INFO_NODE *)lstGet(&freeAmsRegTellerInfoList);
+	
+	return pNode;
+}
+
+
+//---------------------------------------------------------------
+//功能： get an idle vtm info node
+//入口： 
+//返回： pNode
+//说明： 
+//----------------------------------------------------------------
+VTM_INFO_NODE  *AmsGetVtmInfoNode()
+{
+	VTM_INFO_NODE         *pNode = NULL;
+	
+    if(!freeAmsVtmInfoListInitialled)
+    {
+		dbgprint("AmsGetTellerInfoNode InitFlag[%d]Err\r\n",freeAmsVtmInfoListInitialled);
+        return NULL;
+    }
+	
+    pNode = (VTM_INFO_NODE *)lstGet(&freeAmsVtmInfoList);
+	
+	return pNode;
+}
+
 /*******************************************************************************
 * AmsCalcTellerInfoHashIdx - get teller info hash table index
 *
@@ -812,7 +989,7 @@ int AmsKillCrmAllCallTimer(LP_AMS_DATA_t *lpAmsData, int pid)
 */
 static int AmsCalcTellerInfoHashIdx(unsigned char tellerId[],unsigned char len)
 {
-	return __BKDRHash(tellerId,len)%AMS_CRM_ID_HASH_SIZE;
+	return __BKDRHash(tellerId,len)%AMS_VTA_ID_HASH_SIZE;
 }
 
 /*******************************************************************************

@@ -5,69 +5,15 @@ static int 			amsDataInitialised = 0;
 static int			amsCfgDataInitialised = 0;
 
 
-static int          freeAmsCrmListInitialled = 0;
-pthread_mutex_t     freeAmsCrmListMtx;
-LIST 				freeAmsCrmList;
-CRM_NODE        	*freeAmsCrmListBufPtr = NULL;
+static int          freeAmsVtaListInitialled = 0;
+pthread_mutex_t     freeAmsVtaListMtx;
+LIST 				freeAmsVtaList;
+VTA_NODE        	*freeAmsVtaListBufPtr = NULL;
 
 static int          freeAmsTermListInitialled = 0;
 pthread_mutex_t     freeAmsTermListMtx;
 LIST 				freeAmsTermList;
 TERM_NODE            *freeAmsTermListBufPtr = NULL;
-
-
-
-static int			freeAmsTellerInfoListInitialled = 0;
-LIST				freeAmsTellerInfoList;
-TELLER_INFO_NODE	*freeAmsTellerInfoListBufPtr = NULL;
-
-static int			freeAmsVtmInfoListInitialled = 0;
-LIST				freeAmsVtmInfoList;
-VTM_INFO_NODE		*freeAmsVtmInfoListBufPtr = NULL;
-
-static int			freeAmsRegTellerInfoListInitialled = 0;
-pthread_mutex_t     freeAmsRegTellerInfoListMtx;
-LIST				freeAmsRegTellerInfoList;
-TELLER_REGISTER_INFO_NODE	*freeAmsRegTellerInfoListBufPtr = NULL;
-
-int AmsCfgDataInit()
-{
-	int i = 0,ret = 0;
-	wchar_t	param[1024];
-
-	if(0 != amsCfgDataInitialised)
-	{
-		return AMS_SUCCESS;
-	}
-
-	//init teller info list
-	if(AMS_SUCCESS != TellerInfoListInit())
-	{
-		Display("TellerInfoListInit:Error-tellerinfo nodes error!\r\n");
-		return AMS_ERROR;
-	}
-
-	//init vtm info list
-/*	if(AMS_SUCCESS != VtmInfoListInit())
-	{
-		Display("VtmInfoListInit:Error-vtminfo nodes error!\r\n");
-		return AMS_ERROR;
-	}
-*/
-	//init reg teller info list	
-	if(AMS_SUCCESS != RegTellerInfoListInit())
-	{
-		Display("RegTellerInfoListInit:Error-regtellerinfo nodes error!\r\n");
-		return AMS_ERROR;
-	}
-	
-	amsCfgDataInitialised = 1;
-	
-	Display("AmsCfgDataInit Ok!\r\n");
-	
-	return AMS_SUCCESS;
-}
-
 
 int AmsDataInit()
 {
@@ -82,10 +28,10 @@ int AmsDataInit()
 	// get Lic data
 	//AmsGetLicData();
 	
-    // init free crm list 
-	if(AMS_SUCCESS != CrmListInit())
+    // init free vta list 
+	if(AMS_SUCCESS != VtaListInit())
 	{
-		Display("AmsDataInit:Error-crm nodes error!\r\n");
+		Display("AmsDataInit:Error-vta nodes error!\r\n");
     	return AMS_ERROR;
 	}	    
 
@@ -96,10 +42,10 @@ int AmsDataInit()
     	return AMS_ERROR;
 	}
 
-    // init free crm id list 
-	/*if(AMS_SUCCESS != CrmIdListInit())
+    // init free vta id list 
+	/*if(AMS_SUCCESS != VtaIdListInit())
 	{
-		Display("AmsDataInit:Error-crm id nodes error!\r\n");
+		Display("AmsDataInit:Error-vta id nodes error!\r\n");
     	return AMS_ERROR;
 	}*/	    
 
@@ -136,11 +82,11 @@ int AmsDataInit()
     for (i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
     {	
 	    //init sem
-	    Sem_init(&AmsSrvData(i).crmCtrl,0,1);
+	    Sem_init(&AmsSrvData(i).vtaCtrl,0,1);
 
 		Sem_init(&AmsSrvData(i).termCtrl,0,1);
 
-		Sem_init(&AmsSrvData(i).freecrmCtrl,0,1);
+		Sem_init(&AmsSrvData(i).freevtaCtrl,0,1);
 
 //		AmsSrvData(i).serviceState = AMS_SERVICE_INACTIVE;
 
@@ -153,7 +99,7 @@ int AmsDataInit()
 
 	/* clear stat */	
 	/*memset(&SystemData.AmsPriData.amsStat, 0, sizeof(AMS_STAT));
-	for(i = 0; i < Min(SystemData.AmsPriData.amsCfgData.maxCrmNum, AMS_MAX_CRM_NUM); i++)
+	for(i = 0; i < Min(SystemData.AmsPriData.amsCfgData.maxVtaNum, AMS_MAX_VTA_NUM); i++)
 	{
 		if(0 != AmsCfgTeller(i).tellerId)
 		{
@@ -181,232 +127,69 @@ int AmsDataInit()
 	return AMS_SUCCESS;
 }
 
-int TellerInfoListInit()
+
+
+int VtaListInit()
 {
-	TELLER_INFO_NODE			*pNode;
-	int							size;
-	int							i;
-
-	if(0 != freeAmsTellerInfoListInitialled)
-	{
-		return AMS_SUCCESS;
-	}
-
-	lstInit(&freeAmsTellerInfoList);
-
-	size = sizeof(TELLER_INFO_NODE) * AMS_MAX_CRM_NODES;
-	freeAmsTellerInfoListBufPtr = (TELLER_INFO_NODE *)malloc(size);
-	pNode = (TELLER_INFO_NODE *)freeAmsTellerInfoListBufPtr;
-	if(NULL == pNode)
-	{
-		dbgprint("TellerInfoListInit AllocMem[%d]Err\r\n", size);
-		return AMS_ALLOC_MEM_FAILED;
-	}
-
-	for(i = 0; i < AMS_MAX_CRM_NODES;i++,pNode++)
-	{
-		lstAdd(&freeAmsTellerInfoList,(NODE *)pNode);
-	}
-
-	freeAmsTellerInfoListInitialled = 1;
-
-	return AMS_SUCCESS;
-}
-
-
-int RegTellerInfoListInit()
-{
-	TELLER_REGISTER_INFO_NODE			*pNode;
-	int							size;
-	int							i;
-
-	if(0 != freeAmsRegTellerInfoListInitialled)
-	{
-		return AMS_SUCCESS;
-	}
-
-	lstInit(&freeAmsRegTellerInfoList);
-
-	size = sizeof(TELLER_REGISTER_INFO_NODE) * AMS_MAX_CRM_NODES;
-	freeAmsRegTellerInfoListBufPtr = (TELLER_REGISTER_INFO_NODE *)malloc(size);
-	pNode = (TELLER_REGISTER_INFO_NODE *)freeAmsRegTellerInfoListBufPtr;
-	if(NULL == pNode)
-	{
-		dbgprint("TellerInfoListInit AllocMem[%d]Err\r\n", size);
-		return AMS_ALLOC_MEM_FAILED;
-	}
-
-	for(i = 0; i < AMS_MAX_CRM_NODES;i++,pNode++)
-	{
-		lstAdd(&freeAmsRegTellerInfoList,(NODE *)pNode);
-	}
-
-	Pthread_mutex_init(&freeAmsRegTellerInfoListMtx,NULL);
-
-	freeAmsRegTellerInfoListInitialled = 1;
-
-	return AMS_SUCCESS;
-}
-
-
-int VtmInfoListInit()
-{
-	VTM_INFO_NODE			*pNode;
-	int							size;
-	int							i;
-
-	if(0 != freeAmsVtmInfoListInitialled)
-	{
-		return AMS_SUCCESS;
-	}
-
-	lstInit(&freeAmsVtmInfoList);
-
-	size = sizeof(VTM_INFO_NODE) * AMS_MAX_TERM_NODES;
-	freeAmsVtmInfoListBufPtr = (VTM_INFO_NODE *)malloc(size);
-	pNode = (VTM_INFO_NODE *)freeAmsVtmInfoListBufPtr;
-	if(NULL == pNode)
-	{
-		dbgprint("TellerInfoListInit AllocMem[%d]Err\r\n", size);
-		return AMS_ALLOC_MEM_FAILED;
-	}
-
-	for(i = 0; i < AMS_MAX_CRM_NODES;i++,pNode++)
-	{
-		lstAdd(&freeAmsVtmInfoList,(NODE *)pNode);
-	}
-
-	freeAmsVtmInfoListInitialled = 1;
-
-	return AMS_SUCCESS;
-}
-
-//---------------------------------------------------------------
-//¹¦ÄÜ£º get an idle teller info node
-//Èë¿Ú£º 
-//·µ»Ø£º pNode
-//ËµÃ÷£º 
-//----------------------------------------------------------------
-TELLER_INFO_NODE  *AmsGetTellerInfoNode()
-{
-	TELLER_INFO_NODE         *pNode = NULL;
-	
-    if(!freeAmsTellerInfoListInitialled)
-    {
-		dbgprint("AmsGetTellerInfoNode InitFlag[%d]Err\r\n",freeAmsTellerInfoListInitialled);
-        return NULL;
-    }
-	
-    pNode = (TELLER_INFO_NODE *)lstGet(&freeAmsTellerInfoList);
-	
-	return pNode;
-}
-
-//---------------------------------------------------------------
-//¹¦ÄÜ£º get an idle Regteller info node
-//Èë¿Ú£º 
-//·µ»Ø£º pNode
-//ËµÃ÷£º 
-//----------------------------------------------------------------
-TELLER_REGISTER_INFO_NODE  *AmsGetRegTellerInfoNode()
-{
-	TELLER_REGISTER_INFO_NODE         *pNode = NULL;
-	
-    if(!freeAmsRegTellerInfoListInitialled)
-    {
-		dbgprint("AmsGetTellerInfoNode InitFlag[%d]Err\r\n",freeAmsRegTellerInfoListInitialled);
-        return NULL;
-    }
-	Pthread_mutex_lock(&freeAmsCrmListMtx);
-    pNode = (TELLER_REGISTER_INFO_NODE *)lstGet(&freeAmsRegTellerInfoList);
-	
-	return pNode;
-}
-
-
-//---------------------------------------------------------------
-//¹¦ÄÜ£º get an idle vtm info node
-//Èë¿Ú£º 
-//·µ»Ø£º pNode
-//ËµÃ÷£º 
-//----------------------------------------------------------------
-VTM_INFO_NODE  *AmsGetVtmInfoNode()
-{
-	VTM_INFO_NODE         *pNode = NULL;
-	
-    if(!freeAmsVtmInfoListInitialled)
-    {
-		dbgprint("AmsGetTellerInfoNode InitFlag[%d]Err\r\n",freeAmsVtmInfoListInitialled);
-        return NULL;
-    }
-	
-    pNode = (VTM_INFO_NODE *)lstGet(&freeAmsVtmInfoList);
-	
-	return pNode;
-}
-
-
-int CrmListInit()
-{
-	CRM_NODE            *pNode;
+	VTA_NODE            *pNode;
 	int                 size;	
 	int                 i;
 	
-	if(0 != freeAmsCrmListInitialled)
+	if(0 != freeAmsVtaListInitialled)
 	{
 		return AMS_SUCCESS;
 	}
 
-	lstInit(&freeAmsCrmList);
+	lstInit(&freeAmsVtaList);
 	
-	size = sizeof(CRM_NODE) * AMS_MAX_CRM_NODES;
-	freeAmsCrmListBufPtr = (CRM_NODE *)malloc(size);
-	pNode = (CRM_NODE *)freeAmsCrmListBufPtr;
+	size = sizeof(VTA_NODE) * AMS_MAX_VTA_NODES;
+	freeAmsVtaListBufPtr = (VTA_NODE *)malloc(size);
+	pNode = (VTA_NODE *)freeAmsVtaListBufPtr;
 	if(NULL == pNode)
 	{
-		dbgprint("CrmListInit AllocMem[%d]Err\r\n", size);
+		dbgprint("VtaListInit AllocMem[%d]Err\r\n", size);
 		return AMS_ALLOC_MEM_FAILED;
 	}
 	
-	for(i = 0;i < AMS_MAX_CRM_NODES;i++,pNode++)
+	for(i = 0;i < AMS_MAX_VTA_NODES;i++,pNode++)
 	{
-        lstAdd(&freeAmsCrmList,(NODE *)pNode);
+        lstAdd(&freeAmsVtaList,(NODE *)pNode);
 	}
 	
-    Pthread_mutex_init(&freeAmsCrmListMtx,NULL);
+    Pthread_mutex_init(&freeAmsVtaListMtx,NULL);
 	
-	freeAmsCrmListInitialled = 1;
+	freeAmsVtaListInitialled = 1;
 	
 	return AMS_SUCCESS;
 }
 
-CRM_NODE * CrmNodeGet(void)
+VTA_NODE * VtaNodeGet(void)
 {
-	CRM_NODE            *pNode;
+	VTA_NODE            *pNode;
 	
-    if(!freeAmsCrmListInitialled)
+    if(!freeAmsVtaListInitialled)
     {
-		dbgprint("CrmNodeGet InitFlag[%d] Err\r\n",freeAmsCrmListInitialled);
+		dbgprint("VtaNodeGet InitFlag[%d] Err\r\n",freeAmsVtaListInitialled);
         return NULL;
     }
 	
-    Pthread_mutex_lock(&freeAmsCrmListMtx);
-    pNode = (CRM_NODE *)lstGet(&freeAmsCrmList);
-    Pthread_mutex_unlock(&freeAmsCrmListMtx);
+    Pthread_mutex_lock(&freeAmsVtaListMtx);
+    pNode = (VTA_NODE *)lstGet(&freeAmsVtaList);
+    Pthread_mutex_unlock(&freeAmsVtaListMtx);
 	
     return pNode;
 }
 
-void CrmNodeFree(CRM_NODE *pNode)
+void VtaNodeFree(VTA_NODE *pNode)
 {
-    if(!freeAmsCrmListInitialled)
+    if(!freeAmsVtaListInitialled)
     {
         return;
     }
 	
-    Pthread_mutex_lock(&freeAmsCrmListMtx);
-    lstAdd(&freeAmsCrmList,(NODE *)pNode);
-    Pthread_mutex_unlock(&freeAmsCrmListMtx);
+    Pthread_mutex_lock(&freeAmsVtaListMtx);
+    lstAdd(&freeAmsVtaList,(NODE *)pNode);
+    Pthread_mutex_unlock(&freeAmsVtaListMtx);
 }
 
 
@@ -476,45 +259,81 @@ void TermNodeFree(TERM_NODE *pNode)
 
 
 
-
-
-int AmsUpdateSingleCrmWorkInfo(CRM_NODE *pCrmNode, time_t currentTime)
+int AmsCfgDataInit()
 {
-	if(NULL == pCrmNode)
+	int i = 0,ret = 0;
+	wchar_t	param[1024];
+
+	if(0 != amsCfgDataInitialised)
+	{
+		return AMS_SUCCESS;
+	}
+
+	//init teller info list
+	if(AMS_SUCCESS != TellerInfoListInit())
+	{
+		Display("TellerInfoListInit:Error-tellerinfo nodes error!\r\n");
+		return AMS_ERROR;
+	}
+
+	//init vtm info list
+	if(AMS_SUCCESS != VtmInfoListInit())
+	{
+		Display("VtmInfoListInit:Error-vtminfo nodes error!\r\n");
+		return AMS_ERROR;
+	}
+
+	//init reg teller info list	
+	if(AMS_SUCCESS != RegTellerInfoListInit())
+	{
+		Display("RegTellerInfoListInit:Error-regtellerinfo nodes error!\r\n");
+		return AMS_ERROR;
+	}
+	
+	amsCfgDataInitialised = 1;
+	
+	Display("AmsCfgDataInit Ok!\r\n");
+	
+	return AMS_SUCCESS;
+}
+
+int AmsUpdateSingleVtaWorkInfo(VTA_NODE *pVtaNode, time_t currentTime)
+{
+	if(NULL == pVtaNode)
 	{
 		return AMS_ERROR;
 	}
 	
-	if(currentTime > pCrmNode->stateStartTime && currentTime > pCrmNode->workInfoUpdateTime)
+	if(currentTime > pVtaNode->stateStartTime && currentTime > pVtaNode->workInfoUpdateTime)
 	{
-		if(AMS_CRM_STATE_BUSY == pCrmNode->state || AMS_CRM_STATE_PREPARE == pCrmNode->state)
+		if(AMS_VTA_STATE_BUSY == pVtaNode->state || AMS_VTA_STATE_PREPARE == pVtaNode->state)
 		{
-			if(pCrmNode->workInfoUpdateTime > pCrmNode->stateStartTime)
+			if(pVtaNode->workInfoUpdateTime > pVtaNode->stateStartTime)
 			{
-				pCrmNode->crmWorkInfo.workSeconds += (currentTime - pCrmNode->workInfoUpdateTime);
+				pVtaNode->vtaWorkInfo.workSeconds += (currentTime - pVtaNode->workInfoUpdateTime);
 			}
 			else
 			{
-				pCrmNode->crmWorkInfo.workSeconds += (currentTime - pCrmNode->stateStartTime);
+				pVtaNode->vtaWorkInfo.workSeconds += (currentTime - pVtaNode->stateStartTime);
 			}
 			
-			pCrmNode->workInfoUpdateTime = currentTime;
+			pVtaNode->workInfoUpdateTime = currentTime;
 
 			return AMS_OK;
 		}
 	
-		if(AMS_CRM_STATE_IDLE == pCrmNode->state || AMS_CRM_STATE_REST == pCrmNode->state)
+		if(AMS_VTA_STATE_IDLE == pVtaNode->state || AMS_VTA_STATE_REST == pVtaNode->state)
 		{
-			if(pCrmNode->workInfoUpdateTime > pCrmNode->stateStartTime)
+			if(pVtaNode->workInfoUpdateTime > pVtaNode->stateStartTime)
 			{
-				pCrmNode->crmWorkInfo.idleSeconds += (currentTime - pCrmNode->workInfoUpdateTime);
+				pVtaNode->vtaWorkInfo.idleSeconds += (currentTime - pVtaNode->workInfoUpdateTime);
 			}
 			else
 			{
-				pCrmNode->crmWorkInfo.idleSeconds += (currentTime - pCrmNode->stateStartTime);
+				pVtaNode->vtaWorkInfo.idleSeconds += (currentTime - pVtaNode->stateStartTime);
 			}
 			
-			pCrmNode->workInfoUpdateTime = currentTime;
+			pVtaNode->workInfoUpdateTime = currentTime;
 
 			return AMS_OK;
 		}
@@ -537,7 +356,7 @@ int AmsCustCalcSrvGrpIdQueueInfo(unsigned char termId[], unsigned int srvGrpId, 
 	}
 	
 	custNum = lstCount(&AmsSrvData(srvGrpId).termList);
-	tellerNum = lstCount(&AmsSrvData(srvGrpId).freecrmList);
+	tellerNum = lstCount(&AmsSrvData(srvGrpId).freevtaList);
 	pTempTermNode = (TERM_NODE *)lstFirst(&AmsSrvData(srvGrpId).termList);
 	
 	while(NULL != pTempTermNode && i < custNum)//²»±Ø <=
@@ -599,8 +418,8 @@ int AmsCustCalcSrvGrpIdQueueInfo(unsigned char termId[], unsigned int srvGrpId, 
 int AmsSeleteGrpId(unsigned int srvGrpId,unsigned char termId[],unsigned char serviceType[],unsigned int *srvGrpSelect)
 {
 	QUEUE_INFO          queueInfo;
-	CRM_NODE            *pCrmNode = NULL;	
-	unsigned int        idleCrmNum = 0;
+	VTA_NODE            *pVtaNode = NULL;	
+	unsigned int        idleVtaNum = 0;
 	unsigned int        i = 0;
 	unsigned int        j = 0;
 	unsigned int        k = 0;	
@@ -622,10 +441,10 @@ int AmsSeleteGrpId(unsigned int srvGrpId,unsigned char termId[],unsigned char se
 	}
 
 	//¼ì²éµ±Ç°ÒµÎñ×é¿ÕÏÐ¹ñÔ±ÊýÁ¿
-	idleCrmNum = lstCount(&AmsSrvData(srvGrpId).freecrmList);
+	idleVtaNum = lstCount(&AmsSrvData(srvGrpId).freevtaList);
 
 	//µ±Ç°ÒµÎñ×éÓÐ¿ÕÏÐ¹ñÔ±
-	if(0 != idleCrmNum)
+	if(0 != idleVtaNum)
 	{
 		//³õ²½Ñ¡ÖÐÒµÎñ×é
 		*srvGrpSelect = srvGrpId;
@@ -659,7 +478,7 @@ int AmsSeleteGrpId(unsigned int srvGrpId,unsigned char termId[],unsigned char se
 				//ÒÑ¾­´ïµ½µ±Ç°ÒµÎñ×éÔÊÐíµÄ×î´óÅÅ¶Ó³¤¶È
 				if(queueInfo.queuingLen >= AmsCfgQueueSys(k).maxQueLen)
 				{
-					return AMS_ERROR;		//·µ»ØÊ§°Ü			
+					return AMS_OK;		//´ý¶¨å???ÊÇ·ñÐèÒª¼ÌÐø²éÕÒ±ðµÄÖÇÄÜÒµÎñ×é					
 				}
 				else
 				{
@@ -692,9 +511,9 @@ int AmsSelectSrvGrpIdByServiceType(unsigned char termId[],
 											 unsigned char serviceType[],
 											 unsigned int *pSrvGrpId)
 {
-	CRM_NODE            *pCrmNode = NULL;	
-	unsigned int        crmNum = 0;
-	unsigned int        idleCrmNum = 0;
+	VTA_NODE            *pVtaNode = NULL;	
+	unsigned int        vtaNum = 0;
+	unsigned int        idleVtaNum = 0;
 	QUEUE_INFO          queueInfo;
 	unsigned int        srvGrpId = 0;
 	unsigned int        idleRate = 0;
@@ -733,7 +552,7 @@ int AmsSelectSrvGrpIdByServiceType(unsigned char termId[],
 		}
 	}
 
-	if(iret == AMS_ERROR)
+	if(0 == srvGrpSelect)
 	{
 		//Ñ¡ÔñÖÇÄÜÒµÎñ×é
 		for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
@@ -764,7 +583,7 @@ int AmsSelectSrvGrpIdByServiceType(unsigned char termId[],
 		}
 	}
 
-	if(iret == AMS_ERROR)
+	if(0 == srvGrpSelect)
 	{
 		if(AmsDebugTrace)	
 		{
@@ -772,7 +591,7 @@ int AmsSelectSrvGrpIdByServiceType(unsigned char termId[],
 				termId, serviceType);
 		}
 		
-		return AMS_CMS_GET_CRM_NO_VALID_SERVICE_GROUP_ID_OR_TYPE;
+		return AMS_CMS_GET_VTA_NO_VALID_SERVICE_GROUP_ID_OR_TYPE;
 	}
 
 	//Ñ¡ÖÐÒµÎñ×é
@@ -806,7 +625,7 @@ int AmsStartCustomerQueueProcess(MESSAGE_t *pMsg,
 	if(NULL == pMsg || NULL == pTermNode)
 	{
 		dbgprint("AmsStartCustomerQueueProcess Para[%d][%d]", pMsg, pTermNode);
-		iret = AMS_CMS_GET_CRM_PARA_ERR;
+		iret = AMS_CMS_GET_VTA_PARA_ERR;
 		return iret;
 	}
 	
@@ -818,7 +637,7 @@ int AmsStartCustomerQueueProcess(MESSAGE_t *pMsg,
 		dbgprint("AmsStartCustomerQueueProcess Term[%s] AllocPid: SysBusy",
 			pTermNode->termInfo.termId);
 		
-		iret = AMS_CMS_GET_CRM_LP_RESOURCE_LIMITED;
+		iret = AMS_CMS_GET_VTA_LP_RESOURCE_LIMITED;
 		return iret;
 	}
 
@@ -870,7 +689,7 @@ int AmsStartCustomerQueueProcess(MESSAGE_t *pMsg,
 	lpQueueData->cmsPid.iProcessId   = pMsg->s_SenderPid.iProcessId;
 
 	//record vtmPid, may be used later
-   // memcpy(&lpQueueData->vtmPid,&pTermNode->rPid,sizeof(PID_t));
+    memcpy(&lpQueueData->vtmPid,&pTermNode->rPid,sizeof(PID_t));
 
 	lpQueueData->queueId = ((((unsigned int)lpQueueData->myPid.cModuleId) << 24)&0xff000000) | 
 		                 ((((unsigned int)lpQueueData->myPid.cFunctionId) << 16)&0x00ff0000) |
@@ -883,8 +702,7 @@ int AmsStartCustomerQueueProcess(MESSAGE_t *pMsg,
 	lpQueueData->stateTrace  = (unsigned char)AmsStateTrace;
 	lpQueueData->timerTrace  = (unsigned char)AmsTimerTrace;
 	lpQueueData->errorTrace  = (unsigned char)AmsErrorTrace;
-	lpQueueData->alarmTrace  = (unsigned char)AmsAlarmTrace;
-	lpQueueData->cmsgTrace   = (unsigned char)AmsCMsgTrace;
+	lpQueueData->alarmTrace  = (unsigned char)AmsAlarmTrace;	
 	
 	memcpy(lpQueueData->sTraceName,"ams",3);
 	lpQueueData->lTraceNameLen = 3;
@@ -904,7 +722,7 @@ int AmsStartCustomerQueueProcess(MESSAGE_t *pMsg,
         {
 			dbgprint("StartCustomerQueueProcess[%d] Term[%s] CreateTimer Err",
 				lpQueueData->myPid.iProcessId, lpQueueData->termId);
-			iret = AMS_CMS_GET_CRM_CREATE_TIMER_ERR;
+			iret = AMS_CMS_GET_VTA_CREATE_TIMER_ERR;
 			AmsReleassPid(Pid, FAILURE);
 			return iret;
         }
@@ -923,14 +741,14 @@ int AmsStartCustomerQueueProcess(MESSAGE_t *pMsg,
 
 
 
-CRM_NODE *AmsSelectCrm(	unsigned char termId[],
+VTA_NODE *AmsSelectVta(	unsigned char termId[],
 						   unsigned int srvGrpId, 
 						   unsigned char serviceType[],
-						   unsigned int crmNum,
+						   unsigned int vtaNum,
 						   int *pResult)
 {
-	CRM_NODE            *pCrmNode = NULL;	
-	CRM_NODE            *pCrmIdleLongestNode = NULL;	
+	VTA_NODE            *pVtaNode = NULL;	
+	VTA_NODE            *pVtaIdleLongestNode = NULL;	
 	unsigned int        idleLongestTime = 0;
 	time_t              currentTime;	
 	unsigned int        i = 0;
@@ -939,47 +757,47 @@ CRM_NODE *AmsSelectCrm(	unsigned char termId[],
 	//¼ì²éÒµÎñ×é±àºÅ
 	if(srvGrpId > AMS_MAX_SERVICE_GROUP_NUM)
 	{
-		dbgprint("AmsSelectCrm Term[%s] SrvGrpId[%d]Err", termId, srvGrpId);
-		*pResult = AMS_CMS_GET_CRM_SIR_SERVICE_GROUP_ID_ERR;
+		dbgprint("AmsSelectVta Term[%s] SrvGrpId[%d]Err", termId, srvGrpId);
+		*pResult = AMS_CMS_GET_VTA_SIR_SERVICE_GROUP_ID_ERR;
 		return NULL;		
 	}
 
 	//»ñÈ¡×øÏ¯Á´±íÍ·½áµã
-	pCrmNode = (CRM_NODE *)lstFirst(&AmsSrvData(srvGrpId).crmList);
+	pVtaNode = (VTA_NODE *)lstFirst(&AmsSrvData(srvGrpId).vtaList);
 
 	//Ã»ÓÐ×øÏ¯µÇÂ½
-	if(NULL == pCrmNode)
+	if(NULL == pVtaNode)
 	{
-		dbgprint("AmsSelectCrm Term[%s] SrvGrpId[%u] CrmListEmpty.", 
+		dbgprint("AmsSelectVta Term[%s] SrvGrpId[%u] VtaListEmpty.", 
 			termId, srvGrpId);			
-		*pResult = AMS_CMS_GET_CRM_SIR_CRM_EMPTY;
+		*pResult = AMS_CMS_GET_VTA_SIR_VTA_EMPTY;
 		return NULL;	
 	}
 
 	//»ñÈ¡¿ÕÏÐ×øÏ¯Á´±íÍ·½Úµã
-	pCrmNode = (CRM_NODE *)lstGet(&AmsSrvData(srvGrpId).freecrmList);
-	if(NULL == pCrmNode)
+	pVtaNode == (VTA_NODE *)lstFirst(&AmsSrvData(srvGrpId).freevtaList);
+	if(NULL == pVtaNode)
 	{
-		*pResult = AMS_CMS_GET_CRM_SERVICE_IN_QUEUE;
+		*pResult = AMS_CMS_GET_VTA_SERVICE_IN_QUEUE;
 		return NULL;	
 	}
 	else
 	{
-		return pCrmNode;
+		return pVtaNode;
 	}
 	
 }
 
 
-CRM_NODE *AmsServiceIntelligentSelectCrm(
+VTA_NODE *AmsServiceIntelligentSelectVta(
 									   unsigned char termId[],
 									   unsigned int srvGrpId, 
 									   unsigned char serviceType[],
 									   int *pResult)
 {
 	
-	unsigned int		crmNum;
-	CRM_NODE			*pCrmNode = NULL;	
+	unsigned int		vtaNum;
+	VTA_NODE			*pVtaNode = NULL;	
 	QUEUE_INFO			queueInfo;
 	unsigned int		i = 0;
 	
@@ -987,32 +805,32 @@ CRM_NODE *AmsServiceIntelligentSelectCrm(
 	//¼ì²éÒµÎñ×é±àºÅ
 	if(srvGrpId > AMS_MAX_SERVICE_GROUP_NUM)
 	{
-		dbgprint("AmsSISelectCrm Term[%s] SrvGrpId[%d]Err", 
+		dbgprint("AmsSISelectVta Term[%s] SrvGrpId[%d]Err", 
 			termId, srvGrpId);
-		*pResult = AMS_CMS_GET_CRM_SIR_SERVICE_GROUP_ID_ERR;
+		*pResult = AMS_CMS_GET_VTA_SIR_SERVICE_GROUP_ID_ERR;
 		return NULL;		
 	}
 
 	//¼ì²é¿ÕÏÐ×øÏ¯¶ÓÁÐ
-	/*crmNum = lstCount(&AmsSrvData(srvGrpId).freecrmList);
-	if(0 == crmNum)
+	vtaNum = lstCount(&AmsSrvData(srvGrpId).freevtaList);
+	if(0 == vtaNum)
 	{
-		dbgprint("AmsSISelectCrm Term[%s] SrvGrpId[%u] CrmListEmpty", 
+		dbgprint("AmsSISelectVta Term[%s] SrvGrpId[%u] VtaListEmpty", 
 				termId, srvGrpId);
-		*pResult = AMS_CMS_GET_CRM_SIR_CRM_EMPTY;
+		*pResult = AMS_CMS_GET_VTA_SIR_VTA_EMPTY;
 		return NULL;	
-	}*/
+	}
 
 	//¼ì²é¿Í»§ÅÅ¶Ó³¤¶È
-	if(lstCount(&AmsSrvData(srvGrpId).termList) >= 1)
+	if(lstCount(&AmsSrvData(srvGrpId).termList) > 1)
 
 	{
 		memset(&queueInfo,0,sizeof(QUEUE_INFO));
 		if(AMS_OK != AmsCustCalcSrvGrpIdQueueInfo(termId, srvGrpId, &queueInfo))
 		{
-			dbgprint("AmsSISelectCrm Term[%s] CalcSrvGrp[%u]QueueInfoErr", 
+			dbgprint("AmsSISelectVta Term[%s] CalcSrvGrp[%u]QueueInfoErr", 
 				termId, srvGrpId);
-			*pResult = AMS_CMS_GET_CRM_SIR_CALC_QUEUE_INFO_ERR;
+			*pResult = AMS_CMS_GET_VTA_SIR_CALC_QUEUE_INFO_ERR;
 			return NULL;				
 		}
 
@@ -1024,10 +842,10 @@ CRM_NODE *AmsServiceIntelligentSelectCrm(
 				//ÒÑ¾­´ïµ½ÔÊÐíµÄ×î´óÅÅ¶Ó³¤¶È
 				if(queueInfo.queuingLen >= AmsCfgQueueSys(i).maxQueLen)
 				{
-					dbgprint("AmsSISelectCrm Term[%s] SrvGrpId[%u] tooManyCustomers[%u][%u][%d]!", 
+					dbgprint("AmsSISelectVta Term[%s] SrvGrpId[%u] tooManyCustomers[%u][%u][%d]!", 
 						termId, srvGrpId, 
 						queueInfo.queuingLen, AmsCfgQueueSys(i).maxQueLen, i);						
-					*pResult = AMS_CMS_GET_CRM_SIR_TOO_MANY_CUSTOMER_IN_QUEUE;
+					*pResult = AMS_CMS_GET_VTA_SIR_TOO_MANY_CUSTOMER_IN_QUEUE;
 					return NULL;							
 				}
 			}
@@ -1035,13 +853,13 @@ CRM_NODE *AmsServiceIntelligentSelectCrm(
 	}	
 
 	//³£¹æÑ¡Ôñ
-	pCrmNode = AmsSelectCrm(termId,srvGrpId,serviceType,crmNum,pResult);
+	pVtaNode = AmsSelectVta(termId,srvGrpId,serviceType,vtaNum,pResult);
 	//Â·ÓÉÊ§°Ü£¬
 	if(*pResult != AMS_CMS_PRCOESS_SUCCESS)
 	{
 			
 		//Â·ÓÉÊ§°ÜÔ­ÒòÎªÔÝÎÞºÏÊÊ×øÏ¯£¬½øÈëÅÅ¶Ó
-		if(AMS_CMS_GET_CRM_SERVICE_IN_QUEUE == *pResult)
+		if(AMS_CMS_GET_VTA_SERVICE_IN_QUEUE == *pResult)
 		{
 			return NULL;
 		}
@@ -1049,28 +867,28 @@ CRM_NODE *AmsServiceIntelligentSelectCrm(
 		//Â·ÓÉÊ§°ÜÔ­ÒòÎª³öÏÖ´íÎó
 		if(AmsDebugTrace)
 		{
-			dbgprint("AmsSISelectCrm Term[%s] Result[0x%x]Err", termId, *pResult);
+			dbgprint("AmsSISelectVta Term[%s] Result[0x%x]Err", termId, *pResult);
 		}
 		
 		return NULL;
 	}
 	
 	//Â·ÓÉ³É¹¦
-	if(NULL != pCrmNode)
+	if(NULL != pVtaNode)
 	{
 		if(AmsDebugTrace)
 		{
-			dbgprint("AmsSISelectCrm Term[%s] GetCrm[%s].", 
+			dbgprint("AmsSISelectVta Term[%s] GetVta[%s].", 
 				termId,  
-				pCrmNode->crmInfo.tellerId);
+				pVtaNode->vtaInfo.tellerId);
 		}
 					
-		return pCrmNode;
+		return pVtaNode;
 	}
 
 	//ÆäËûÀàÐÍÂ·ÓÉÊ§°Ü£¬Ä¬ÈÏ½øÈëÅÅ¶Ó
 	//not get, please wait ...
-	*pResult = AMS_CMS_GET_CRM_SERVICE_IN_QUEUE;
+	*pResult = AMS_CMS_GET_VTA_SERVICE_IN_QUEUE;
 	
     return NULL;
 	
@@ -1097,7 +915,7 @@ int AmsSendServiceProcMsg()
 	
 	SendMsgBuff(&s_Msg,0);
 
-	if(AmsCMsgTrace)
+	if(AmsMsgTrace)
 	{	
 		unsigned char description [1024];
 		int descrlen;
@@ -1156,13 +974,13 @@ TERM_NODE * AmsGetIdleLongestTerm(unsigned int srvGrpId, int termNum, time_t cur
 
 
 
-void AmsGetCrmInServiceProcTask(int iThreadId, time_t currentTime)
+void AmsGetVtaInServiceProcTask(int iThreadId, time_t currentTime)
 {
 	int					iret = AMS_CMS_PRCOESS_SUCCESS;		
 	LP_QUEUE_DATA_t     *lpQueueData = NULL;      //ÅÅ¶Ó½ø³ÌÊý¾ÝÇøÖ¸Õë	
 	LP_AMS_DATA_t		*lpAmsData = NULL;        //½ø³ÌÊý¾ÝÇøÖ¸Õë			
 	TERM_NODE            *pTermNode = NULL;	
-	CRM_NODE            *pCrmNode = NULL;
+	VTA_NODE            *pVtaNode = NULL;
 	DWORD               srvGrpId = 0;
 	MESSAGE_t           msg;	
 	int                 termNum = 0;
@@ -1202,7 +1020,7 @@ void AmsGetCrmInServiceProcTask(int iThreadId, time_t currentTime)
 
 			lpQueueData=(LP_QUEUE_DATA_t *)ProcessData[pTermNode->customerPid];
 
-//			dbgprint("AmsServiceIntelligentSelectCrm Vtm[%s][%u]SrvGrpId[%u]\r\n",
+//			dbgprint("AmsServiceIntelligentSelectVta Vtm[%s][%u]SrvGrpId[%u]\r\n",
 //				lpQueueData->vtmNo, lpQueueData->vtmId, lpQueueData->srvGrpId);	
 
 			//½öÐ¯´øÒµÎñÀàÐÍ£¬Ã»ÓÐÖ¸Ã÷ÒµÎñ×é
@@ -1240,21 +1058,21 @@ void AmsGetCrmInServiceProcTask(int iThreadId, time_t currentTime)
 			}
 
 			//ÒµÎñÖÇÄÜÂ·ÓÉ
-			pCrmNode = AmsServiceIntelligentSelectCrm(
+			pVtaNode = AmsServiceIntelligentSelectVta(
 													  lpQueueData->termId,
 			                                          lpQueueData->srvGrpId,
 			                                          lpQueueData->serviceType,
 			                                          &iret);
-			if(NULL == pCrmNode)
+			if(NULL == pVtaNode)
 			{
-				if(AMS_CMS_GET_CRM_SERVICE_IN_QUEUE != iret)
+				if(AMS_CMS_GET_VTA_SERVICE_IN_QUEUE != iret)
 				{
-					dbgprint("ServiceProcTask Vtm[%s] GetCrm SISelectCrm Failed",
+					dbgprint("ServiceProcTask Vtm[%s] GetVta SISelectVta Failed",
 						lpQueueData->termId);
 					
 					if(AMS_ERROR == iret)
 					{
-						iret = AMS_CMS_GET_CRM_SERVICE_INTELLIGENT_ROUTING_ERR;
+						iret = AMS_CMS_GET_VTA_SERVICE_INTELLIGENT_ROUTING_ERR;
 					}
 
 					memset(&msg, 0, sizeof(MESSAGE_t));
@@ -1273,7 +1091,7 @@ void AmsGetCrmInServiceProcTask(int iThreadId, time_t currentTime)
 					{
 						memcpy(&msg.cMessageBody[1], lpQueueData->callId, lpQueueData->callIdLen);	
 					}
-					AmsSendCmsCrmGetRsp(NULL,&msg,iret,NULL,pTermNode);	
+					AmsSendCmsVtaGetRsp(NULL,&msg,iret,NULL,pTermNode);	
 					
 					//update Customer Service State
 					AmsSetTermServiceState(pTermNode, AMS_CUSTOMER_SERVICE_NULL);
@@ -1298,32 +1116,7 @@ void AmsGetCrmInServiceProcTask(int iThreadId, time_t currentTime)
 					continue;
 				}
 				else
-				{
-					memset(&msg, 0, sizeof(MESSAGE_t));
-					
-					//pack cmsPid
-					msg.s_SenderPid.cModuleId   = pTermNode->cmsPid.cModuleId;
-					msg.s_SenderPid.cFunctionId = pTermNode->cmsPid.cFunctionId;
-					msg.s_SenderPid.iProcessId  = pTermNode->cmsPid.iProcessId;
-
-					//pack amsPid
-					msg.s_ReceiverPid.iProcessId = 0;
-					
-					//pack callId
-					msg.cMessageBody[0] = lpQueueData->callIdLen;
-					if(lpQueueData->callIdLen <= AMS_MAX_CALLID_LEN)
-					{
-						memcpy(&msg.cMessageBody[1], lpQueueData->callId, lpQueueData->callIdLen);	
-					}
-					//send Crm Get Rsp to CMS
-				    AmsSendCmsCrmGetRsp(NULL,&msg,iret,NULL,NULL);
-
-					/* É±µô¶¨Ê±Æ÷ */
-					if(lpQueueData->iTimerId >= 0)
-					{
-						AmsQueueKillTimer(pTermNode->customerPid, &lpQueueData->iTimerId);//»ò lpQueueData->myPid.iProcessId
-						AmsTimerStatProc(T_AMS_CUSTOMER_IN_QUEUE_TIMER, AMS_KILL_TIMER);
-					} 
+				{					
 					break;
 				}
 			}
@@ -1347,14 +1140,14 @@ void AmsGetCrmInServiceProcTask(int iThreadId, time_t currentTime)
 				}
 
 				//¼ì²é½ø³ÌºÅ
-				pid = pCrmNode->amsPid & 0xffff;
+				pid = pVtaNode->amsPid & 0xffff;
 				if((0 == pid) || (pid >= LOGIC_PROCESS_SIZE))
 				{
-					dbgprint("ServiceProcTask Vtm[%s] GetCrm Pid:%d Err", 
+					dbgprint("ServiceProcTask Vtm[%s] GetVta Pid:%d Err", 
 						lpQueueData->termId, pid);
 					
-					iret = AMS_CMS_GET_CRM_AMS_PID_ERR;
-					AmsSendCmsCrmGetRsp(NULL,&msg,iret,pCrmNode,NULL);
+					iret = AMS_CMS_GET_VTA_AMS_PID_ERR;
+					AmsSendCmsVtaGetRsp(NULL,&msg,iret,pVtaNode,NULL);
 
 					//update Customer Service State
 					AmsSetTermServiceState(pTermNode, AMS_CUSTOMER_SERVICE_NULL);
@@ -1389,15 +1182,15 @@ void AmsGetCrmInServiceProcTask(int iThreadId, time_t currentTime)
 				//record vtmPos
 				//lpAmsData->vtmPos = pVtmNode->vtmCfgPos;
 				
-				//Set crm call State, only one pthread!!!
-				AmsSetCrmCallState(lpAmsData, pCrmNode, AMS_CALL_STATE_WAIT_ANSWER);
+				//Set vta call State, only one pthread!!!
+				AmsSetVtaCallState(lpAmsData, pVtaNode, AMS_CALL_STATE_WAIT_ANSWER);
 
 #ifdef AMS_TEST_LT
-			    //calc crm workInfo
-				AmsUpdateSingleCrmWorkInfo(pCrmNode, currentTime);
+			    //calc vta workInfo
+				AmsUpdateSingleVtaWorkInfo(pVtaNode, currentTime);
 		
-				//set Crm State and State Start Time
-				AmsSetCrmState(iThreadId, lpAmsData, pCrmNode, AMS_CRM_STATE_BUSY, 0);
+				//set Vta State and State Start Time
+				AmsSetVtaState(iThreadId, lpAmsData, pVtaNode, AMS_VTA_STATE_BUSY, 0);
 #endif
 
 				//record vtmPid, may be used later
@@ -1411,7 +1204,7 @@ void AmsGetCrmInServiceProcTask(int iThreadId, time_t currentTime)
 				}
 
 				//record amsPid
-				pTermNode->amsPid = pCrmNode->amsPid;
+				pTermNode->amsPid = pVtaNode->amsPid;
 
 				//update Customer Service State
 				AmsSetTermServiceState(pTermNode, AMS_CUSTOMER_IN_SERVICE);
@@ -1421,30 +1214,24 @@ void AmsGetCrmInServiceProcTask(int iThreadId, time_t currentTime)
 				lpAmsData->cmsPid.cFunctionId  = pTermNode->cmsPid.cFunctionId;
 				lpAmsData->cmsPid.iProcessId   = pTermNode->cmsPid.iProcessId;
 
-				Sem_wait(&AmsSrvData(srvGrpId).freecrmCtrl);
-				lstDelete(&AmsSrvData(srvGrpId).freecrmList, (NODE *)pCrmNode);
-				Sem_post(&AmsSrvData(srvGrpId).freecrmCtrl);
-
-				//send Crm Get Rsp to CMS
-			    AmsSendCmsCrmGetRsp(lpAmsData,&msg,iret,pCrmNode,NULL);
-
-				/* É±µô¶¨Ê±Æ÷ */
-				if(lpQueueData->iTimerId >= 0)
-				{
-					AmsQueueKillTimer(pTermNode->customerPid, &lpQueueData->iTimerId);//»ò lpQueueData->myPid.iProcessId
-					AmsTimerStatProc(T_AMS_CUSTOMER_IN_QUEUE_TIMER, AMS_KILL_TIMER);
-				} 
-
-				/* Del Vtm Node from List */
-			    Sem_wait(&AmsSrvData(i).termCtrl);
-				lstDelete(&AmsSrvData(i).termList, (NODE *)pTermNode);
-				Sem_post(&AmsSrvData(i).termCtrl);
-
-			    TermNodeFree(pTermNode);	
+				Sem_wait(&AmsSrvData(srvGrpId).freevtaCtrl);
+				lstDelete(&AmsSrvData(srvGrpId).freevtaList, (NODE *)pVtaNode);
+				Sem_post(&AmsSrvData(srvGrpId).freevtaCtrl);
+				
 			}
 
 			//update srvGrpId
 //			pVtmNode->vtmInfo.srvGrpId = lpQueueData->srvGrpId;
+
+			//send Vta Get Rsp to CMS
+		    AmsSendCmsVtaGetRsp(lpAmsData,&msg,iret,pVtaNode,NULL);
+
+			/* É±µô¶¨Ê±Æ÷ */
+			if(lpQueueData->iTimerId >= 0)
+			{
+				AmsQueueKillTimer(pTermNode->customerPid, &lpQueueData->iTimerId);//»ò lpQueueData->myPid.iProcessId
+				AmsTimerStatProc(T_AMS_CUSTOMER_IN_QUEUE_TIMER, AMS_KILL_TIMER);
+			} 
 
 			//release lpQueueData Pid
 			AmsReleassPid(lpQueueData->myPid, END);
@@ -1460,92 +1247,92 @@ void AmsGetCrmInServiceProcTask(int iThreadId, time_t currentTime)
 	}
 }
 
-void AmsClearInactiveCrm(int iThreadId, time_t currentTime)
+void AmsClearInactiveVta(int iThreadId, time_t currentTime)
 {
 	LP_AMS_DATA_t		*lpAmsData = NULL;        //½ø³ÌÊý¾ÝÇøÖ¸Õë	
-	CRM_NODE            *pCrmNode = NULL;
-	CRM_NODE            *pCrmTempNode = NULL;	
+	VTA_NODE            *pVtaNode = NULL;
+	VTA_NODE            *pVtaTempNode = NULL;	
 	int                 clearNum = 0;
 	int                 pid = 0;
 	int                 i = 0;
 	int                 j = 0;	
 
-    /* find inactive Crm Node in process */
+    /* find inactive Vta Node in process */
 	for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
 	{
 		j = 0;
-		pCrmNode = (CRM_NODE *)lstFirst(&AmsSrvData(i).crmList);
-		while(NULL != pCrmNode && j < AMS_MAX_CRM_NODES)
+		pVtaNode = (VTA_NODE *)lstFirst(&AmsSrvData(i).vtaList);
+		while(NULL != pVtaNode && j < AMS_MAX_VTA_NODES)
 		{
 #ifdef AMS_TEST_LT
-			pCrmNode->handshakeTime = currentTime;
+			pVtaNode->handshakeTime = currentTime;
 #endif
-			if(currentTime - pCrmNode->handshakeTime >= AMS_CRM_CONNECT_CLEAR_INTERVAL)
+			if(currentTime - pVtaNode->handshakeTime >= AMS_VTA_CONNECT_CLEAR_INTERVAL)
 			{
-				dbgprint("Teller[%s] %lu : %lu -:%lu Clear!", pCrmNode->crmInfo.tellerId, 
-					currentTime, pCrmNode->handshakeTime, currentTime - pCrmNode->handshakeTime);
-				pid = pCrmNode->amsPid & 0xffff;
+				dbgprint("Teller[%s] %lu : %lu -:%lu Clear!", pVtaNode->vtaInfo.tellerId, 
+					currentTime, pVtaNode->handshakeTime, currentTime - pVtaNode->handshakeTime);
+				pid = pVtaNode->amsPid & 0xffff;
 				if(pid > 0 && pid < LOGIC_PROCESS_SIZE)
 				{
 					lpAmsData=(LP_AMS_DATA_t *)ProcessData[pid];
 					//notify cms to release call
-					if(    pCrmNode->callState > AMS_CALL_STATE_NULL 
-						&& pCrmNode->callState < AMS_CALL_STATE_RSVD)
+					if(    pVtaNode->callState > AMS_CALL_STATE_NULL 
+						&& pVtaNode->callState < AMS_CALL_STATE_RSVD)
 					{
 						AmsSendCmsCallEventInd(lpAmsData,AMS_CALL_EVENT_IND_TELLER_LOGOUT);
 					}
 
-				    //calc crm workInfo
-					AmsUpdateSingleCrmWorkInfo(pCrmNode, currentTime);
+				    //calc vta workInfo
+					AmsUpdateSingleVtaWorkInfo(pVtaNode, currentTime);
 	
-					//set Crm State and State Start Time
-					AmsSetCrmState(iThreadId, lpAmsData, pCrmNode, AMS_CRM_STATE_OFFLINE, 0);
+					//set Vta State and State Start Time
+					AmsSetVtaState(iThreadId, lpAmsData, pVtaNode, AMS_VTA_STATE_OFFLINE, 0);
 
-					if(AMS_CALL_STATE_NULL != pCrmNode->callState)
+					if(AMS_CALL_STATE_NULL != pVtaNode->callState)
 					{
-						//set Crm Call State and State Start Time 
-						AmsSetCrmCallState(lpAmsData, pCrmNode, AMS_CALL_STATE_NULL);
+						//set Vta Call State and State Start Time 
+						AmsSetVtaCallState(lpAmsData, pVtaNode, AMS_CALL_STATE_NULL);
 					}
 
 					//crmÊ§Áªºó£¬cms term ¹Ò»úÍ¨ÖªÊ§Ð§£¬ÌáÇ°ÉèÖÃterm×´Ì¬
 					AmsResetTermState(iThreadId, lpAmsData->srvGrpIdPos, lpAmsData->termId, lpAmsData->termIdLen);
 					
-					//AmsResultStatProc(AMS_CRM_HANDSHAKE_RESULT, AMS_CRM_HANDSHAKE_CLEAR_INACTIVTE_TELLER);
+					//AmsResultStatProc(AMS_VTA_HANDSHAKE_RESULT, AMS_VTA_HANDSHAKE_CLEAR_INACTIVTE_TELLER);
 
-					pCrmTempNode = pCrmNode;
-					pCrmNode = (CRM_NODE *)lstNext((NODE *)pCrmNode);
+					pVtaTempNode = pVtaNode;
+					pVtaNode = (VTA_NODE *)lstNext((NODE *)pVtaNode);
 					j++;
 					
 					/* É±µô¶¨Ê±Æ÷ */
-					AmsKillCrmAllTimer(lpAmsData, pid);
+					AmsKillVtaAllTimer(lpAmsData, pid);
 							
 				    //update time, used later
-				    memset(&pCrmTempNode->stateStartLocalTime, 0, sizeof(TIME_INFO));
-				    memset(&pCrmTempNode->callStateStartLocalTime, 0, sizeof(TIME_INFO)); 
-				    memset(&pCrmTempNode->stateStartTime, 0, sizeof(time_t)); 
-				    memset(&pCrmTempNode->callStateStartTime, 0, sizeof(time_t));
-				    memset(&pCrmTempNode->startTime, 0, sizeof(time_t)); 	
+				    memset(&pVtaTempNode->stateStartLocalTime, 0, sizeof(TIME_INFO));
+				    memset(&pVtaTempNode->callStateStartLocalTime, 0, sizeof(TIME_INFO)); 
+				    memset(&pVtaTempNode->stateStartTime, 0, sizeof(time_t)); 
+				    memset(&pVtaTempNode->callStateStartTime, 0, sizeof(time_t));
+				    memset(&pVtaTempNode->startTime, 0, sizeof(time_t)); 	
 
 					//Reset SIU preSrvTellerId
-/*					if(pCrmTempNode->crmInfo.tellerId == AmsSrvData(lpAmsData->srvGrpId).preSrvTellerId)
+/*					if(pVtaTempNode->vtaInfo.tellerId == AmsSrvData(lpAmsData->srvGrpId).preSrvTellerId)
 					{
 						AmsSrvData(lpAmsData->srvGrpId).preSrvTellerId = 0;
 					}
 					*/
-					/* Del Crm Node from List */
-				    Sem_wait(&AmsSrvData(lpAmsData->srvGrpIdPos).crmCtrl);
-					lstDelete(&AmsSrvData(lpAmsData->srvGrpIdPos).crmList, (NODE *)pCrmTempNode);
-					Sem_post(&AmsSrvData(lpAmsData->srvGrpIdPos).crmCtrl);
+					/* Del Vta Node from List */
+				    Sem_wait(&AmsSrvData(lpAmsData->srvGrpIdPos).vtaCtrl);
+					lstDelete(&AmsSrvData(lpAmsData->srvGrpIdPos).vtaList, (NODE *)pVtaTempNode);
+					Sem_post(&AmsSrvData(lpAmsData->srvGrpIdPos).vtaCtrl);
 
-					/* Del Crm Node from List */
-				    Sem_wait(&AmsSrvData(lpAmsData->srvGrpIdPos).freecrmCtrl);
-					lstDelete(&AmsSrvData(lpAmsData->srvGrpIdPos).freecrmList, (NODE *)pCrmTempNode);
-					Sem_post(&AmsSrvData(lpAmsData->srvGrpIdPos).freecrmCtrl);
+					/* Del Vta Node from List */
+				    Sem_wait(&AmsSrvData(lpAmsData->srvGrpIdPos).freevtaCtrl);
+					lstDelete(&AmsSrvData(lpAmsData->srvGrpIdPos).freevtaList, (NODE *)pVtaTempNode);
+					Sem_post(&AmsSrvData(lpAmsData->srvGrpIdPos).freevtaCtrl);
 
 					//release lpAmsData Pid
 					AmsReleassPid(lpAmsData->myPid, END);
 
-					CrmNodeFree(pCrmTempNode);
+					VtaNodeFree(pVtaTempNode);
 
 					clearNum++;
 					
@@ -1557,7 +1344,7 @@ void AmsClearInactiveCrm(int iThreadId, time_t currentTime)
 					continue;
 				}
 			}
-			pCrmNode = (CRM_NODE *)lstNext((NODE *)pCrmNode);
+			pVtaNode = (VTA_NODE *)lstNext((NODE *)pVtaNode);
 			j ++;		
 		}
 	}
@@ -1588,7 +1375,7 @@ void AmsClearInactiveTerm(int iThreadId, time_t currentTime)
 			
 			if(currentTime - pTermNode->handshakeTime >= AMS_TERM_CONNECT_CLEAR_INTERVAL)
 			{
-				dbgprint("Term[%s] %lu : %lu -:%lu Clear!", pTermNode->termInfo.termId, 
+				dbgprint("Vtm[%s] %lu : %lu -:%lu Clear!", pTermNode->termInfo.termId, 
 					currentTime, pTermNode->handshakeTime, currentTime - pTermNode->handshakeTime);
 								
 				//É±µô¶¨Ê±Æ÷
@@ -1674,51 +1461,51 @@ void AmsClearInactiveTerm(int iThreadId, time_t currentTime)
 void AmsClearInactiveCmsCall(int iThreadId, time_t currentTime)
 {
 	LP_AMS_DATA_t		*lpAmsData = NULL;        //½ø³ÌÊý¾ÝÇøÖ¸Õë	
-	CRM_NODE            *pCrmNode = NULL;
-	CRM_NODE            *pCrmTempNode = NULL;	
+	VTA_NODE            *pVtaNode = NULL;
+	VTA_NODE            *pVtaTempNode = NULL;	
 	int                 clearNum = 0;
 	int                 pid = 0;
 	int                 i = 0;
 	int                 j = 0;	
 
-    /* find inactive cms call Crm Node in process */
+    /* find inactive cms call Vta Node in process */
 	for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
 	{
 		j = 0;
-		pCrmNode = (CRM_NODE *)lstFirst(&AmsSrvData(i).crmList);
-		while(NULL != pCrmNode && j < AMS_MAX_CRM_NODES)
+		pVtaNode = (VTA_NODE *)lstFirst(&AmsSrvData(i).vtaList);
+		while(NULL != pVtaNode && j < AMS_MAX_VTA_NODES)
 		{	
 			//CMSÎ´·¢ËÍ¹Ò»ú£¬±£»¤´¦Àí
-			if(    AMS_CALL_STATE_NULL != pCrmNode->callState
-				&& AMS_CRM_STATE_IDLE == pCrmNode->state
-				&& currentTime - pCrmNode->stateStartTime >= AMS_CMS_CALL_CLEAR_INTERVAL
-				&& currentTime - pCrmNode->callStateStartTime >= AMS_CMS_CALL_CLEAR_INTERVAL)
+			if(    AMS_CALL_STATE_NULL != pVtaNode->callState
+				&& AMS_VTA_STATE_IDLE == pVtaNode->state
+				&& currentTime - pVtaNode->stateStartTime >= AMS_CMS_CALL_CLEAR_INTERVAL
+				&& currentTime - pVtaNode->callStateStartTime >= AMS_CMS_CALL_CLEAR_INTERVAL)
 			{
-				pid = pCrmNode->amsPid & 0xffff;
+				pid = pVtaNode->amsPid & 0xffff;
 				if(pid > 0 && pid < LOGIC_PROCESS_SIZE)
 				{
 					lpAmsData=(LP_AMS_DATA_t *)ProcessData[pid];
 					
 					dbgprint("Teller[%s] Vtm[%s]CallState[%d] Time[%lu]: [%lu-%lu] [%lu-%lu] Clear!", 
-						pCrmNode->crmInfo.tellerId, 
+						pVtaNode->vtaInfo.tellerId, 
 						lpAmsData->termId,
-						pCrmNode->callState,
+						pVtaNode->callState,
 						currentTime, 
-						pCrmNode->stateStartTime, currentTime - pCrmNode->stateStartTime,
-						pCrmNode->callStateStartTime, currentTime - pCrmNode->callStateStartTime);
+						pVtaNode->stateStartTime, currentTime - pVtaNode->stateStartTime,
+						pVtaNode->callStateStartTime, currentTime - pVtaNode->callStateStartTime);
 
 					//notify cms to release call
 					AmsSendCmsCallEventInd(lpAmsData,AMS_CALL_EVENT_IND_TELLER_ERR,NULL);
 
 					//½öÉ±µôºô½ÐÏà¹Ø¶¨Ê±Æ÷£¬°üÀ¨ÏûÏ¢¡¢ÎÄ¼þÊÕ·¢
-					AmsKillCrmAllCallTimer(lpAmsData, pid);
+					AmsKillVtaAllCallTimer(lpAmsData, pid);
 					
 				    //update time
-				    memset(&pCrmNode->callStateStartLocalTime, 0, sizeof(TIME_INFO)); 
-				    memset(&pCrmNode->callStateStartTime, 0, sizeof(time_t));	
+				    memset(&pVtaNode->callStateStartLocalTime, 0, sizeof(TIME_INFO)); 
+				    memset(&pVtaNode->callStateStartTime, 0, sizeof(time_t));	
 					
-					//reset Crm Call State and State Start Time 
-					AmsSetCrmCallState(lpAmsData, pCrmNode, AMS_CALL_STATE_NULL);
+					//reset Vta Call State and State Start Time 
+					AmsSetVtaCallState(lpAmsData, pVtaNode, AMS_CALL_STATE_NULL);
 
 					AmsResultStatProc(AMS_CMS_EVENT_NOTICE_RESULT, AMS_CMS_HANDSHAKE_CLEAR_INACTIVTE_CALL);
 
@@ -1727,8 +1514,8 @@ void AmsClearInactiveCmsCall(int iThreadId, time_t currentTime)
 					//reset sessStat
 					//memset(&lpAmsData->sessStat, 0, sizeof(AMS_SESSION_STAT));
 					
-					pCrmTempNode = pCrmNode;
-					pCrmNode = (CRM_NODE *)lstNext((NODE *)pCrmNode);
+					pVtaTempNode = pVtaNode;
+					pVtaNode = (VTA_NODE *)lstNext((NODE *)pVtaNode);
 					j++;
 
 					clearNum++;
@@ -1742,43 +1529,43 @@ void AmsClearInactiveCmsCall(int iThreadId, time_t currentTime)
 				}
 
 				//amsPid ÎÞÐ§Ê±£¬±£»¤´¦Àí
-				if(AMS_CALL_STATE_NULL != pCrmNode->callState)
+				if(AMS_CALL_STATE_NULL != pVtaNode->callState)
 				{
-					pCrmNode->callState = AMS_CALL_STATE_NULL;
+					pVtaNode->callState = AMS_CALL_STATE_NULL;
 				}
 			}
 
-			pCrmNode = (CRM_NODE *)lstNext((NODE *)pCrmNode);
+			pVtaNode = (VTA_NODE *)lstNext((NODE *)pVtaNode);
 			j ++;
 			
 		}
 	}
 }
 
-void AmsUpdateCrmWorkInfoProc(time_t currentTime)
+void AmsUpdateVtaWorkInfoProc(time_t currentTime)
 {
-	CRM_NODE            *pCrmNode = NULL;		
+	VTA_NODE            *pVtaNode = NULL;		
 	int                 updateNum = 0;	
 	int                 i = 0;
 	int                 j = 0;	
 
-    /* update Crm Work Info if Need */
+    /* update Vta Work Info if Need */
 	for(i = 0; i < AMS_MAX_SERVICE_GROUP_NUM; i++)
 	{
 		j = 0;
 		
-		pCrmNode = (CRM_NODE *)lstFirst(&AmsSrvData(i).crmList);
-		while(NULL != pCrmNode && j < AMS_MAX_CRM_NODES)
+		pVtaNode = (VTA_NODE *)lstFirst(&AmsSrvData(i).vtaList);
+		while(NULL != pVtaNode && j < AMS_MAX_VTA_NODES)
 		{			
-			if(currentTime - pCrmNode->workInfoUpdateTime >= AMS_CRM_WORK_INFO_UPDATE_INTERVAL)
+			if(currentTime - pVtaNode->workInfoUpdateTime >= AMS_VTA_WORK_INFO_UPDATE_INTERVAL)
 			{		
-				if(AMS_OK == AmsUpdateSingleCrmWorkInfo(pCrmNode, currentTime))
+				if(AMS_OK == AmsUpdateSingleVtaWorkInfo(pVtaNode, currentTime))
 				{
-					if(pCrmNode->tellerCfgPos < AMS_MAX_CRM_NUM)
+					if(pVtaNode->tellerCfgPos < AMS_MAX_VTA_NUM)
 					{
-						if(AmsTellerStat(pCrmNode->tellerCfgPos).tellerId == pCrmNode->crmInfo.tellerId)
+						if(AmsTellerStat(pVtaNode->tellerCfgPos).tellerId == pVtaNode->vtaInfo.tellerId)
 						{
-							memcpy(&AmsTellerStat(pCrmNode->tellerCfgPos).crmWorkInfo, &pCrmNode->crmWorkInfo, sizeof(TELLER_WORK_INFO));
+							memcpy(&AmsTellerStat(pVtaNode->tellerCfgPos).vtaWorkInfo, &pVtaNode->vtaWorkInfo, sizeof(TELLER_WORK_INFO));
 						}
 					}
 					
@@ -1791,7 +1578,7 @@ void AmsUpdateCrmWorkInfoProc(time_t currentTime)
 				}
 			}
 
-			pCrmNode = (CRM_NODE *)lstNext((NODE *)pCrmNode);
+			pVtaNode = (VTA_NODE *)lstNext((NODE *)pVtaNode);
 			j ++;
 			
 		}
@@ -1808,8 +1595,8 @@ int AmsProcServiceProcMsg(int iThreadId, MESSAGE_t *pMsg)
 
 	time(&currentTime);	
 
-	//ÇåÀí²»»î¶¯µÄCRMÁ¬½Ó£¬¼°ÊÍ·ÅÒµÎñ´¦Àí½ø³Ì
-	AmsClearInactiveCrm(iThreadId, currentTime);
+	//ÇåÀí²»»î¶¯µÄVTAÁ¬½Ó£¬¼°ÊÍ·ÅÒµÎñ´¦Àí½ø³Ì
+	AmsClearInactiveVta(iThreadId, currentTime);
 
 	//ÇåÀí²»»î¶¯µÄTermÁ¬½Ó£¬¼°ÊÍ·ÅÅÅ¶Ó·þÎñ½ø³Ì
 	AmsClearInactiveTerm(iThreadId, currentTime);
@@ -1818,7 +1605,7 @@ int AmsProcServiceProcMsg(int iThreadId, MESSAGE_t *pMsg)
     //ÅÐ¶ÏÊÇ·ñÓÐµÈ´ýÒµÎñµÄ¿Í»§
     //ÈôÓÐ£¬´Ó¶ÓÁÐÍ·¿ªÊ¼Ë³ÐòÎª¿Í»§Ñ¡Ôñ¹ñÔ±£»
     //ÈôÑ¡Ôñ³É¹¦£¬ÔòÊÍ·ÅÅÅ¶Ó·þÎñ½ø³Ì	
-    AmsGetCrmInServiceProcTask(iThreadId, currentTime);
+    AmsGetVtaInServiceProcTask(iThreadId, currentTime);
 
 
 	//ÇåÀí²»»î¶¯µÄRCAS·þÎñÆ÷
@@ -1829,13 +1616,13 @@ int AmsProcServiceProcMsg(int iThreadId, MESSAGE_t *pMsg)
 
 	
     //calc teller WorkInfo Every 5 Minutes
-	AmsUpdateCrmWorkInfoProc(currentTime);
+	AmsUpdateVtaWorkInfoProc(currentTime);
 
 	return AMS_OK;
 	
 }
 
-int AmsSendCmsGetCrmTimeoutRsp(LP_QUEUE_DATA_t *lpQueueData,MESSAGE_t *pMsg,int iret)
+int AmsSendCmsGetVtaTimeoutRsp(LP_QUEUE_DATA_t *lpQueueData,MESSAGE_t *pMsg,int iret)
 {
 	MESSAGE_t           s_Msg;
 	unsigned char       *p;
@@ -1852,7 +1639,7 @@ int AmsSendCmsGetCrmTimeoutRsp(LP_QUEUE_DATA_t *lpQueueData,MESSAGE_t *pMsg,int 
 	s_Msg.s_SenderPid.cModuleId = SystemData.cMid;
 	s_Msg.s_SenderPid.cFunctionId = FID_AMS;
 	s_Msg.s_SenderPid.iProcessId = pMsg->s_ReceiverPid.iProcessId;
-	s_Msg.iMessageType = A_TELLER_GET_RSP;
+	s_Msg.iMessageType = A_VTA_GET_RSP;
 	s_Msg.iMessageLength = 0;
 
     p = &s_Msg.cMessageBody[0];
@@ -1883,13 +1670,13 @@ int AmsSendCmsGetCrmTimeoutRsp(LP_QUEUE_DATA_t *lpQueueData,MESSAGE_t *pMsg,int 
 		unsigned char description [1024];
 		int descrlen;
 		memset(description,0,sizeof(description));
-		descrlen=snprintf(description,1024,"send A_TELLER_GET_RSP msg \n");	
-		AmsTraceToFile(s_Msg.s_ReceiverPid,s_Msg.s_SenderPid,"A_TELLER_GET_RSP",description,
+		descrlen=snprintf(description,1024,"send A_VTA_GET_RSP msg \n");	
+		AmsTraceToFile(s_Msg.s_ReceiverPid,s_Msg.s_SenderPid,"A_VTA_GET_RSP",description,
 						descrlen,s_Msg.cMessageBody,s_Msg.iMessageLength,lpQueueData->sTraceName);				
 	}
 
     AmsMsgStatProc(AMS_CMS_MSG, s_Msg.iMessageType);
-	AmsResultStatProc(AMS_CMS_GET_CRM_RESULT, iret);
+	AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);
 	
 	return SUCCESS;
 }
@@ -1897,7 +1684,7 @@ int AmsSendCmsGetCrmTimeoutRsp(LP_QUEUE_DATA_t *lpQueueData,MESSAGE_t *pMsg,int 
 
 int AmsCustomerInQueueTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
 {
-	int					iret = AMS_CMS_GET_CRM_TIMEOUT;
+	int					iret = AMS_CMS_GET_VTA_TIMEOUT;
 	LP_QUEUE_DATA_t     *lpQueueData = NULL;             //ÅÅ¶Ó½ø³ÌÊý¾ÝÇøÖ¸Õë
 	LP_AMS_DATA_t		*lpAmsData = NULL;               //½ø³ÌÊý¾ÝÇøÖ¸Õë	
 	TERM_NODE            *pTermNode = NULL;			
@@ -1922,8 +1709,8 @@ int AmsCustomerInQueueTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
 	if((0 == pid) || (pid >= LOGIC_PROCESS_SIZE))
 	{
 		dbgprint("AmsCustomerInQueueTimeoutProc Pid:%d Err", pid);
-		iret = AMS_CMS_GET_CRM_TIMEOUT_PARA_ERR;
-		AmsResultStatProc(AMS_CMS_GET_CRM_RESULT, iret);
+		iret = AMS_CMS_GET_VTA_TIMEOUT_PARA_ERR;
+		AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);
 		return AMS_ERROR;
 	}
 
@@ -1931,8 +1718,8 @@ int AmsCustomerInQueueTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
 	if(pTmMsg->iMessageLength > (PARA_LEN + sizeof(char) + sizeof(int)))
 	{
 		dbgprint("AmsCustomerInQueueTimeoutProc[%d] Len:%d Err", pid, pTmMsg->iMessageLength);
-		iret = AMS_CMS_GET_CRM_TIMEOUT_LEN_ERR;
-		AmsResultStatProc(AMS_CMS_GET_CRM_RESULT, iret);
+		iret = AMS_CMS_GET_VTA_TIMEOUT_LEN_ERR;
+		AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);
 		return AMS_ERROR;
 	}
 
@@ -1952,8 +1739,8 @@ int AmsCustomerInQueueTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
 		dbgprint("AmsCustomerInQueueTimeoutProc Term[%s] PID[%d][%d] Not Equal", 
 			lpQueueData->termId,
 			lpQueueData->myPid.iProcessId, pid);
-		iret = AMS_CMS_GET_CRM_TIMEOUT_PARA_ERR;
-		AmsResultStatProc(AMS_CMS_GET_CRM_RESULT, iret);
+		iret = AMS_CMS_GET_VTA_TIMEOUT_PARA_ERR;
+		AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);
 		return AMS_ERROR;
 	}
 	
@@ -1968,8 +1755,8 @@ int AmsCustomerInQueueTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
 	{
 		dbgprint("AmsCustomerInQueueTimeoutProc[%d] Term[%s]Id[%u]Err.", 
 			pid, lpQueueData->termId, queueId);
-		iret = 	AMS_CMS_GET_CRM_TIMEOUT_TERM_ID_ERR;
-		AmsResultStatProc(AMS_CMS_GET_CRM_RESULT, iret);
+		iret = 	AMS_CMS_GET_VTA_TIMEOUT_VTM_ID_ERR;
+		AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);
 		return AMS_ERROR;		
 	}
 			
@@ -1987,8 +1774,8 @@ int AmsCustomerInQueueTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
 	{
 		dbgprint("AmsCustomerInQueueTimeoutProc[%d] Term[%s]Id[%u]Err", 
 			pid, lpQueueData->termId, queueId);
-		iret = 	AMS_CMS_GET_CRM_TIMEOUT_TERM_ID_ERR;
-		AmsResultStatProc(AMS_CMS_GET_CRM_RESULT, iret);
+		iret = 	AMS_CMS_GET_VTA_TIMEOUT_VTM_ID_ERR;
+		AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);
 		return AMS_ERROR;		
 	}
 
@@ -1997,8 +1784,8 @@ int AmsCustomerInQueueTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
 	{
 		dbgprint("AmsCustomerInQueueTimeoutProc[%d] Term[%s][%u]State[%d]Err", 
 			pid, lpQueueData->termId, pTermNode->state);
-		iret = 	AMS_CMS_GET_CRM_TIMEOUT_STATE_ERR;
-		AmsResultStatProc(AMS_CMS_GET_CRM_RESULT, iret);	
+		iret = 	AMS_CMS_GET_VTA_TIMEOUT_STATE_ERR;
+		AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);	
 	}
 	if(AMS_TERM_STATE_IDLE != pTermNode->state)
 	{
@@ -2011,8 +1798,8 @@ int AmsCustomerInQueueTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
 	{
 		dbgprint("AmsCustomerInQueueTimeoutProc[%d] Term[%s]ServiceState[%d]Err", 
 			pid, lpQueueData->termId, pTermNode->serviceState);
-		iret = 	AMS_CMS_GET_CRM_TIMEOUT_SERVICE_STATE_ERR;
-		AmsResultStatProc(AMS_CMS_GET_CRM_RESULT, iret);	
+		iret = 	AMS_CMS_GET_VTA_TIMEOUT_SERVICE_STATE_ERR;
+		AmsResultStatProc(AMS_CMS_GET_VTA_RESULT, iret);	
 	}
 	if(AMS_CUSTOMER_SERVICE_NULL != pTermNode->serviceState)
 	{
@@ -2033,8 +1820,8 @@ int AmsCustomerInQueueTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
 	//reset customerPid
 	pTermNode->customerPid = 0;
 		
-	//send Cms Crm Get Rsp
-	AmsSendCmsGetCrmTimeoutRsp(lpQueueData,&msg,iret);
+	//send Cms Vta Get Rsp
+	AmsSendCmsGetVtaTimeoutRsp(lpQueueData,&msg,iret);
 
 	//release lpQueueData Pid
 	AmsReleassPid(lpQueueData->myPid, END);
@@ -2043,10 +1830,10 @@ int AmsCustomerInQueueTimeoutProc(int iThreadId, TIMEMESSAGE_t *pTmMsg)
 
 }
 
-int AmsClearHeartbeatErrCrm(LP_AMS_DATA_t *lpAmsData,unsigned char tellid[],unsigned char tellidlen)
+int AmsClearHeartbeatErrVta(LP_AMS_DATA_t *lpAmsData,unsigned char tellid[],unsigned char tellidlen)
 {
-	CRM_NODE            *pCrmNode = NULL;
-	CRM_NODE            *pCrmTempNode = NULL;	
+	VTA_NODE            *pVtaNode = NULL;
+	VTA_NODE            *pVtaTempNode = NULL;	
 	int					pid = 0;	
 
 #ifdef AMS_TEST_LT
@@ -2055,58 +1842,58 @@ int AmsClearHeartbeatErrCrm(LP_AMS_DATA_t *lpAmsData,unsigned char tellid[],unsi
 
 	if(lpAmsData == NULL)
 	{
-		dbgprint("AmsClearHeatbeatErrCrm Err");
+		dbgprint("AmsClearHeatbeatErrVta Err");
 		return AMS_ERROR;
 	}
 	pid = lpAmsData->amsPid & 0xFFFF;
 
-	/*find crm Node*/
-	pCrmNode = AmsSearchCrmNode(lpAmsData->srvGrpIdPos, lpAmsData->tellerId,lpAmsData->tellerIdLen);
-	if(NULL == pCrmNode)
+	/*find vta Node*/
+	pVtaNode = AmsSearchVtaNode(lpAmsData->srvGrpIdPos, lpAmsData->tellerId,lpAmsData->tellerIdLen);
+	if(NULL == pVtaNode)
 	{
-		dbgprint("AmsClearHeartbeatErrCrm Tellid Err");
+		dbgprint("AmsClearHeartbeatErrVta Tellid Err");
 		return AMS_ERROR;		
 	}
 
-	//calc crm workInfo
-	AmsUpdateSingleCrmWorkInfo(pCrmNode, currentTime);
+	//calc vta workInfo
+	AmsUpdateSingleVtaWorkInfo(pVtaNode, currentTime);
 
-	//set Crm State and State Start Time
-	AmsSetCrmState(NULL, lpAmsData, pCrmNode, AMS_CRM_STATE_OFFLINE, 0);
+	//set Vta State and State Start Time
+	AmsSetVtaState(NULL, lpAmsData, pVtaNode, AMS_VTA_STATE_OFFLINE, 0);
 
-	if(AMS_CALL_STATE_NULL != pCrmNode->callState)
+	if(AMS_CALL_STATE_NULL != pVtaNode->callState)
 	{
-		//set Crm Call State and State Start Time 
-		AmsSetCrmCallState(lpAmsData, pCrmNode, AMS_CALL_STATE_NULL);
+		//set Vta Call State and State Start Time 
+		AmsSetVtaCallState(lpAmsData, pVtaNode, AMS_CALL_STATE_NULL);
 	}
 
-	//crmÊ§Áªºó£¬cms vtm ¹Ò»úÍ¨ÖªÊ§Ð§£¬ÌáÇ°ÉèÖÃvtm×´Ì¬
+	//vtaÊ§Áªºó£¬cms vtm ¹Ò»úÍ¨ÖªÊ§Ð§£¬ÌáÇ°ÉèÖÃvtm×´Ì¬
 	AmsResetTermState(NULL, lpAmsData->srvGrpIdPos, lpAmsData->termId, lpAmsData->termIdLen);
 	
 	/* É±µô¶¨Ê±Æ÷ */
-	AmsKillCrmAllTimer(lpAmsData, pid);
+	AmsKillVtaAllTimer(lpAmsData, pid);
 			
     //update time, used later
-    memset(&pCrmNode->stateStartLocalTime, 0, sizeof(TIME_INFO));
-    memset(&pCrmNode->callStateStartLocalTime, 0, sizeof(TIME_INFO)); 
-    memset(&pCrmNode->stateStartTime, 0, sizeof(time_t)); 
-    memset(&pCrmNode->callStateStartTime, 0, sizeof(time_t));
-    memset(&pCrmNode->startTime, 0, sizeof(time_t)); 	
+    memset(&pVtaNode->stateStartLocalTime, 0, sizeof(TIME_INFO));
+    memset(&pVtaNode->callStateStartLocalTime, 0, sizeof(TIME_INFO)); 
+    memset(&pVtaNode->stateStartTime, 0, sizeof(time_t)); 
+    memset(&pVtaNode->callStateStartTime, 0, sizeof(time_t));
+    memset(&pVtaNode->startTime, 0, sizeof(time_t)); 	
 
-	/* Del Crm Node from List */
-    Sem_wait(&AmsSrvData(lpAmsData->srvGrpIdPos).crmCtrl);
-	lstDelete(&AmsSrvData(lpAmsData->srvGrpIdPos).crmList, (NODE *)pCrmNode);
-	Sem_post(&AmsSrvData(lpAmsData->srvGrpIdPos).crmCtrl);
+	/* Del Vta Node from List */
+    Sem_wait(&AmsSrvData(lpAmsData->srvGrpIdPos).vtaCtrl);
+	lstDelete(&AmsSrvData(lpAmsData->srvGrpIdPos).vtaList, (NODE *)pVtaNode);
+	Sem_post(&AmsSrvData(lpAmsData->srvGrpIdPos).vtaCtrl);
 
-	/* Del Crm Node from freeList */
-    Sem_wait(&AmsSrvData(lpAmsData->srvGrpIdPos).freecrmCtrl);
-	lstDelete(&AmsSrvData(lpAmsData->srvGrpIdPos).freecrmList, (NODE *)pCrmNode);
-	Sem_post(&AmsSrvData(lpAmsData->srvGrpIdPos).freecrmCtrl);
+	/* Del Vta Node from freeList */
+    Sem_wait(&AmsSrvData(lpAmsData->srvGrpIdPos).freevtaCtrl);
+	lstDelete(&AmsSrvData(lpAmsData->srvGrpIdPos).freevtaList, (NODE *)pVtaNode);
+	Sem_post(&AmsSrvData(lpAmsData->srvGrpIdPos).freevtaCtrl);
 
 	//release lpAmsData Pid
 	AmsReleassPid(lpAmsData->myPid, END);
 
-	CrmNodeFree(pCrmTempNode);
+	VtaNodeFree(pVtaTempNode);
 
 	return AMS_OK;
 }

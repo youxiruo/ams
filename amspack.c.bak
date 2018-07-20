@@ -113,7 +113,7 @@ int AmsUnpackStateOperateReqOpartPara(unsigned char body[], int bodyLen, STATE_O
 IPV6
 PORT
 */
-int AmsUnpackCrmRegReqVpartPara(unsigned char body[], int bodyLen, TERM_NET_INFO *pTermNetInfo)
+int AmsUnpackVtaRegReqVpartPara(unsigned char body[], int bodyLen, TERM_NET_INFO *pTermNetInfo)
 {
 	unsigned char       paraID = 0;
 	int                 pos = 0;
@@ -123,20 +123,20 @@ int AmsUnpackCrmRegReqVpartPara(unsigned char body[], int bodyLen, TERM_NET_INFO
 
 	if(NULL == body || NULL == pTermNetInfo)
 	{
-		dbgprint("AmsUnpackCrmRegReqVpartPara Err1");
+		dbgprint("AmsUnpackVtaRegReqVpartPara Err1");
 		return AMS_ERROR;
 	}
 
 	if(bodyLen < 3)
 	{
-		dbgprint("AmsUnpackCrmRegReqVpartPara Err2");
+		dbgprint("AmsUnpackVtaRegReqVpartPara Err2");
 		return AMS_ERROR;
 	}
 
 	paraID = body[pos];
 	if(paraID != AMS_TERM_NET_INFO_ID)
 	{
-		dbgprint("AmsUnpackCrmRegReqVpartPara Err3");
+		dbgprint("AmsUnpackVtaRegReqVpartPara Err3");
 		return AMS_ERROR;
 	}
 	pos+=3;
@@ -210,13 +210,13 @@ int AmsUnpackTellerpersionalinfo(unsigned char body[], int bodyLen, TELLER_PERSO
 }
 
 
-int AmsPackCrmLoginBase(unsigned char tellerIdLen,unsigned char tellerId[],int iret,unsigned char p[],LP_AMS_DATA_t	*lpAmsData)
+int AmsPackVtaLoginBase(unsigned char tellerIdLen,unsigned char tellerId[],int iret,unsigned char p[],LP_AMS_DATA_t	*lpAmsData)
 {
 	int len=0;
 	
 	if(tellerId == NULL || p == NULL)
 	{
-		dbgprint("AmsPackCrmLoginBase Error");
+		dbgprint("AmsPackVtaLoginBase Error");
 		return 0;
 	}
 
@@ -233,9 +233,9 @@ int AmsPackCrmLoginBase(unsigned char tellerIdLen,unsigned char tellerId[],int i
 	memcpy(p,tellerId,tellerIdLen);	
 	p+=tellerIdLen;
 
-	if(iret != AMS_CRM_QUEUE_MNG_SUCCESS)
+	if(iret != AMS_VTA_QUEUE_MNG_SUCCESS)
 	{
-		*p++=AMS_CRM_LOGIN_ERR_ID;
+		*p++=AMS_VTA_LOGIN_ERR_ID;
 		BEPUTSHORT(4,p);
 		p+=2;
 

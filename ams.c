@@ -136,9 +136,9 @@ int AmsProcAMsg(int iThreadId,MESSAGE_t *pMsg)
 
 	switch(pMsg->s_SenderPid.cFunctionId)
 	{					
-		case FID_VTA:
-			AmsMsgStatProc(AMS_VTA_MSG, pMsg->iMessageType);
-			iret = AmsProcVtaMsg(iThreadId,pMsg); 
+		case FID_CRM:
+			AmsMsgStatProc(AMS_CRM_MSG, pMsg->iMessageType);
+			iret = AmsProcCrmMsg(iThreadId,pMsg); 
 			break;
 		
 		/*case FID_VTM:	
@@ -168,31 +168,46 @@ int AmsProcAMsg(int iThreadId,MESSAGE_t *pMsg)
 
 
 //------------------------------------
-//功能:	Vta消息处理函数	
-//入口:	iThreadId:线程号 pMsg:Vta消息
+//功能:	Crm消息处理函数	
+//入口:	iThreadId:线程号 pMsg:Crm消息
 //返回:	0:成功,其他:失败	
 //说明:	Vta消息处理函数调用
 //修改:
 //------------------------------------
-int AmsProcVtaMsg(int iThreadId, MESSAGE_t *pMsg)
+int AmsProcCrmMsg(int iThreadId, MESSAGE_t *pMsg)
 {
 	int    iret = 0;
 	
 	switch(pMsg->iMessageType)
 	{					
-		case A_VTA_LOGIN_REQ:
-			iret = VtaLoginReqProc(iThreadId,pMsg); 
+		case A_TELLER_LOGIN_REQ:
+			iret = CrmLoginReqProc(iThreadId,pMsg); 
 			break;
-		case A_VTA_STATE_OPERATE_REQ:
-			iret = VtaStateOperateReqProc(iThreadId,pMsg); 
+		case A_TELLER_LOGOUT_REQ:
+			iret = CrmLoginOutProc(iThreadId,pMsg);
 			break;
-		case A_VTA_STATE_OPERATE_CNF:
-			iret = VtaStateOperateCnfProc(iThreadId,pMsg);
+		case A_TELLER_MODIFY_PASSWORD_REQ:
+			iret = CrmModifyPswdReq(iThreadId,pMsg);
+			break;
+		case A_TELLER_FORCE_LOGIN_REQ:
+			iret = CrmForceLoginReq(iThreadId,pMsg);
+			break;
+		case A_TELLER_QUERY_INFO_REQ:
+			iret = CrmQueryInfoReq(iThreadId,pMsg);
+			break;
+		case A_TELLER_EVENT_NOTICE:
+			iret = CrmEventNoticeMsg(iThreadId,pMsg);
+			break;
+		case A_TELLER_STATE_OPERATE_REQ:
+			iret = CrmStateOperateReqProc(iThreadId,pMsg); 
+			break;
+		case A_TELLER_STATE_OPERATE_CNF:
+			iret = CrmStateOperateCnfProc(iThreadId,pMsg);
 			break;
 		default:
 			//消息统计
 			AmsMsgStatProc();
-			dbgprint("AMS Proc Vta Msg Error: MsgCode: iMessageType=0x%x.\n\t", pMsg->iMessageType);
+			dbgprint("AMS Proc Crm Msg Error: MsgCode: iMessageType=0x%x.\n\t", pMsg->iMessageType);
 			return AMS_ERROR;
 	}
 	return iret;
@@ -210,20 +225,20 @@ int AmsProcCmsMsg(int iThreadId, MESSAGE_t *pMsg)
 	
 	switch(pMsg->iMessageType)
 	{					
-		case A_VTA_REG_REQ:	//坐席注册请求
-			iret = VtaRegReqProc(iThreadId,pMsg); 
+		case A_TELLER_REG_REQ:	//坐席注册请求
+			iret = CrmRegReqProc(iThreadId,pMsg); 
 			break;
 			
-        case A_VTA_GET_REQ:	//坐席分配请求
-			iret = VtaGetReqProc(iThreadId,pMsg); 
+        case A_TELLER_GET_REQ:	//坐席分配请求
+			iret = CrmGetReqProc(iThreadId,pMsg); 
 			break;	
 
-		case A_VTA_CALLOUT_REQ://坐席外呼请求
-			iret = VtaCalloutReqProc(iThreadId,pMsg);
+		case A_TELLER_CALLOUT_REQ://坐席外呼请求
+			iret = CrmCalloutReqProc(iThreadId,pMsg);
 			break;
 
-		case A_AUTHINFO_QUERY_REQ://坐席鉴权信息查询请求
-			iret = VtaAuthinfoReqProc(iThreadId,pMsg);
+		case A_TELLER_AUTH_INFO_QUERY_REQ://坐席鉴权信息查询请求
+			iret = CrmAuthinfoReqProc(iThreadId,pMsg);
 			break;
 			
         /*case A_TERM_NETINFO_QUERY_REQ:	
@@ -285,9 +300,9 @@ int AmsProcBMsg(int iThreadId,MESSAGE_t *pMsg)
 
     switch(pTmMsg->iMessageType)
 	{
-		case B_AMS_VTA_STATE_OP_IND_TIMEOUT:
-			AmsTimerStatProc(T_AMS_VTA_STATE_OPERATE_IND_TIMER, AMS_TIMER_TIMEOUT);
-			iret = VtaStateOperateIndTimeoutProc(iThreadId,pTmMsg); 
+		case B_AMS_TELLER_STATE_OP_IND_TIMEOUT:
+			AmsTimerStatProc(T_AMS_CRM_STATE_OPERATE_IND_TIMER, AMS_TIMER_TIMEOUT);
+			iret = CrmStateOperateIndTimeoutProc(iThreadId,pTmMsg); 
 			break;
 
 		case B_AMS_CUSTOMER_IN_QUEUE_TIMEOUT:			
